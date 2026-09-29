@@ -75,6 +75,9 @@ export interface TelemetryPoint {
   gyroX: number | null;
   gyroY: number | null;
   gyroZ: number | null;
+  magX?: number | null;
+  magY?: number | null;
+  magZ?: number | null;
   lux: number | null;
   pressureHpa: number | null;
   gpsLat: number | null;
@@ -172,6 +175,7 @@ export interface TelemetryBroadcast {
   receivedAt: number;
   accel?: { x: number; y: number; z: number };
   gyro?: { x: number; y: number; z: number };
+  mag?: { x: number; y: number; z: number };
   lux?: number;
   pressureHpa?: number;
   gps?: { lat: number; lon: number; speedMs?: number; accuracyM?: number };
