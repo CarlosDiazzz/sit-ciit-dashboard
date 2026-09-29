@@ -11,6 +11,8 @@ import {
   YAxis,
 } from 'recharts';
 
+import SpeedGauge from '../components/SpeedGauge';
+
 // Gráficas en vivo por unidad, vía Socket.IO (el backend reemite cada
 // `telemetry` que guarda con éxito). Dos gráficas separadas, no una con
 // doble eje: aceleración (g) y velocidad (km/h) son unidades distintas.
@@ -258,6 +260,17 @@ export default function Unidad() {
           </div>
 
           <h3 style={{ marginTop: 20 }}>Velocidad — GPS (km/h)</h3>
+          <div style={{ maxWidth: 260 }}>
+            <SpeedGauge
+              speedKmh={points.at(-1)?.speedKmh ?? null}
+              colors={{
+                track: colors.grid,
+                accent: colors.seriesSpeed,
+                ink: colors.textPrimary,
+                muted: colors.muted,
+              }}
+            />
+          </div>
           <div style={{ width: '100%', height: 200, background: colors.surface }}>
             <ResponsiveContainer>
               <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
