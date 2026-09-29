@@ -32,16 +32,16 @@ export interface ChartPalette {
 
 /* Alineados con los tokens de superficie y texto de index.css. */
 const DARK: ChartPalette = {
-  surface: '#161b22',
-  textPrimary: '#f0f6fc',
-  textSecondary: '#c9d1d9',
-  muted: '#8b949e',
-  grid: '#2a313c',
-  axis: '#3a434f',
-  seriesX: '#3987e5',
-  seriesY: '#d95926',
-  seriesZ: '#199e70',
-  seriesSpeed: '#9085e9',
+  surface: '#121715',
+  textPrimary: '#f5f0e4',
+  textSecondary: '#d4d0c5',
+  muted: '#918f86',
+  grid: '#29332f',
+  axis: '#3b4943',
+  seriesX: '#d55f5c',
+  seriesY: '#f39a48',
+  seriesZ: '#55bde9',
+  seriesSpeed: '#49c79c',
 };
 
 const LIGHT: ChartPalette = {

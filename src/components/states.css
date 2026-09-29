@@ -9,7 +9,9 @@
   text-align: center;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background:
+    radial-gradient(circle at 50% 0, rgba(var(--accent-rgb), 0.08), transparent 60%),
+    var(--surface);
 }
 
 .state-title {
@@ -55,7 +57,7 @@
 .btn {
   padding: var(--s2) var(--s4);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: var(--surface-2);
   color: var(--text-strong);
 }
@@ -66,7 +68,8 @@
 }
 
 .btn-primary {
-  background: var(--accent-bg);
+  background: var(--accent);
   border-color: var(--accent-border);
-  color: var(--accent);
+  color: #08110d;
+  font-weight: 650;
 }
