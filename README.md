@@ -23,8 +23,11 @@ npm run dev
 - **Bitácora** — auditoría de comandos.
 - **Login** — autenticación contra el backend, oculta acciones según rol.
 
-Todas son placeholders en esta fase (Fase 0 — andamiaje); se implementan
-en las fases siguientes (ver `CLAUDE.md`).
+**Unidad** ya tiene gráfica en vivo (Recharts + Socket.IO): aceleración
+x/y/z y magnitud, filtro por `unitId`, vista de tabla alternativa, estado
+de conexión del socket y último heartbeat por nodo de la unidad. Las
+demás vistas siguen siendo placeholders — se implementan en las fases
+siguientes (ver `CLAUDE.md`).
 
 ## Contrato
 
