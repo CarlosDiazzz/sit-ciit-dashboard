@@ -1,0 +1,95 @@
+.node-compare {
+  margin-bottom: var(--s5);
+}
+
+.node-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s3);
+}
+
+/* Tarjeta clicable: seleccionar un nodo cambia cuál se grafica. */
+.node-card {
+  display: block;
+  width: 100%;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+}
+
+.node-card:hover {
+  border-color: var(--accent-border);
+  background: var(--surface-hover);
+}
+
+.node-card.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+/* Un nodo que dejó de reportar sigue visible pero atenuado: su ausencia
+ * es información, no motivo para quitarlo de la pantalla. */
+.node-card.is-quiet {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.node-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+
+.node-code {
+  color: var(--text-strong);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.node-role {
+  padding: 1px var(--s2);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.node-role-primary {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.node-role-backup {
+  color: var(--text-dim);
+  background: var(--offline-bg);
+}
+
+.node-stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px var(--s3);
+  margin: 0;
+  font-size: 12px;
+}
+
+.node-stats dt {
+  color: var(--text-dim);
+}
+
+.node-stats dd {
+  margin: 0;
+  text-align: right;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.node-warn {
+  margin-top: var(--s2);
+  color: var(--warning);
+  font-size: 11px;
+}

@@ -5,7 +5,7 @@
  * calcula el GPS del celular) — no se deriva ni se estima aquí.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -22,6 +22,7 @@ import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
 import type { TelemetryBroadcast, Unit } from '../api/types';
 import { ConnectionBadge, MovementBadge } from '../components/Badges';
+import NodeComparison from '../components/NodeComparison';
 import SpeedGauge from '../components/SpeedGauge';
 import { AsyncBoundary } from '../components/States';
 import { chartPalette } from '../lib/chartColors';
@@ -63,6 +64,9 @@ export default function Unidad() {
   const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isMoving, setIsMoving] = useState(false);
+  // Reloj compartido: hace que los "hace N s" de las tarjetas avancen
+  // aunque no llegue telemetria nueva (asi se ve que un nodo se callo).
+  const [ahora, setAhora] = useState(() => Date.now());
   const isMovingRef = useRef(false);
   const movementEmaRef = useRef(0);
 
@@ -77,6 +81,11 @@ export default function Unidad() {
     movementEmaRef.current = 0;
     isMovingRef.current = false;
     setIsMoving(false);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setAhora(Date.now()), 1000);
+    return () => clearInterval(id);
   }, []);
 
   const onTelemetry = useCallback((evt: TelemetryBroadcast) => {
@@ -166,6 +175,13 @@ export default function Unidad() {
           </label>
         ) : null}
       </div>
+
+      <NodeComparison
+        lastByNode={lastByNode}
+        ahora={ahora}
+        selectedNodeId={selectedNodeId}
+        onSelect={selectNode}
+      />
 
       {points.length === 0 ? (
         <section className="chart-card">
