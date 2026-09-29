@@ -30,6 +30,21 @@ export function ConnectionBadge({ online }: { online: boolean }) {
   );
 }
 
+/** Del acelerómetro/giroscopio del nodo, no es una velocidad — solo dice
+ *  si hay actividad distinta de estar quieto. Reusa los tokens de
+ *  online/offline: misma idea de "algo pasa ahora mismo" vs. "en reposo". */
+export function MovementBadge({ moving }: { moving: boolean }) {
+  return (
+    <span
+      className={`badge ${moving ? 'badge-online' : 'badge-offline'}`}
+      title="Acelerómetro + giroscopio, no es velocidad"
+    >
+      <span className="badge-dot" aria-hidden="true" />
+      {moving ? 'En movimiento' : 'Quieto'}
+    </span>
+  );
+}
+
 const STATUS_LABEL: Record<CommandStatus, string> = {
   sent: 'Enviado',
   delivered: 'Entregado',

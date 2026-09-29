@@ -21,7 +21,7 @@ import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
 import type { TelemetryBroadcast, Unit } from '../api/types';
-import { ConnectionBadge } from '../components/Badges';
+import { ConnectionBadge, MovementBadge } from '../components/Badges';
 import SpeedGauge from '../components/SpeedGauge';
 import { AsyncBoundary } from '../components/States';
 import { chartPalette } from '../lib/chartColors';
@@ -45,6 +45,16 @@ interface ChartPoint {
   speedKmh: number | null;
 }
 
+// Indicador instantáneo de movimiento a partir del acelerómetro (no una
+// velocidad: el GPS es la única fuente de eso, ver nota arriba).
+// Histéresis para no parpadear en el umbral: entra al superar ENTER,
+// solo sale al bajar de EXIT. Reacciona en el siguiente sample (~1 s),
+// más rápido que el km/h del GPS, como complemento mientras ese número
+// se confirma — la misma señal que decide en el celular cuándo pedirle
+// al GPS una lectura anticipada (ver sit-ciit-mobile).
+const MOVEMENT_ENTER_G = 0.08;
+const MOVEMENT_EXIT_G = 0.03;
+
 export default function Unidad() {
   const state = useApi<Unit[]>(() => api.listUnits());
   const colors = chartPalette();
@@ -52,6 +62,9 @@ export default function Unidad() {
   const [points, setPoints] = useState<ChartPoint[]>([]);
   const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
+  const isMovingRef = useRef(false);
+  const movementEmaRef = useRef(0);
 
   // El manejador del socket se recrea al cambiar de nodo; la ref permite
   // leer la selección vigente sin volver a suscribirse en cada cambio.
@@ -61,6 +74,9 @@ export default function Unidad() {
     selectedRef.current = nodeId;
     setSelectedNodeId(nodeId);
     setPoints([]);
+    movementEmaRef.current = 0;
+    isMovingRef.current = false;
+    setIsMoving(false);
   }, []);
 
   const onTelemetry = useCallback((evt: TelemetryBroadcast) => {
@@ -78,6 +94,20 @@ export default function Unidad() {
     if (!evt.accel && speedKmh == null) return;
 
     const a = evt.accel;
+
+    if (a) {
+      const magnitude = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+      const deviation = Math.abs(magnitude - 1);
+      movementEmaRef.current = movementEmaRef.current * 0.7 + deviation * 0.3;
+      const nextIsMoving = isMovingRef.current
+        ? movementEmaRef.current > MOVEMENT_EXIT_G
+        : movementEmaRef.current > MOVEMENT_ENTER_G;
+      if (nextIsMoving !== isMovingRef.current) {
+        isMovingRef.current = nextIsMoving;
+        setIsMoving(nextIsMoving);
+      }
+    }
+
     setPoints((prev) =>
       [
         ...prev,
@@ -182,12 +212,12 @@ export default function Unidad() {
           <section className="chart-card">
             <div className="card-head">
               <h2>Velocidad</h2>
-              <span className="chart-meta">GPS del dispositivo</span>
+              <MovementBadge moving={isMoving} />
             </div>
 
             <SpeedGauge
               speedKmh={ultimo?.speedKmh ?? null}
-              colors={{ accent: colors.seriesX, muted: colors.muted }}
+              colors={{ accent: colors.seriesSpeed, muted: colors.muted }}
             />
 
             <div className="chart-frame chart-frame-sm">
@@ -203,7 +233,7 @@ export default function Unidad() {
                     type="monotone"
                     dataKey="speedKmh"
                     name="km/h"
-                    stroke={colors.seriesX}
+                    stroke={colors.seriesSpeed}
                     dot={false}
                     isAnimationActive={false}
                     connectNulls

@@ -23,6 +23,11 @@ export interface ChartPalette {
   seriesX: string;
   seriesY: string;
   seriesZ: string;
+  /** Velocidad (gps.speedMs). Vive en su propia gráfica (otra unidad,
+   *  otro eje, nunca junto a x/y/z) — violeta deliberadamente distinto
+   *  de blue/orange/green para que no lea como parte de ese grupo (antes
+   *  reusaba seriesX, que sí sugiere esa relación sin ser cierta). */
+  seriesSpeed: string;
 }
 
 /* Alineados con los tokens de superficie y texto de index.css. */
@@ -36,6 +41,7 @@ const DARK: ChartPalette = {
   seriesX: '#3987e5',
   seriesY: '#d95926',
   seriesZ: '#199e70',
+  seriesSpeed: '#9085e9',
 };
 
 const LIGHT: ChartPalette = {
@@ -48,6 +54,7 @@ const LIGHT: ChartPalette = {
   seriesX: '#2a78d6',
   seriesY: '#eb6834',
   seriesZ: '#1baf7a',
+  seriesSpeed: '#4a3aa7',
 };
 
 /** La interfaz es oscura por defecto (ver index.css). Cuando se agregue
