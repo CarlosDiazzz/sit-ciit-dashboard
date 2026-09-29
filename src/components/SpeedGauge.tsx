@@ -7,7 +7,7 @@
 // en vez de saltar de golpe — así se siente "en vivo" aunque el GPS solo
 // llegue cada varios segundos. No inventa valores intermedios como
 // mediciones, solo suaviza cómo se muestra el cambio entre dos reales.
-import { useAnimatedNumber } from '../hooks/useAnimatedNumber';
+import { useAnimatedNumber } from "../hooks/useAnimatedNumber";
 
 interface SpeedGaugeColors {
   accent: string;

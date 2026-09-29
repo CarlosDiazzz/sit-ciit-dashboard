@@ -1,0 +1,67 @@
+.chart-card {
+  margin-bottom: var(--s5);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.chart-frame {
+  width: 100%;
+  height: 320px;
+}
+
+.chart-meta {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.chart-hint {
+  padding: var(--s6) var(--s4);
+  color: var(--text-dim);
+  text-align: center;
+  font-size: 13px;
+}
+
+.unit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+}
+
+.unit .card-head {
+  margin-bottom: var(--s3);
+}
+
+/* Aceleración y velocidad lado a lado; en pantallas angostas se apilan. */
+.live-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+.chart-frame-sm {
+  height: 180px;
+}
+
+.node-picker {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.node-picker select {
+  margin-left: var(--s1);
+  padding: var(--s1) var(--s2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  font: inherit;
+}
+
+@media (max-width: 1100px) {
+  .live-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,77 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  padding: 2px var(--s2);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-info {
+  color: var(--info);
+  background: var(--info-bg);
+  border-color: var(--info-bg);
+}
+
+.badge-warning {
+  color: var(--warning);
+  background: var(--warning-bg);
+  border-color: var(--warning-bg);
+}
+
+.badge-critical {
+  color: var(--critical);
+  background: var(--critical-bg);
+  border-color: var(--critical);
+}
+
+.badge-online {
+  color: var(--online);
+  background: var(--online-bg);
+}
+
+.badge-offline {
+  color: var(--offline);
+  background: var(--offline-bg);
+}
+
+/* Estados de comando: el avance sent -> delivered -> executed se lee por
+ * intensidad creciente; rejected rompe la secuencia en rojo. */
+.badge-cmd-sent {
+  color: var(--text-dim);
+  background: var(--offline-bg);
+}
+
+.badge-cmd-delivered {
+  color: var(--info);
+  background: var(--info-bg);
+}
+
+.badge-cmd-executed {
+  color: var(--online);
+  background: var(--online-bg);
+}
+
+.badge-cmd-rejected {
+  color: var(--critical);
+  background: var(--critical-bg);
+  border-color: var(--critical);
+}
+
+.badge-late {
+  color: var(--warning);
+  background: transparent;
+  border-color: var(--warning);
+  border-style: dashed;
+}
