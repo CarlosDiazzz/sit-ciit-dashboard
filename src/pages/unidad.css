@@ -32,3 +32,36 @@
 .unit .card-head {
   margin-bottom: var(--s3);
 }
+
+/* Aceleración y velocidad lado a lado; en pantallas angostas se apilan. */
+.live-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+.chart-frame-sm {
+  height: 180px;
+}
+
+.node-picker {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.node-picker select {
+  margin-left: var(--s1);
+  padding: var(--s1) var(--s2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  font: inherit;
+}
+
+@media (max-width: 1100px) {
+  .live-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,11 +1,11 @@
-/* Vista Unidad: estado de los nodos y gráfica en vivo de aceleración.
+/* Vista Unidad: estado de los nodos, aceleración y velocidad en vivo.
  *
  * La telemetría llega por Socket.IO: el backend reemite cada mensaje que
- * guarda con éxito. Luz, velocidad y GPS se agregan cuando esos sensores
- * empiecen a llegar del celular (Fase 2+).
+ * guarda con éxito. La velocidad sale únicamente de `gps.speedMs` (la
+ * calcula el GPS del celular) — no se deriva ni se estima aquí.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -22,6 +22,7 @@ import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
 import type { TelemetryBroadcast, Unit } from '../api/types';
 import { ConnectionBadge } from '../components/Badges';
+import SpeedGauge from '../components/SpeedGauge';
 import { AsyncBoundary } from '../components/States';
 import { chartPalette } from '../lib/chartColors';
 import { formatAgo, formatNumber } from '../lib/format';
@@ -30,141 +31,189 @@ import './unidad.css';
 
 const ROLE_LABEL = { primary: 'Primario', backup: 'Respaldo' } as const;
 
-/** Puntos visibles en la gráfica. A ~1 Hz son alrededor de un minuto de
- *  historia, suficiente para ver un impacto sin saturar el render. */
+/** Puntos visibles en las gráficas. A ~1 Hz son alrededor de un minuto
+ *  de historia, suficiente para ver un impacto sin saturar el render. */
 const MAX_POINTS = 60;
 
 interface ChartPoint {
   ts: number;
   time: string;
-  x: number;
-  y: number;
-  z: number;
-  magnitude: number;
+  x: number | null;
+  y: number | null;
+  z: number | null;
+  magnitude: number | null;
+  speedKmh: number | null;
 }
 
 export default function Unidad() {
   const state = useApi<Unit[]>(() => api.listUnits());
   const colors = chartPalette();
 
-  /** Unidad seleccionada por su código de contrato ("unit-01"), que es lo
-   *  que trae el payload del socket. */
-  const [unitCode, setUnitCode] = useState<string | null>(null);
   const [points, setPoints] = useState<ChartPoint[]>([]);
   const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
-  const onTelemetry = useCallback(
-    (evt: TelemetryBroadcast) => {
-      setLastByNode((prev) => ({ ...prev, [evt.nodeId]: evt }));
+  // El manejador del socket se recrea al cambiar de nodo; la ref permite
+  // leer la selección vigente sin volver a suscribirse en cada cambio.
+  const selectedRef = useRef<string | null>(null);
 
-      // Sin unidad elegida se sigue la primera que reporte, para que la
-      // gráfica no quede en blanco esperando un clic.
-      const seguida = unitCode ?? evt.unitId;
-      if (evt.unitId !== seguida || !evt.accel) return;
+  const selectNode = useCallback((nodeId: string) => {
+    selectedRef.current = nodeId;
+    setSelectedNodeId(nodeId);
+    setPoints([]);
+  }, []);
 
-      const { x, y, z } = evt.accel;
-      setPoints((prev) =>
-        [
-          ...prev,
-          {
-            ts: evt.ts,
-            time: new Date(evt.ts).toLocaleTimeString('es-MX', { hour12: false }),
-            x,
-            y,
-            z,
-            magnitude: Math.sqrt(x * x + y * y + z * z),
-          },
-        ].slice(-MAX_POINTS),
-      );
-    },
-    [unitCode],
-  );
+  const onTelemetry = useCallback((evt: TelemetryBroadcast) => {
+    setLastByNode((prev) => ({ ...prev, [evt.nodeId]: evt }));
+
+    // Sin selección previa se sigue el primer nodo que reporte, para que
+    // las gráficas no queden en blanco esperando un clic.
+    if (!selectedRef.current) {
+      selectedRef.current = evt.nodeId;
+      setSelectedNodeId(evt.nodeId);
+    }
+    if (evt.nodeId !== selectedRef.current) return;
+
+    const speedKmh = evt.gps?.speedMs != null ? evt.gps.speedMs * 3.6 : null;
+    if (!evt.accel && speedKmh == null) return;
+
+    const a = evt.accel;
+    setPoints((prev) =>
+      [
+        ...prev,
+        {
+          ts: evt.ts,
+          time: new Date(evt.ts).toLocaleTimeString('es-MX', { hour12: false }),
+          x: a?.x ?? null,
+          y: a?.y ?? null,
+          z: a?.z ?? null,
+          magnitude: a ? Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) : null,
+          speedKmh,
+        },
+      ].slice(-MAX_POINTS),
+    );
+  }, []);
 
   useSocketEvent('telemetry', onTelemetry);
 
-  const seguida = unitCode ?? Object.values(lastByNode)[0]?.unitId ?? null;
+  const reportando = useMemo(() => Object.values(lastByNode), [lastByNode]);
+  const ultimo = points.at(-1);
 
-  const nodosReportando = useMemo(
-    () => Object.values(lastByNode).filter((n) => n.unitId === seguida),
-    [lastByNode, seguida],
-  );
+  const ejeComun = {
+    stroke: colors.axis,
+    tick: { fill: colors.muted, fontSize: 12 },
+  };
+  const tooltipComun = {
+    contentStyle: {
+      background: colors.surface,
+      border: `1px solid ${colors.grid}`,
+      fontSize: 12,
+    },
+    labelStyle: { color: colors.textSecondary },
+  };
 
   return (
     <>
       <div className="page-head">
         <div>
           <h1>Unidades</h1>
-          <p>Nodos por unidad, fuente activa y aceleración en vivo.</p>
+          <p>Nodos por unidad, aceleración y velocidad en vivo.</p>
         </div>
+
+        {reportando.length > 0 ? (
+          <label className="node-picker">
+            Nodo:{' '}
+            <select
+              value={selectedNodeId ?? ''}
+              onChange={(e) => selectNode(e.target.value)}
+            >
+              {reportando.map((n) => (
+                <option key={n.nodeId} value={n.nodeId}>
+                  {n.nodeId} ({ROLE_LABEL[n.role]})
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </div>
 
-      <section className="chart-card">
-        <div className="card-head">
-          <h2>Aceleración {seguida ? <span className="mono">{seguida}</span> : null}</h2>
-          {/* Los nodos que están reportando ahora mismo por el socket, que
-              no es lo mismo que los dados de alta en la BD. */}
-          <span className="chart-meta">
-            {nodosReportando.length > 0
-              ? `${nodosReportando.length} nodo(s) reportando`
-              : 'sin telemetría'}
-          </span>
-        </div>
-
-        {points.length === 0 ? (
+      {points.length === 0 ? (
+        <section className="chart-card">
           <p className="chart-hint">
-            Esperando telemetría del corredor. La gráfica se dibuja sola en
-            cuanto un nodo empiece a publicar.
+            Esperando telemetría del corredor. Las gráficas se dibujan solas
+            en cuanto un nodo empiece a publicar.
           </p>
-        ) : (
-          <div className="chart-frame">
-            <ResponsiveContainer>
-              <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid stroke={colors.grid} vertical={false} />
-                <XAxis
-                  dataKey="time"
-                  stroke={colors.axis}
-                  tick={{ fill: colors.muted, fontSize: 12 }}
-                  minTickGap={40}
-                />
-                <YAxis
-                  stroke={colors.axis}
-                  tick={{ fill: colors.muted, fontSize: 12 }}
-                  domain={['auto', 'auto']}
-                  label={{
-                    value: 'g',
-                    position: 'insideTopLeft',
-                    fill: colors.muted,
-                    fontSize: 12,
-                  }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: colors.surface,
-                    border: `1px solid ${colors.grid}`,
-                    fontSize: 12,
-                  }}
-                  labelStyle={{ color: colors.textSecondary }}
-                />
-                <Legend wrapperStyle={{ fontSize: 12, color: colors.textSecondary }} />
-                <Line type="monotone" dataKey="x" stroke={colors.seriesX} dot={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="y" stroke={colors.seriesY} dot={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="z" stroke={colors.seriesZ} dot={false} isAnimationActive={false} />
-                {/* |a| es la derivada de las tres series, no una cuarta
-                    categoría: tinta neutra y trazo punteado. */}
-                <Line
-                  type="monotone"
-                  dataKey="magnitude"
-                  name="|a|"
-                  stroke={colors.textPrimary}
-                  strokeDasharray="4 3"
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </section>
+        </section>
+      ) : (
+        <div className="live-grid">
+          <section className="chart-card">
+            <div className="card-head">
+              <h2>Aceleración</h2>
+              <span className="chart-meta mono">{selectedNodeId}</span>
+            </div>
+            <div className="chart-frame">
+              <ResponsiveContainer>
+                <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGrid stroke={colors.grid} vertical={false} />
+                  <XAxis dataKey="time" minTickGap={40} {...ejeComun} />
+                  <YAxis domain={['auto', 'auto']} {...ejeComun} />
+                  <Tooltip {...tooltipComun} />
+                  <Legend wrapperStyle={{ fontSize: 12, color: colors.textSecondary }} />
+                  <Line type="monotone" dataKey="x" stroke={colors.seriesX} dot={false} isAnimationActive={false} connectNulls />
+                  <Line type="monotone" dataKey="y" stroke={colors.seriesY} dot={false} isAnimationActive={false} connectNulls />
+                  <Line type="monotone" dataKey="z" stroke={colors.seriesZ} dot={false} isAnimationActive={false} connectNulls />
+                  {/* |a| es la derivada de las tres series, no una cuarta
+                      categoría: tinta neutra y trazo punteado. */}
+                  <Line
+                    type="monotone"
+                    dataKey="magnitude"
+                    name="|a|"
+                    stroke={colors.textPrimary}
+                    strokeDasharray="4 3"
+                    dot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+
+          <section className="chart-card">
+            <div className="card-head">
+              <h2>Velocidad</h2>
+              <span className="chart-meta">GPS del dispositivo</span>
+            </div>
+
+            <SpeedGauge
+              speedKmh={ultimo?.speedKmh ?? null}
+              colors={{ accent: colors.seriesX, muted: colors.muted }}
+            />
+
+            <div className="chart-frame chart-frame-sm">
+              <ResponsiveContainer>
+                <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGrid stroke={colors.grid} vertical={false} />
+                  <XAxis dataKey="time" minTickGap={40} {...ejeComun} />
+                  <YAxis domain={[0, 'auto']} {...ejeComun} />
+                  <Tooltip {...tooltipComun} />
+                  {/* connectNulls: el GPS llega más lento que el
+                      acelerómetro, así que hay puntos sin velocidad. */}
+                  <Line
+                    type="monotone"
+                    dataKey="speedKmh"
+                    name="km/h"
+                    stroke={colors.seriesX}
+                    dot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+        </div>
+      )}
 
       <AsyncBoundary
         state={state}
@@ -179,22 +228,11 @@ export default function Unidad() {
               <section key={unidad.id} className="unit">
                 <div className="card-head">
                   <h2>{unidad.label ?? unidad.unitCode}</h2>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => {
-                      setUnitCode(unidad.unitCode);
-                      setPoints([]);
-                    }}
-                    disabled={seguida === unidad.unitCode}
-                  >
-                    {seguida === unidad.unitCode ? 'En gráfica' : 'Graficar'}
-                  </button>
                 </div>
 
                 <div className="cards">
                   {unidad.nodes.map((nodo) => {
-                    const ultimo = lastByNode[nodo.nodeCode];
+                    const vivo = lastByNode[nodo.nodeCode];
                     return (
                       <article key={nodo.id} className="card">
                         <div className="card-head">
@@ -225,7 +263,7 @@ export default function Unidad() {
                           <dd>{nodo.pendingOutbox ?? '—'}</dd>
 
                           <dt>Último seq</dt>
-                          <dd>{ultimo ? ultimo.seq : '—'}</dd>
+                          <dd>{vivo ? vivo.seq : '—'}</dd>
                         </dl>
                       </article>
                     );
