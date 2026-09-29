@@ -47,6 +47,14 @@ interface ChartPoint {
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:3000';
 const MAX_POINTS = 60;
 
+// Indicador instantáneo de movimiento a partir del acelerómetro (no una
+// velocidad — ver nota arriba sobre por qué el acelerómetro no sirve para
+// eso). Mismos umbrales que en sit-ciit-mobile, con histéresis para no
+// parpadear en el umbral. Reacciona con cada telemetry (~1 s), más rápido
+// que el km/h de GPS, como complemento mientras ese número se confirma.
+const MOVEMENT_ENTER_G = 0.08;
+const MOVEMENT_EXIT_G = 0.03;
+
 // Paleta categórica validada (dataviz skill): slots 1-3 (azul/naranja/aqua)
 // para los ejes x/y/z — pasan CVD y contraste en modo claro y oscuro para
 // líneas. La magnitud no es una serie categórica más, es la derivada de
@@ -103,6 +111,9 @@ export default function Unidad() {
   const [lastByNode, setLastByNode] = useState<Record<string, TelemetryEvent>>({});
   const [showTable, setShowTable] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
+  const isMovingRef = useRef(false);
+  const movementEmaRef = useRef(0);
 
   // Nodo seleccionado dentro de la unidad — necesario en cuanto hay más de
   // un nodo (primary + backup): sin esto, sus lecturas se mezclarían en
@@ -113,6 +124,9 @@ export default function Unidad() {
     selectedNodeIdRef.current = id;
     setSelectedNodeIdState(id);
     setPoints([]);
+    movementEmaRef.current = 0;
+    isMovingRef.current = false;
+    setIsMoving(false);
   }
 
   useEffect(() => {
@@ -138,6 +152,18 @@ export default function Unidad() {
         : null;
       const speedKmh = evt.gps?.speedMs != null ? evt.gps.speedMs * 3.6 : null;
       if (!evt.accel && speedKmh == null) return;
+
+      if (magnitude != null) {
+        const deviation = Math.abs(magnitude - 1);
+        movementEmaRef.current = movementEmaRef.current * 0.7 + deviation * 0.3;
+        const nextIsMoving = isMovingRef.current
+          ? movementEmaRef.current > MOVEMENT_EXIT_G
+          : movementEmaRef.current > MOVEMENT_ENTER_G;
+        if (nextIsMoving !== isMovingRef.current) {
+          isMovingRef.current = nextIsMoving;
+          setIsMoving(nextIsMoving);
+        }
+      }
 
       setPoints((prev) =>
         [
@@ -265,6 +291,20 @@ export default function Unidad() {
               speedKmh={points.at(-1)?.speedKmh ?? null}
               colors={{ accent: colors.seriesSpeed, muted: colors.muted }}
             />
+            <div
+              style={{
+                textAlign: 'center',
+                fontWeight: 700,
+                fontSize: 13,
+                color: isMoving ? '#0ca30c' : colors.muted,
+              }}
+            >
+              {isMoving ? '● en movimiento' : '○ quieto'}
+              <span style={{ fontWeight: 400, opacity: 0.7, fontSize: 11 }}>
+                {' '}
+                (del acelerómetro, no es velocidad)
+              </span>
+            </div>
           </div>
           <div style={{ width: '100%', height: 200, background: colors.surface }}>
             <ResponsiveContainer>
