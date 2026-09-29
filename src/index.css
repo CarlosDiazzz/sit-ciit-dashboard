@@ -1,4 +1,4 @@
-/* SIT-CIIT — sistema visual del centro de control.
+/* Zenda — sistema visual del centro de control.
  *
  * Todo el color vive en tokens de :root. Para cambiar el tema (claro,
  * otra paleta) se reescriben las variables de este bloque, no los
@@ -10,23 +10,32 @@
 
 :root {
   /* Superficies, de más al fondo a más al frente */
-  --bg: #0e1116;
-  --surface: #161b22;
-  --surface-2: #1c232c;
-  --surface-hover: #222b36;
+  --bg: #0b0e0d;
+  --surface: #121715;
+  --surface-2: #18201d;
+  --surface-hover: #202a26;
 
-  --border: #2a313c;
-  --border-strong: #3a434f;
+  --border: #29332f;
+  --border-strong: #3b4943;
 
   /* Texto */
-  --text: #c9d1d9;
-  --text-dim: #8b949e;
-  --text-strong: #f0f6fc;
+  --text: #d4d0c5;
+  --text-dim: #918f86;
+  --text-strong: #f5f0e4;
 
   /* Acento: azul frío, neutro respecto a las severidades */
-  --accent: #58a6ff;
-  --accent-bg: rgba(88, 166, 255, 0.12);
-  --accent-border: rgba(88, 166, 255, 0.45);
+  --accent: #49c79c;
+  --accent-rgb: 73, 199, 156;
+  --accent-soft: #9be5c9;
+  --accent-bg: rgba(var(--accent-rgb), 0.12);
+  --accent-border: rgba(var(--accent-rgb), 0.5);
+
+  /* Pigmentos por dominio: una traducción contemporánea de la referencia. */
+  --quetzal: #49c79c;
+  --tlaloc: #55bde9;
+  --ehecatl: #d55f5c;
+  --tezcatlipoca: #568bb4;
+  --tonatiuh: #f39a48;
 
   /* Severidades del contrato (info | warning | critical).
    * No usar estos colores para nada que no sea severidad o estado:
@@ -44,7 +53,8 @@
   --offline: #6e7681;
   --offline-bg: rgba(110, 118, 129, 0.14);
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: Inter, ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --display: Georgia, 'Times New Roman', serif;
   --mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
 
   /* Escala de espaciado: múltiplos de 4 */
@@ -55,8 +65,10 @@
   --s5: 24px;
   --s6: 32px;
 
-  --radius: 6px;
-  --radius-sm: 4px;
+  --radius: 14px;
+  --radius-sm: 8px;
+
+  --shadow-card: 0 18px 45px rgba(0, 0, 0, 0.22);
 
   font: 14px/1.5 var(--sans);
   color: var(--text);
@@ -75,6 +87,9 @@
 body {
   margin: 0;
   min-height: 100svh;
+  background:
+    radial-gradient(circle at 80% -10%, rgba(73, 199, 156, 0.08), transparent 32rem),
+    var(--bg);
 }
 
 h1,
@@ -88,11 +103,14 @@ h3 {
 /* Escala tipográfica contenida: en alta densidad, la jerarquía la marcan
  * el peso y el color más que el tamaño. */
 h1 {
-  font-size: 20px;
-  letter-spacing: -0.2px;
+  font-family: var(--display);
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.7px;
 }
 h2 {
   font-size: 15px;
+  letter-spacing: 0.01em;
 }
 h3 {
   font-size: 13px;
@@ -125,6 +143,16 @@ code,
 button {
   font: inherit;
   cursor: pointer;
+}
+
+select,
+input {
+  accent-color: var(--accent);
+}
+
+::selection {
+  color: #07100c;
+  background: var(--accent-soft);
 }
 
 :focus-visible {
