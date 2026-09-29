@@ -263,12 +263,7 @@ export default function Unidad() {
           <div style={{ maxWidth: 260 }}>
             <SpeedGauge
               speedKmh={points.at(-1)?.speedKmh ?? null}
-              colors={{
-                track: colors.grid,
-                accent: colors.seriesSpeed,
-                ink: colors.textPrimary,
-                muted: colors.muted,
-              }}
+              colors={{ accent: colors.seriesSpeed, muted: colors.muted }}
             />
           </div>
           <div style={{ width: '100%', height: 200, background: colors.surface }}>
