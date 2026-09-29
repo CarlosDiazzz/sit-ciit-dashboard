@@ -148,12 +148,39 @@ export interface IssueCommandRequest {
 }
 
 /* --- Eventos de Socket.IO (nombre -> payload) ---------------------------
- * Los nombres definitivos los fija el backend; este mapa es el punto
- * único donde ajustarlos. */
+ *
+ * Ojo: lo que llega por el socket NO tiene la forma de las filas de la
+ * BD. El backend reemite el mensaje MQTT que acaba de guardar, así que
+ * conserva la forma del contrato: `nodeId`/`unitId` son los códigos del
+ * dispositivo ("unit-01-a"), no UUIDs, los tiempos son epoch en
+ * milisegundos, y los vectores vienen anidados.
+ *
+ * La fuente de verdad de esta forma es
+ * sit-ciit-backend/src/domain/ports/TelemetryBroadcaster.ts.
+ */
+
+export interface TelemetryBroadcast {
+  /** Código del nodo en el contrato, ej. "unit-01-a". */
+  nodeId: string;
+  /** Código de la unidad en el contrato, ej. "unit-01". */
+  unitId: string;
+  role: NodeRole;
+  seq: number;
+  /** epoch ms, reloj del dispositivo. */
+  ts: number;
+  /** epoch ms, reloj del servidor. */
+  receivedAt: number;
+  accel?: { x: number; y: number; z: number };
+  gyro?: { x: number; y: number; z: number };
+  lux?: number;
+  pressureHpa?: number;
+  gps?: { lat: number; lon: number; speedMs?: number; accuracyM?: number };
+}
+
+/** Los nombres y formas que aún no emite el backend están comentados: se
+ *  agregan cuando existan, para no tipar contra algo inventado. */
 export interface ServerToClientEvents {
-  telemetry: (point: TelemetryPoint) => void;
-  event: (event: EventRecord) => void;
-  'node:status': (node: Node) => void;
-  'unit:active-node': (payload: { unitId: string; activeNodeId: string | null }) => void;
-  'command:update': (command: Command) => void;
+  telemetry: (payload: TelemetryBroadcast) => void;
+  // event: (event: EventRecord) => void;              // Fase 2
+  // 'command:update': (command: Command) => void;     // Fase 4
 }
