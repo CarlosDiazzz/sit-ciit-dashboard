@@ -1,0 +1,79 @@
+.map-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: var(--s4);
+  align-items: start;
+}
+
+.map-frame {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.map {
+  height: calc(100svh - 190px);
+  min-height: 420px;
+  background: var(--surface);
+}
+
+/* Las teselas de OSM son claras; se atenúan un poco para que no
+ * deslumbren junto a la interfaz oscura, sin perder legibilidad. */
+.map .leaflet-tile-pane {
+  filter: brightness(0.82) saturate(0.85);
+}
+
+.map .leaflet-control-attribution {
+  background: rgba(14, 17, 22, 0.85);
+  color: var(--text-dim);
+}
+
+.map .leaflet-control-attribution a {
+  color: var(--accent);
+}
+
+.map-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.unit-strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unit-strip li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+.map-hint {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+@media (max-width: 860px) {
+  .map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .map {
+    height: 50svh;
+  }
+}
