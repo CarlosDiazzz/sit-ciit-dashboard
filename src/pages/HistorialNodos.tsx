@@ -264,7 +264,12 @@ export default function HistorialNodos() {
             </label>
           </div>
           <div className="management-toolbar">
-            <button className="btn btn-primary" disabled={data.loading}>{translate("Consultar historial")}</button>
+            <button
+              className="btn btn-primary history-consult-btn"
+              disabled={data.loading}
+            >
+              {translate("Consultar historial")}
+            </button>
             <button className="btn" type="button" onClick={() => preset(1)}>{translate("Última hora")}</button>
             <button className="btn" type="button" onClick={() => preset(24)}>{translate("Últimas 24 horas")}</button>
             <button className="btn" type="button" onClick={() => preset(168)}>{translate("Últimos 7 días")}</button>
