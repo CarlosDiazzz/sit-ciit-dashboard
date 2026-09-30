@@ -49,6 +49,14 @@ const TRANSICION_MS = 4000;
  *  precisión, dos fixes casi iguales darían un giro aleatorio. */
 const RUMBO_MIN_M = 12;
 
+/** Primary y backup van en el mismo camión, así que sus marcadores se
+ *  tapan. Por debajo de esta distancia se separan en pantalla. */
+const SOLAPE_M = 25;
+
+/** Cuánto se separan, en grados de latitud (~18 m). Es un ajuste de
+ *  dibujo: el popup sigue dando la posición medida. */
+const SEPARACION_GRADOS = 0.00016;
+
 interface Unidad {
   nodeId: string;
   unitId: string;
@@ -112,6 +120,9 @@ function posicionActual(u: Unidad, ahora: number): [number, number] {
 export default function LiveMapLayers() {
   const [unidades, setUnidades] = useState<Record<string, Unidad>>({});
   const [eventos, setEventos] = useState<EventoEnMapa[]>([]);
+  /** Nodo que cada unidad usa como fuente, por codigo de unidad. Lo
+   *  emite el backend al hacer failover. */
+  const [fuentePorUnidad, setFuentePorUnidad] = useState<Record<string, string | null>>({});
   const [ahora, setAhora] = useState(() => Date.now());
 
   // Un solo bucle de animación para todas las unidades. Si el visitante
@@ -262,6 +273,13 @@ export default function LiveMapLayers() {
   );
 
   useSocketEvent(
+    'unit:active-node',
+    useCallback((p: { unitId: string; activeNodeId: string | null }) => {
+      setFuentePorUnidad((prev) => ({ ...prev, [p.unitId]: p.activeNodeId }));
+    }, []),
+  );
+
+  useSocketEvent(
     'event',
     useCallback((ev: EventBroadcast) => {
       // Marca la unidad aunque el evento no traiga GPS: que algo le
@@ -324,7 +342,18 @@ export default function LiveMapLayers() {
       ))}
 
       {lista.map((u) => {
-        const pos = posicionActual(u, ahora);
+        const medida = posicionActual(u, ahora);
+        // Si hay otro nodo de la misma unidad casi encima, se separan:
+        // el primario arriba, el respaldo abajo.
+        const hermano = lista.find(
+          (o) => o.nodeId !== u.nodeId && o.unitId === u.unitId,
+        );
+        const solapan =
+          hermano !== undefined &&
+          metros(medida, posicionActual(hermano, ahora)) < SOLAPE_M;
+        const pos: [number, number] = solapan
+          ? [medida[0] + (u.role === 'primary' ? SEPARACION_GRADOS : -SEPARACION_GRADOS), medida[1]]
+          : medida;
         const callada = ahora - u.recibidoEn > SIN_DATOS_MS;
 
         return (
@@ -356,6 +385,13 @@ export default function LiveMapLayers() {
                 callada,
                 alerta: u.alerta,
                 etiqueta: u.unitId,
+                role: u.role,
+                // Sin aviso de failover todavia, el primario es la
+                // fuente: es lo que hace el backend al dar de alta.
+                esFuente:
+                  fuentePorUnidad[u.unitId] !== undefined
+                    ? fuentePorUnidad[u.unitId] === u.nodeId
+                    : u.role === 'primary',
               })}
               zIndexOffset={500}
             >

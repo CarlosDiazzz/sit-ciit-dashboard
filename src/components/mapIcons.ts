@@ -29,6 +29,11 @@ export interface IconoUnidadOpts {
   /** Severidad del último evento de la unidad, para el halo. */
   alerta: EventSeverity | null;
   etiqueta: string;
+  /** Primary y backup van en el mismo camión: sin distinguirlos, dos
+   *  marcadores idénticos se superponen y no se sabe cuál es cuál. */
+  role: 'primary' | 'backup';
+  /** El nodo que la unidad está usando ahora como fuente de datos. */
+  esFuente: boolean;
 }
 
 const COLOR_ALERTA: Record<EventSeverity, string> = {
@@ -37,8 +42,17 @@ const COLOR_ALERTA: Record<EventSeverity, string> = {
   critical: '#d55f5c',
 };
 
-export function iconoUnidad({ rumbo, callada, alerta, etiqueta }: IconoUnidadOpts): DivIcon {
-  const relleno = callada ? '#6e7681' : '#49c79c';
+export function iconoUnidad({
+  rumbo,
+  callada,
+  alerta,
+  etiqueta,
+  role,
+  esFuente,
+}: IconoUnidadOpts): DivIcon {
+  // El respaldo va en tono frío y algo más pequeño: se ve que está ahí
+  // sin competir con el nodo que realmente está reportando.
+  const relleno = callada ? '#6e7681' : role === 'primary' ? '#49c79c' : '#55bde9';
   const borde = '#0b0e0d';
   // Sin rumbo conocido el icono se deja al norte en vez de girar a un
   // valor inventado; la unidad está ahí, solo no se sabe hacia dónde va.
@@ -48,11 +62,14 @@ export function iconoUnidad({ rumbo, callada, alerta, etiqueta }: IconoUnidadOpt
   return divIcon({
     className: '',
     html: `
-      <div class="unit-marker ${halo}">
+      <div class="unit-marker ${role === 'backup' ? 'unit-marker--backup ' : ''}${halo}">
         <div class="unit-marker__icon" style="transform: rotate(${giro}deg)">
           ${svgTren(relleno, borde)}
         </div>
-        <span class="unit-marker__label">${etiqueta}</span>
+        <span class="unit-marker__label">
+          ${etiqueta}<b class="unit-marker__role">${role === 'primary' ? 'P' : 'B'}</b>
+        </span>
+        ${esFuente ? '<span class="unit-marker__source" title="Fuente activa"></span>' : ''}
       </div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 13],

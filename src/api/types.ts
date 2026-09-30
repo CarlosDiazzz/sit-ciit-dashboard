@@ -302,6 +302,13 @@ export interface ServerToClientEvents {
   telemetry: (payload: TelemetryBroadcast) => void;
   event: (payload: EventBroadcast) => void;
   'command:update': (payload: CommandUpdate) => void;
+  /** La unidad cambio de fuente activa (failover o recuperacion). Los
+   *  ids son codigos del contrato, no UUIDs de la base. */
+  'unit:active-node': (payload: {
+    unitId: string;
+    activeNodeId: string | null;
+    reason: 'failover' | 'recovered' | 'no_nodes_online';
+  }) => void;
 }
 
 /** Fila del CRUD de nodos. El secreto NUNCA aparece aquí — solo en la

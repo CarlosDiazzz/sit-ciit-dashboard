@@ -100,3 +100,35 @@
     animation: none;
   }
 }
+
+/* El respaldo se dibuja algo más chico: presente, sin competir con el
+   nodo que está reportando. */
+.unit-marker--backup .unit-marker__icon {
+  transform-origin: 50% 50%;
+  scale: 0.82;
+}
+
+/* Rol en la etiqueta: P primario, B respaldo. Sin esto, dos nodos de la
+   misma unidad muestran el mismo texto y no se distinguen. */
+.unit-marker__role {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgba(245, 240, 228, 0.22);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* Punto que marca cuál de los dos es la fuente activa de la unidad. */
+.unit-marker__source {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f5f0e4;
+  border: 2px solid #0b0e0d;
+  box-shadow: 0 0 0 2px rgba(73, 199, 156, 0.85);
+}
