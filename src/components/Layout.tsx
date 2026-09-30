@@ -74,7 +74,7 @@ const NAV = [
     deity: "Control operativo",
     domain: "Seguimiento de órdenes",
     icon: Radio,
-    theme: "control",
+    theme: "comandos",
     end: false,
   },
 ] as const;
@@ -87,7 +87,7 @@ const USUARIOS_NAV = {
   deity: "Acceso",
   domain: "Cuentas del centro de control",
   icon: Users,
-  theme: "control",
+  theme: "tlaloc",
   end: false,
 } as const;
 
@@ -97,7 +97,17 @@ const NODOS_NAV = {
   deity: "Acceso",
   domain: "Identidad y secretos de campo",
   icon: Smartphone,
-  theme: "control",
+  theme: "tonatiuh",
+  end: false,
+} as const;
+
+const AUDITORIA_NAV = {
+  to: "/auditoria",
+  label: "Historial de nodos",
+  deity: "Seguimiento",
+  domain: "Cambios y responsables",
+  icon: ClipboardList,
+  theme: "ehecatl",
   end: false,
 } as const;
 
@@ -130,14 +140,14 @@ export default function Layout() {
     deity: "Operación",
     domain: "Recursos, envíos y viajes",
     icon: ClipboardList,
-    theme: "control",
+    theme: "quetzal",
     end: false,
   };
   const nav =
     user?.role === "cliente" || user?.role === "technician"
       ? [managementNav]
       : ["admin", "control_center"].includes(user?.role ?? "")
-        ? [...NAV, managementNav, USUARIOS_NAV, NODOS_NAV]
+        ? [...NAV, managementNav, USUARIOS_NAV, NODOS_NAV, AUDITORIA_NAV]
         : [...NAV, managementNav];
   if (user?.role !== "cliente")
     nav.push({
@@ -155,7 +165,7 @@ export default function Layout() {
     deity: "Alertas",
     domain: "Incidentes de tu operación",
     icon: ShieldAlert,
-    theme: "control",
+    theme: "tezcatlipoca",
     end: false,
   });
   const current =
