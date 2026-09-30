@@ -52,15 +52,25 @@ interface Props {
 export default function WeatherRiskPanel({ unit, canEditCategory, allRules, onCategoryChanged }: Props) {
   const colors = chartPalette();
 
-  const latest = useApi(() => api.getWeatherLatest(unit.id), [unit.id]);
+  // Sin categoría de carga el vigilante nunca genera una lectura para
+  // esta unidad — pedirla igual solo deja un 404 sin sentido en la
+  // consola. El "todavía no tiene categoría asignada" ya se muestra
+  // aparte, antes de leer latest.data (ver el JSX abajo).
+  const tieneCategoria = unit.cargoCategory !== null;
+  const latest = useApi(
+    () => (tieneCategoria ? api.getWeatherLatest(unit.id) : Promise.resolve(null)),
+    [unit.id, tieneCategoria],
+  );
   const history = useApi(
     () =>
-      api.getWeatherHistory(
-        unit.id,
-        new Date(Date.now() - HISTORY_HOURS * 3_600_000).toISOString(),
-        new Date().toISOString(),
-      ),
-    [unit.id],
+      tieneCategoria
+        ? api.getWeatherHistory(
+            unit.id,
+            new Date(Date.now() - HISTORY_HOURS * 3_600_000).toISOString(),
+            new Date().toISOString(),
+          )
+        : Promise.resolve([]),
+    [unit.id, tieneCategoria],
   );
 
   // El scheduler del backend solo registra un evento cuando cambia el
