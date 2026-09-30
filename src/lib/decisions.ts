@@ -19,4 +19,5 @@ export const eventGuidance: Record<AnyEventKind, string> = {
   threshold_exceeded: 'Revisa la lectura y el umbral configurado antes de decidir un ajuste.',
   source_failover: 'Revisa la conectividad del nodo principal y verifica las lecturas de la fuente de respaldo.',
   sensor_disagreement: 'Compara ambos nodos y comprueba su instalación antes de confiar en una sola lectura.',
+  weather_risk: 'Contrasta el clima reportado, la ubicación y la regla de riesgo aplicable antes de definir medidas para la carga.',
 };

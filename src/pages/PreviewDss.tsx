@@ -25,6 +25,7 @@ function sampleEvents(): EventRecord[] {
     gpsLat: null, gpsLon: null, ts: ago(s.minutes), receivedAt: ago(s.delayed ? 3 : s.minutes - 0.05),
     acknowledgedAt: s.confirmed ? ago(s.minutes - 3) : null,
     acknowledgedBy: s.confirmed ? 'Operador de demostración' : null,
+    details: null,
   }));
 }
 

@@ -3,6 +3,7 @@
  */
 
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Activity, ClipboardList, Map as MapIcon, Radio, ShieldAlert, Wifi } from 'lucide-react';
 import { useConnectionStatus } from '../api/socket';
 import { useSession } from '../auth/context';
 import { useColorMode } from '../hooks/useColorMode';
@@ -12,12 +13,12 @@ import './decision.css';
 import './theme.css';
 
 const NAV = [
-  { to: '/', label: 'Ruta', deity: 'Quetzalcóatl', domain: 'Ubicación, recorrido y ETA', glyph: 'Q', theme: 'quetzal', end: true },
-  { to: '/conectividad', label: 'Conectividad', deity: 'Tláloc', domain: 'Nodos y disponibilidad', glyph: 'Tl', theme: 'tlaloc', end: false },
-  { to: '/unidad', label: 'Estado general', deity: 'Tonatiuh', domain: 'Unidad y telemetría', glyph: 'T', theme: 'tonatiuh', end: false },
-  { to: '/eventos', label: 'Movimiento y eventos', deity: 'Ehécatl', domain: 'Impactos y estabilidad', glyph: 'E', theme: 'ehecatl', end: false },
-  { to: '/bitacora', label: 'Auditoría', deity: 'Tezcatlipoca', domain: 'Historial de intervenciones', glyph: 'Tz', theme: 'tezcatlipoca', end: false },
-  { to: '/comandos', label: 'Comandos', deity: 'Control operativo', domain: 'Seguimiento de órdenes', glyph: 'C', theme: 'control', end: false },
+  { to: '/', label: 'Ruta', deity: 'Quetzalcóatl', domain: 'Ubicación, recorrido y ETA', icon: MapIcon, theme: 'quetzal', end: true },
+  { to: '/conectividad', label: 'Conectividad', deity: 'Tláloc', domain: 'Nodos y disponibilidad', icon: Wifi, theme: 'tlaloc', end: false },
+  { to: '/unidad', label: 'Estado general', deity: 'Tonatiuh', domain: 'Unidad y telemetría', icon: Activity, theme: 'tonatiuh', end: false },
+  { to: '/eventos', label: 'Movimiento y eventos', deity: 'Ehécatl', domain: 'Impactos y estabilidad', icon: ShieldAlert, theme: 'ehecatl', end: false },
+  { to: '/bitacora', label: 'Auditoría', deity: 'Tezcatlipoca', domain: 'Historial de intervenciones', icon: ClipboardList, theme: 'tezcatlipoca', end: false },
+  { to: '/comandos', label: 'Comandos', deity: 'Control operativo', domain: 'Seguimiento de órdenes', icon: Radio, theme: 'control', end: false },
 ] as const;
 const ROLE_LABEL: Record<string, string> = {
   control_center: 'Centro de control',
@@ -73,7 +74,7 @@ export default function Layout() {
               className={({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`}
               data-nav-theme={item.theme}
             >
-              <span className="nav-glyph" aria-hidden="true">{item.glyph}</span>
+              <span className="nav-glyph" aria-hidden="true"><item.icon size={18} strokeWidth={1.8} /></span>
               <span className="nav-copy">
                 <strong>{item.label}</strong>
                 <small>{item.deity} · {item.domain}</small>

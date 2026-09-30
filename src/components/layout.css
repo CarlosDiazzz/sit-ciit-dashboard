@@ -121,9 +121,12 @@
   border-radius: 50% 50% 44% 56%;
   background: var(--surface-2);
   color: var(--text-dim);
-  font-family: var(--display);
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.nav-glyph svg {
+  display: block;
+  flex: 0 0 auto;
 }
 
 .nav-link.is-active .nav-glyph {
@@ -401,7 +404,6 @@
   .section-context,
   .context-divider { display: none; }
   .nav-link { min-height: 44px; padding: 6px 8px; }
-  .nav-glyph { display: none; }
   .topbar {
     grid-template-columns: minmax(0, 1fr);
     min-height: 80px;

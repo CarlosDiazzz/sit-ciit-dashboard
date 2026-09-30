@@ -7,13 +7,17 @@
  */
 
 import type {
+  CargoCategory,
   Command,
   CommandLogEntry,
   EventRecord,
   IssueCommandRequest,
   LoginResponse,
+  RiskRule,
   TelemetryPoint,
   Unit,
+  WeatherLatestResponse,
+  WeatherReading,
 } from './types';
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:3000';
@@ -178,4 +182,25 @@ export const api = {
   /** Bitácora: historial completo de transiciones de comandos. */
   listCommandLog: (limit = 200) =>
     request<CommandLogEntry[]>(`/command-log?limit=${limit}`),
+
+  /** Clima real en la última posición conocida de la unidad + reglas de
+   *  riesgo activas para su categoría de carga. */
+  getWeatherLatest: (unitId: string) =>
+    request<WeatherLatestResponse>(`/units/${unitId}/weather/latest`),
+
+  getWeatherHistory: (unitId: string, from: string, to: string) =>
+    request<WeatherReading[]>(
+      `/units/${unitId}/weather/history?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    ),
+
+  setCargoCategory: (unitId: string, category: CargoCategory) =>
+    request<{ cargoCategory: CargoCategory }>(`/units/${unitId}/cargo-category`, {
+      method: 'PATCH',
+      body: JSON.stringify({ category }),
+    }),
+
+  /** Tabla de referencia: todas las reglas de riesgo (activas o no), con
+   *  su umbral declarado y su fuente — dato estático, no depende de una
+   *  unidad en particular. */
+  listRiskRules: () => request<RiskRule[]>('/risk-rules'),
 };

@@ -51,9 +51,3 @@
   background: var(--online-bg);
   color: var(--online);
 }
-
-/* Destaca brevemente la fila que acaba de cambiar por un ack. */
-.table tbody tr.is-fresh td {
-  background: var(--accent-bg);
-  transition: background 1.2s ease-out;
-}

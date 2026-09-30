@@ -112,3 +112,9 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+/* Fila recien llegada en vivo (por socket), en Eventos y Comandos. */
+.table tbody tr.is-fresh td {
+  background: var(--accent-bg);
+  transition: background 1.2s ease-out;
+}

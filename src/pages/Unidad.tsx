@@ -21,11 +21,13 @@ import {
 import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
-import type { TelemetryBroadcast, Unit } from '../api/types';
+import type { RiskRule, TelemetryBroadcast, Unit } from '../api/types';
+import { useSession } from '../auth/context';
 import { ConnectionBadge, MovementBadge } from '../components/Badges';
 import NodeComparison from '../components/NodeComparison';
 import SpeedGauge from '../components/SpeedGauge';
 import { AsyncBoundary } from '../components/States';
+import WeatherRiskPanel from '../components/WeatherRiskPanel';
 import { chartPalette } from '../lib/chartColors';
 import { formatAgo, formatNumber } from '../lib/format';
 import { useColorMode } from '../hooks/useColorMode';
@@ -60,8 +62,12 @@ const MOVEMENT_EXIT_G = 0.03;
 
 export default function Unidad() {
   const state = useApi<Unit[]>(() => api.listUnits());
+  // Tabla de referencia de umbrales: es la misma para todas las unidades.
+  const riskRulesState = useApi<RiskRule[]>(() => api.listRiskRules());
   const { mode } = useColorMode();
   const colors = chartPalette(mode === 'dark');
+  const { user } = useSession();
+  const canEditCargoCategory = user?.role === 'control_center';
 
   const [points, setPoints] = useState<ChartPoint[]>([]);
   const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});
@@ -287,6 +293,13 @@ export default function Unidad() {
                 <div className="card-head">
                   <h2>{unidad.label ?? unidad.unitCode}</h2>
                 </div>
+
+                <WeatherRiskPanel
+                  unit={unidad}
+                  canEditCategory={canEditCargoCategory}
+                  allRules={riskRulesState.data ?? []}
+                  onCategoryChanged={state.reload}
+                />
 
                 <div className="cards">
                   {unidad.nodes.map((nodo) => {

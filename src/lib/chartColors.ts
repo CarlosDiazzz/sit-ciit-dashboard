@@ -28,6 +28,12 @@ export interface ChartPalette {
    *  de blue/orange/green para que no lea como parte de ese grupo (antes
    *  reusaba seriesX, que sí sugiere esa relación sin ser cierta). */
   seriesSpeed: string;
+  /** Temperatura y humedad ambiental (clima, no sensores del celular).
+   *  Slot propio (ámbar/violeta), validado con scripts/validate_palette.js
+   *  del skill de dataviz — no reusa x/y/z/speed para no sugerir que es
+   *  el mismo tipo de dato. */
+  seriesTemp: string;
+  seriesHumidity: string;
 }
 
 /* Alineados con los tokens de superficie y texto de index.css. */
@@ -42,6 +48,8 @@ const DARK: ChartPalette = {
   seriesY: '#f39a48',
   seriesZ: '#55bde9',
   seriesSpeed: '#49c79c',
+  seriesTemp: '#a8842a',
+  seriesHumidity: '#7a63c9',
 };
 
 const LIGHT: ChartPalette = {
@@ -55,6 +63,8 @@ const LIGHT: ChartPalette = {
   seriesY: '#eb6834',
   seriesZ: '#1baf7a',
   seriesSpeed: '#4a3aa7',
+  seriesTemp: '#a8791b',
+  seriesHumidity: '#6a4fc4',
 };
 
 /** La interfaz es oscura por defecto (ver index.css). Cuando se agregue
