@@ -5,23 +5,26 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { ApiError, api } from '../api/client';
 import { useSession } from '../auth/context';
-import { userRoleLabel } from '../lib/labels';
+import { useColorMode } from '../hooks/useColorMode';
 import './login.css';
 
 export default function Login() {
-  const { user, signIn, signOut } = useSession();
+  const { user, signIn } = useSession();
+  const { mode, toggle } = useColorMode();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const canSubmit = /\S+@\S+\.\S+/.test(email.trim()) && password.length > 0;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!canSubmit || enviando) return;
     setError(null);
     setEnviando(true);
     try {
@@ -38,28 +41,22 @@ export default function Login() {
   }
 
   if (user) {
-    return (
-      <div className="login">
-        <div className="login-card">
-          <h1>Sesión iniciada</h1>
-          <p className="login-hint">
-            {user.email} — {userRoleLabel(user.role)}
-          </p>
-          <button type="button" className="btn" onClick={signOut}>
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="login">
+    <div className="login" data-color-mode={mode}>
+      <button
+        type="button"
+        className="login-mode-toggle"
+        onClick={toggle}
+        aria-label={mode === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+      >
+        <span aria-hidden="true">{mode === 'dark' ? '☀' : '☾'}</span>
+        {mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+      </button>
       <form className="login-card" onSubmit={onSubmit}>
         <h1>Iniciar sesión</h1>
-        <p className="login-hint">
-          Los usuarios se dan de alta desde el backend con <code>npm run create-user</code>.
-        </p>
 
         <label className="field">
           <span>Correo</span>
@@ -89,7 +86,7 @@ export default function Login() {
           </p>
         ) : null}
 
-        <button type="submit" className="btn btn-primary" disabled={enviando}>
+        <button type="submit" className="btn btn-primary" disabled={!canSubmit || enviando}>
           {enviando ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
