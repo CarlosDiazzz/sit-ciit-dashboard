@@ -131,14 +131,35 @@ export default function Unidad() {
   // leer la selección vigente sin volver a suscribirse en cada cambio.
   const selectedRef = useRef<string | null>(null);
 
-  const selectNode = useCallback((nodeId: string) => {
-    selectedRef.current = nodeId;
-    setSelectedNodeId(nodeId);
-    setPoints([]);
-    movementEmaRef.current = 0;
-    isMovingRef.current = false;
-    setIsMoving(false);
-  }, []);
+  const selectNode = useCallback(
+    (nodeId: string) => {
+      selectedRef.current = nodeId;
+      setSelectedNodeId(nodeId);
+      setPoints([]);
+      movementEmaRef.current = 0;
+      isMovingRef.current = false;
+      setIsMoving(false);
+
+      // Rellenar con historia real del nodo elegido: sin esto, la
+      // gráfica se quedaba vacía al cambiar de nodo hasta que llegara
+      // algo nuevo por socket específicamente para ese nodo.
+      const unidad = state.data?.find((u) => u.nodes.some((n) => n.nodeCode === nodeId));
+      if (!unidad) return;
+      void (async () => {
+        try {
+          const rows = await api.listTelemetry(unidad.unitCode);
+          if (selectedRef.current !== nodeId) return; // se cambió de nuevo mientras cargaba
+          const propias = rows.filter((r) => r.nodeCode === nodeId);
+          if (propias.length === 0) return;
+          setPoints(propias.slice(0, MAX_POINTS).reverse().map(toChartPoint));
+        } catch {
+          // Sin historia para este nodo no debe romper la selección —
+          // se sigue esperando datos en vivo.
+        }
+      })();
+    },
+    [state.data],
+  );
 
   useEffect(() => {
     const id = setInterval(() => setAhora(Date.now()), 1000);
