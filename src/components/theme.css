@@ -72,35 +72,45 @@
 .shell[data-color-mode='light'][data-theme='control'] { --accent: #4e5e57; --accent-rgb: 78, 94, 87; --accent-soft: #e4e8e5; }
 
 .shell[data-color-mode='light'] .sidebar {
-  --text: #e5eee9;
-  --text-dim: #b5c6be;
-  --text-strong: #ffffff;
-  --surface-2: #244c40;
-  --surface-hover: #285548;
-  --border: rgba(255, 255, 255, 0.15);
-  --border-strong: rgba(255, 255, 255, 0.27);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 190px),
-    #173f35;
-  border-right-color: #0f3028;
+  --text: #34443e;
+  --text-dim: #66736e;
+  --text-strong: #172e27;
+  --surface-hover: #edf1ee;
+  --border: #d9e1db;
+  background: #f8faf8;
+  border-right-color: var(--border);
+}
+
+.shell[data-color-mode='light'] .sidebar::before {
+  filter: grayscale(1) blur(1px);
+  opacity: 0.16;
+}
+
+.shell[data-color-mode='light'] [data-nav-theme='control'] {
+  --nav-color: #4e5e57;
 }
 
 .shell[data-color-mode='light'] .brand-mark {
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
   filter: none;
 }
 
+/* Compensa el margen transparente del archivo claro sin modificar el original. */
+.shell[data-color-mode='light'] .brand-mark img {
+  transform: translateX(-2px) scale(1.1);
+  transform-origin: center;
+}
+
 .shell[data-color-mode='light'] .nav-link.is-active {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: inset 3px 0 0 #d6b56d;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.09);
+  border-color: rgba(var(--accent-rgb), 0.22);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .shell[data-color-mode='light'] .nav-link.is-active .nav-glyph {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.34);
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent);
+  background: transparent;
 }
 
 .shell[data-color-mode='light'] .topbar {
