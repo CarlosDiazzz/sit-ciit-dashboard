@@ -130,3 +130,14 @@
   background: var(--accent-bg);
   transition: background 1.2s ease-out;
 }
+
+/* Cifras del propio evento bajo la orientacion: lo medido, donde y si
+   llego tarde. Van mas tenues que la recomendacion porque son el
+   respaldo de esta, no otra instruccion. */
+.dss-evidence-line {
+  margin: var(--s1) 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}

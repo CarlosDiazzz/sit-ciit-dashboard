@@ -14,6 +14,7 @@ import type { EventBroadcast, EventRecord, EventVerdict } from '../api/types';
 import { AsyncBoundary, EmptyState } from '../components/States';
 import { LateBadge, SeverityBadge } from '../components/Badges';
 import { eventKindLabel, eventValueUnit } from '../lib/labels';
+import { medicionResumida, retrasoResumido, ubicacionResumida } from '../lib/guidance';
 import EventSignal from '../components/EventSignal';
 import EventVerdictPanel from '../components/EventVerdict';
 import { eventGuidance, prioritizeEvents } from '../lib/decisions';
@@ -77,7 +78,32 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
           />
           <EventSignal eventId={selected.id} />
           <p className="dss-caption">{eventValueUnit(selected.kind) ? 'Unidad de medida indicada según el contrato. ' : 'El registro no especifica la unidad de medida. '}La severidad proviene del evento; no confirma por sí sola el estado actual de la carga.</p>
-          <section className="dss-recommendation"><span className="dss-kicker">03 / DECIDIR</span><h3>Acción sugerida</h3><p>{eventGuidance[selected.kind] ?? 'Verifica la evidencia con el operador antes de actuar.'}</p><div className="dss-actions"><Link to="/unidad" className="btn">Consultar telemetría ↗</Link><Link to="/comandos">Seguimiento de comandos →</Link></div><small>Orientación para revisión humana. No ejecuta acciones automáticas.</small></section>
+          <section className="dss-recommendation">
+            <span className="dss-kicker">03 / DECIDIR</span>
+            <h3>Acción sugerida</h3>
+            <p>{eventGuidance[selected.kind] ?? 'Verifica la evidencia con el operador antes de actuar.'}</p>
+            {/* Las cifras del propio evento, para no obligar a ir a
+                buscarlas: cuánto se midió, dónde y si llegó tarde. */}
+            {[medicionResumida(selected), ubicacionResumida(selected), retrasoResumido(selected)]
+              .filter((f): f is string => f !== null)
+              .map((frase) => (
+                <p key={frase} className="dss-evidence-line">{frase}</p>
+              ))}
+            <div className="dss-actions">
+              {/* Con el nodo en el enlace, la vista abre centrada en él
+                  en vez de dejar al operador buscándolo. */}
+              <Link
+                to={selected.nodeCode ? `/unidad?nodo=${selected.nodeCode}` : '/unidad'}
+                className="btn"
+              >
+                Consultar telemetría ↗
+              </Link>
+              <Link to={selected.nodeCode ? `/comandos?nodo=${selected.nodeCode}` : '/comandos'}>
+                Seguimiento de comandos →
+              </Link>
+            </div>
+            <small>Orientación para revisión humana. No ejecuta acciones automáticas.</small>
+          </section>
         </div> : <p className="dss-caption">Selecciona un evento para revisar su evidencia.</p>}
       </aside>
     </div>

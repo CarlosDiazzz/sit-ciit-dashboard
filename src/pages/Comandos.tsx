@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PagedRows } from '../components/Pagination';
 
 import { ApiError, api } from '../api/client';
@@ -42,7 +43,10 @@ export default function Comandos() {
   const unidades = useApi<Unit[]>(() => api.listUnits());
   const comandos = useApi<Command[]>(() => api.listCommands({ limit: 100 }), []);
 
-  const [nodo, setNodo] = useState('');
+  // ?nodo=unit-01-b llega desde un evento: el formulario abre con ese
+  // destino ya elegido en vez de obligar a buscarlo en la lista.
+  const [params] = useSearchParams();
+  const [nodo, setNodo] = useState(params.get('nodo') ?? '');
   const [accion, setAccion] = useState<CmdAction>('trigger_alarm');
   const [valor, setValor] = useState('');
   const [enviando, setEnviando] = useState(false);
