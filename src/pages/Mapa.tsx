@@ -1,3 +1,4 @@
+import DecisionBrief from '../components/DecisionBrief';
 /* Mapa de la Línea Z y sus conexiones G y K desde el archivo local Overpass.
  * La lista de unidades conserva su fuente de telemetría independiente.
  */
@@ -10,6 +11,7 @@ import { useApi } from '../api/useApi';
 import type { Unit } from '../api/types';
 import { ErrorState, Loading } from '../components/States';
 import { ConnectionBadge } from '../components/Badges';
+import LiveMapLayers from '../components/LiveMapLayers';
 import { MEDIAS_AGUAS_JUNCTION, parseMainRailRoute, parseRailConnections, type MapCoordinate, type RailConnection } from '../lib/mapData';
 import './mapa.css';
 
@@ -81,11 +83,17 @@ export default function Mapa() {
     <>
       <div className="page-head">
         <div>
-          <h1>Mapa</h1>
+          <span className="dss-kicker">QUETZALCÓATL / CORREDOR INTEROCEÁNICO</span><h1>Ruta</h1>
           <p>Corredor Salina Cruz–Coatzacoalcos (Línea Z).</p>
         </div>
       </div>
 
+      <DecisionBrief title="Supervisa la cobertura antes de interpretar la ruta" evidence="El mapa reúne el trazado ferroviario y las últimas posiciones GPS recibidas. Verifica la hora y la fuente activa antes de interpretar una ubicación." action="Revisa el estado de la unidad y su último reporte antes de decidir sobre el recorrido." to="/unidad" linkLabel="Revisar unidades" />
+      <div className="dss-metrics route-metrics">
+        <article><span>Ubicación</span><strong>{state.data?.length ?? '—'}</strong><small>Unidades registradas para seguimiento</small></article>
+        <article><span>Recorrido · Línea Z</span><strong>{railRoute.length > 1 ? 'Disponible' : 'Cargando'}</strong><small>Trazado y conexiones G y K en el mapa</small></article>
+        <article><span>ETA · Llegada estimada</span><strong>Sin estimación</strong><small>Requiere destino, distancia restante y velocidad promedio</small></article>
+      </div>
       <div className="map-layout">
         <div className="map-frame">
           <MapContainer center={CENTRO} zoom={8} className="map">
@@ -95,6 +103,8 @@ export default function Mapa() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <LiveMapLayers />
+
             <FitMapToData route={railRoute} connections={railConnections} />
             {railConnections.map((connection) => (
               <Polyline
@@ -137,7 +147,7 @@ export default function Mapa() {
           <h2>Unidades</h2>
           {mapDataError && <p className="map-hint" role="alert">{mapDataError}</p>}
 
-          {state.loading && state.data === null ? (
+          {state.loading ? (
             <Loading label="Cargando unidades…" />
           ) : state.error ? (
             <ErrorState error={state.error} onRetry={state.reload} />
@@ -155,7 +165,8 @@ export default function Mapa() {
             </ul>
           ) : (
             <p className="map-hint">
-              Sin unidades registradas todavía.
+              Sin unidades registradas todavía. Las posiciones GPS se muestran al recibir
+              telemetría de los nodos.
             </p>
           )}
         </aside>

@@ -3,24 +3,23 @@
  */
 
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Activity, ClipboardList, CloudSun, Map as MapIcon, Radio, ShieldAlert, Smartphone, Users } from 'lucide-react';
+import { Activity, ClipboardList, Map as MapIcon, Radio, ShieldAlert, Smartphone, Users, Wifi } from 'lucide-react';
 import { useConnectionStatus } from '../api/socket';
 import { useSession } from '../auth/context';
+import { useColorMode } from '../hooks/useColorMode';
 import { userRoleLabel } from '../lib/labels';
 import AztecOrnament from './AztecOrnament';
 import './layout.css';
+import './decision.css';
+import './theme.css';
 
 const NAV = [
-  // Quetzalcóatl — Mapa: Ruta
-  { to: '/', label: 'Mapa', domain: 'Ruta', icon: MapIcon, theme: 'quetzal', end: true },
-  // Tonatiuh — Unidad: Estado general
-  { to: '/unidad', label: 'Unidad', domain: 'Estado general', icon: Activity, theme: 'tonatiuh', end: false },
-  // Tezcatlipoca — Eventos: Seguridad
-  { to: '/eventos', label: 'Eventos', domain: 'Seguridad', icon: ShieldAlert, theme: 'tezcatlipoca', end: false },
-  // Ehécatl — Comandos: Movimiento
-  { to: '/comandos', label: 'Comandos', domain: 'Movimiento', icon: Radio, theme: 'ehecatl', end: false },
-  // Tezcatlipoca — Bitácora: Incidencias
-  { to: '/bitacora', label: 'Bitácora', domain: 'Incidencias', icon: ClipboardList, theme: 'tezcatlipoca', end: false },
+  { to: '/', label: 'Ruta', deity: 'Quetzalcóatl', domain: 'Ubicación, recorrido y ETA', icon: MapIcon, theme: 'quetzal', end: true },
+  { to: '/conectividad', label: 'Conectividad', deity: 'Tláloc', domain: 'Nodos y disponibilidad', icon: Wifi, theme: 'tlaloc', end: false },
+  { to: '/unidad', label: 'Estado general', deity: 'Tonatiuh', domain: 'Unidad y telemetría', icon: Activity, theme: 'tonatiuh', end: false },
+  { to: '/eventos', label: 'Movimiento y eventos', deity: 'Ehécatl', domain: 'Impactos y estabilidad', icon: ShieldAlert, theme: 'ehecatl', end: false },
+  { to: '/bitacora', label: 'Auditoría', deity: 'Tezcatlipoca', domain: 'Historial de intervenciones', icon: ClipboardList, theme: 'tezcatlipoca', end: false },
+  { to: '/comandos', label: 'Comandos', deity: 'Control operativo', domain: 'Seguimiento de órdenes', icon: Radio, theme: 'control', end: false },
 ] as const;
 
 // Solo visible para control_center: son cuentas de otras personas, no
@@ -28,29 +27,28 @@ const NAV = [
 const USUARIOS_NAV = {
   to: '/usuarios',
   label: 'Usuarios',
-  domain: 'Acceso',
+  deity: 'Acceso',
+  domain: 'Cuentas del centro de control',
   icon: Users,
-  theme: 'tonatiuh',
+  theme: 'control',
   end: false,
 } as const;
 
 const NODOS_NAV = {
   to: '/nodos',
   label: 'Nodos',
-  domain: 'Acceso',
+  deity: 'Acceso',
+  domain: 'Identidad y secretos de campo',
   icon: Smartphone,
-  theme: 'tonatiuh',
+  theme: 'control',
   end: false,
 } as const;
-
-// Tláloc — módulo Ambiente, próximamente.
-const TLALOC = { domain: 'Ambiente', icon: CloudSun };
 
 function ConnectionIndicator() {
   const status = useConnectionStatus();
   const label =
     status === 'online'
-      ? 'Datos en vivo'
+      ? 'Canal en vivo conectado'
       : status === 'connecting'
         ? 'Conectando…'
         : 'Sin conexión';
@@ -65,6 +63,7 @@ function ConnectionIndicator() {
 
 export default function Layout() {
   const { user, signOut } = useSession();
+  const { mode, toggle } = useColorMode();
   const location = useLocation();
   // cliente no tiene nada que hacer aquí (RequireAuth ya le bloquea las
   // rutas): mostrarle links que van a rebotar solo confunde.
@@ -75,7 +74,7 @@ export default function Layout() {
   ) ?? NAV[0];
 
   return (
-    <div className="shell" data-theme={current.theme}>
+    <div className="shell" data-theme={current.theme} data-color-mode={mode}>
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
@@ -101,19 +100,11 @@ export default function Layout() {
               <span className="nav-glyph" aria-hidden="true"><item.icon size={18} strokeWidth={1.8} /></span>
               <span className="nav-copy">
                 <strong>{item.label}</strong>
-                <small>{item.domain}</small>
+                <small>{item.deity} · {item.domain}</small>
               </span>
             </NavLink>
           ))}
         </nav>
-
-        <div className="coming-soon" aria-label="Módulo ambiente próximamente">
-          <span className="nav-glyph" aria-hidden="true"><TLALOC.icon size={18} strokeWidth={1.8} /></span>
-          <span className="nav-copy">
-            <strong>{TLALOC.domain}</strong>
-            <small>Próximamente</small>
-          </span>
-        </div>
 
         <footer className="sidebar-foot">
           <span className="mini-glyph" aria-hidden="true">◆</span>
@@ -129,11 +120,24 @@ export default function Layout() {
               <ConnectionIndicator />
               <span className="context-divider" aria-hidden="true" />
               <span className="section-context">
+                <strong>{current.deity}</strong>
                 <small>{current.domain}</small>
               </span>
             </div>
 
             <div className="topbar-right">
+              <button
+                type="button"
+                className="theme-toggle"
+                onClick={toggle}
+                aria-label={mode === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
+                title={mode === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
+              >
+                <span className="theme-toggle-icon" aria-hidden="true">
+                  {mode === 'light' ? '☾' : '☀'}
+                </span>
+                <span>{mode === 'light' ? 'Oscuro' : 'Claro'}</span>
+              </button>
               {user ? (
                 <>
                   <span className="user">

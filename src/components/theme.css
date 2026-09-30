@@ -1,0 +1,224 @@
+/* Tema claro institucional. Los colores de severidad conservan su función. */
+:root[data-color-mode='light'] {
+  --bg: #f4f1e9;
+  --surface: #ffffff;
+  --surface-2: #f7f5ef;
+  --surface-hover: #eeeae0;
+  --border: #d9d4c8;
+  --border-strong: #b9b3a6;
+  --text: #34443e;
+  --text-dim: #66736e;
+  --text-strong: #172e27;
+  --accent: #245847;
+  --accent-rgb: 36, 88, 71;
+  --accent-soft: #dce8e1;
+  --accent-bg: rgba(36, 88, 71, 0.09);
+  --accent-border: rgba(36, 88, 71, 0.34);
+  --quetzal: #28624f;
+  --tlaloc: #2d6472;
+  --ehecatl: #8f433e;
+  --tezcatlipoca: #345d78;
+  --tonatiuh: #8a5a19;
+  --info: #275f88;
+  --info-bg: #e7f0f6;
+  --warning: #81570c;
+  --warning-bg: #fff4d8;
+  --critical: #9f2f32;
+  --critical-bg: #fbeaec;
+  --online: #2b6b45;
+  --online-bg: #e4f1e8;
+  --offline: #626d68;
+  --offline-bg: #eceeeb;
+  --shadow-card: 0 2px 10px rgba(30, 48, 40, 0.07);
+  color-scheme: light;
+}
+
+:root[data-color-mode='light'] body {
+  background:
+    linear-gradient(180deg, rgba(117, 94, 53, 0.035), transparent 260px),
+    var(--bg);
+}
+
+.shell[data-color-mode='light'] {
+  --bg: #f4f1e9;
+  --surface: #ffffff;
+  --surface-2: #f7f5ef;
+  --surface-hover: #eeeae0;
+  --border: #d9d4c8;
+  --border-strong: #b9b3a6;
+  --text: #34443e;
+  --text-dim: #66736e;
+  --text-strong: #172e27;
+  --info: #275f88;
+  --info-bg: #e7f0f6;
+  --warning: #81570c;
+  --warning-bg: #fff4d8;
+  --critical: #9f2f32;
+  --critical-bg: #fbeaec;
+  --online: #2b6b45;
+  --online-bg: #e4f1e8;
+  --offline: #626d68;
+  --offline-bg: #eceeeb;
+  --shadow-card: 0 2px 10px rgba(30, 48, 40, 0.07);
+  --radius: 6px;
+  --radius-sm: 4px;
+}
+
+.shell[data-color-mode='light'][data-theme='quetzal'] { --accent: #28624f; --accent-rgb: 40, 98, 79; --accent-soft: #dce9e3; }
+.shell[data-color-mode='light'][data-theme='tlaloc'] { --accent: #2d6472; --accent-rgb: 45, 100, 114; --accent-soft: #dce9ec; }
+.shell[data-color-mode='light'][data-theme='tonatiuh'] { --accent: #8a5a19; --accent-rgb: 138, 90, 25; --accent-soft: #eee4d3; }
+.shell[data-color-mode='light'][data-theme='ehecatl'] { --accent: #8f433e; --accent-rgb: 143, 67, 62; --accent-soft: #f0dfdd; }
+.shell[data-color-mode='light'][data-theme='tezcatlipoca'] { --accent: #345d78; --accent-rgb: 52, 93, 120; --accent-soft: #dfe8ed; }
+.shell[data-color-mode='light'][data-theme='control'] { --accent: #4e5e57; --accent-rgb: 78, 94, 87; --accent-soft: #e4e8e5; }
+
+.shell[data-color-mode='light'] .sidebar {
+  --text: #e5eee9;
+  --text-dim: #b5c6be;
+  --text-strong: #ffffff;
+  --surface-2: #244c40;
+  --surface-hover: #285548;
+  --border: rgba(255, 255, 255, 0.15);
+  --border-strong: rgba(255, 255, 255, 0.27);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 190px),
+    #173f35;
+  border-right-color: #0f3028;
+}
+
+.shell[data-color-mode='light'] .brand-mark {
+  background: rgba(255, 255, 255, 0.08);
+  filter: none;
+}
+
+.shell[data-color-mode='light'] .nav-link.is-active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 3px 0 0 #d6b56d;
+}
+
+.shell[data-color-mode='light'] .nav-link.is-active .nav-glyph {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.shell[data-color-mode='light'] .topbar {
+  --ornament-surface: #ffffff;
+  background: #ffffff;
+  box-shadow: 0 1px 0 var(--border), 0 4px 14px rgba(31, 47, 40, 0.05);
+}
+
+.shell[data-color-mode='light'] .content {
+  background:
+    linear-gradient(rgba(55, 71, 64, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(55, 71, 64, 0.025) 1px, transparent 1px),
+    var(--bg);
+  background-size: 32px 32px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-strong);
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.theme-toggle:hover { background: var(--surface-hover); }
+.theme-toggle-icon { font-size: 16px; line-height: 1; }
+
+.shell[data-color-mode='light'] .page-head {
+  padding: 0 0 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.shell[data-color-mode='light'] .page-head h1 {
+  color: #163b31;
+  font-family: var(--display);
+  font-size: 31px;
+  font-weight: 600;
+}
+
+.shell[data-color-mode='light'] .dss-kicker {
+  color: #755d2d;
+}
+
+.shell[data-color-mode='light'] .dss-metrics article,
+.shell[data-color-mode='light'] .dss-panel,
+.shell[data-color-mode='light'] .decision-brief,
+.shell[data-color-mode='light'] .chart-card,
+.shell[data-color-mode='light'] .map-side,
+.shell[data-color-mode='light'] .table-wrap,
+.shell[data-color-mode='light'] .cmd-form,
+.shell[data-color-mode='light'] .login-card,
+.shell[data-color-mode='light'] .node-card,
+.shell[data-color-mode='light'] .card {
+  box-shadow: var(--shadow-card);
+}
+
+.shell[data-color-mode='light'] .preview-banner {
+  color: #ffffff;
+  background: #294f44;
+  border-color: #527568;
+}
+
+.shell[data-color-mode='light'] .preview-banner p { color: #d7e2dc; }
+.shell[data-color-mode='light'] .preview-banner a { color: #ffffff; }
+
+.shell[data-color-mode='light'] .state {
+  --state-ink: #172e27;
+  --state-muted: #66736e;
+  --state-surface: #ffffff;
+  border-color: var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+.shell[data-color-mode='light'] .state-text { color: #52615b; }
+.shell[data-color-mode='light'] .state-detail { border-color: var(--border); }
+.shell[data-color-mode='light'] .state-progress { background: #d9d4c8; }
+.shell[data-color-mode='light'] .state-progress::after { background: #294f44; }
+.shell[data-color-mode='light'] .state .state-retry {
+  color: #ffffff;
+  background: #245847;
+  border-color: #245847;
+}
+.shell[data-color-mode='light'] .state .state-retry:hover { background: #173f35; border-color: #173f35; }
+
+.shell[data-color-mode='light'] .map .leaflet-tile-pane {
+  filter: saturate(0.75) contrast(0.95);
+}
+.shell[data-color-mode='light'] .map .leaflet-control-attribution {
+  color: #4e5e57;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.shell[data-color-mode='light'] .table thead th {
+  color: #30483f;
+  background: #ede9df;
+}
+
+.shell[data-color-mode='light'] .card,
+.shell[data-color-mode='light'] .chart-card,
+.shell[data-color-mode='light'] .login-card,
+.shell[data-color-mode='light'] .node-card,
+.shell[data-color-mode='light'] .map-side {
+  background: var(--surface);
+}
+
+.shell[data-color-mode='light'] input,
+.shell[data-color-mode='light'] select {
+  background: #ffffff;
+  color: var(--text-strong);
+}
+
+@media (max-width: 600px) {
+  .theme-toggle span:last-child { display: none; }
+  .theme-toggle { min-width: 38px; justify-content: center; padding-inline: 8px; }
+}

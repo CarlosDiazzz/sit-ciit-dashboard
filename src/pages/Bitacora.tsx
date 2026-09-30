@@ -1,3 +1,4 @@
+import DecisionBrief from '../components/DecisionBrief';
 /* Bitácora: cada cambio de estado de cada comando, para auditoría.
  *
  * A diferencia de la vista de Comandos, que muestra el estado actual,
@@ -35,6 +36,7 @@ export default function Bitacora() {
         </div>
       </div>
 
+      <DecisionBrief title="Reconstruye la secuencia de la intervención" evidence="Cada entrada representa una transición de estado. Compara los tiempos y motivos del mismo comando para comprender qué ocurrió." action="Revisa el seguimiento del comando para distinguir una solicitud enviada de una ejecución confirmada." to="/comandos" linkLabel="Revisar comandos" />
       <AsyncBoundary
         state={state}
         empty={{
