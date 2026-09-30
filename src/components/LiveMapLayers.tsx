@@ -7,45 +7,62 @@
  *
  * Todo lo que se pinta aquí viene del backend. Una unidad sin GPS no
  * aparece en el mapa — no se inventa una posición sobre la vía.
+ *
+ * Sobre el movimiento: el GPS llega cada ~5 s, así que un marcador
+ * puesto en la última posición salta de golpe. Aquí se interpola la
+ * transición entre dos posiciones REALES, igual que el velocímetro
+ * suaviza el número entre dos lecturas. No se inventan posiciones
+ * intermedias como mediciones: solo se suaviza cómo se muestra el
+ * cambio, y el popup siempre da el último dato recibido de verdad.
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { CircleMarker, Polyline, Popup, Tooltip } from 'react-leaflet';
+import { Marker, Polyline, Popup, Tooltip } from 'react-leaflet';
 
 import { useSocketEvent } from '../api/socket';
 import type { EventBroadcast, TelemetryBroadcast } from '../api/types';
 import type { EventSeverity } from '../contract/contract';
 import { eventKindLabel, eventValueUnit } from '../lib/labels';
 import { formatTime } from '../lib/format';
+import { iconoEvento, iconoUnidad } from './mapIcons';
+import './liveMap.css';
 
-/** Posiciones guardadas por unidad para dibujar su rastro. A 1 Hz son
- *  unos dos minutos de recorrido, suficiente para ver hacia dónde va
- *  sin llenar el mapa de puntos. */
+/** Posiciones guardadas por unidad para el rastro: a 1 Hz, unos dos
+ *  minutos de recorrido. */
 const RASTRO_MAX = 120;
 
 /** Un evento se desvanece del mapa tras este tiempo: el mapa muestra lo
- *  que está pasando, el historial completo vive en la vista Eventos. */
+ *  que está pasando; el historial vive en la vista Eventos. */
 const EVENTO_VIGENCIA_MS = 10 * 60 * 1000;
 
 /** Sin datos en este tiempo, la unidad se dibuja apagada: sigue en su
  *  última posición conocida, pero ya no se afirma que esté ahí. */
 const SIN_DATOS_MS = 30_000;
 
-const COLOR_SEVERIDAD: Record<EventSeverity, string> = {
-  info: '#58a6ff',
-  warning: '#d29922',
-  critical: '#f85149',
-};
+/** Duración de la transición entre dos posiciones GPS. Algo por debajo
+ *  del intervalo del GPS (~5 s) para que la siguiente llegue casi al
+ *  terminar y el movimiento no se vea a tirones. */
+const TRANSICION_MS = 4000;
 
-interface PosicionUnidad {
+/** Por debajo de esta distancia no se recalcula el rumbo: con ~100 m de
+ *  precisión, dos fixes casi iguales darían un giro aleatorio. */
+const RUMBO_MIN_M = 12;
+
+interface Unidad {
   nodeId: string;
   unitId: string;
   role: 'primary' | 'backup';
-  lat: number;
-  lon: number;
+  /** Posición confirmada más reciente. */
+  destino: [number, number];
+  /** Desde dónde se está animando. */
+  origen: [number, number];
+  /** Cuándo empezó la transición actual. */
+  desde: number;
+  rumbo: number | null;
   speedKmh: number | null;
   recibidoEn: number;
   rastro: [number, number][];
+  alerta: EventSeverity | null;
 }
 
 interface EventoEnMapa {
@@ -58,41 +75,105 @@ interface EventoEnMapa {
   ts: number;
 }
 
+/** Distancia aproximada en metros. A escala de un corredor basta con
+ *  tratar los grados como plano, corrigiendo la longitud por latitud. */
+function metros(a: [number, number], b: [number, number]): number {
+  const dLat = (b[0] - a[0]) * 111_320;
+  const dLon = (b[1] - a[1]) * 111_320 * Math.cos((a[0] * Math.PI) / 180);
+  return Math.sqrt(dLat * dLat + dLon * dLon);
+}
+
+/** Rumbo en grados desde el norte, para orientar el icono. */
+function rumboEntre(a: [number, number], b: [number, number]): number {
+  const dLat = b[0] - a[0];
+  const dLon = (b[1] - a[1]) * Math.cos((a[0] * Math.PI) / 180);
+  return (Math.atan2(dLon, dLat) * 180) / Math.PI;
+}
+
+/** Arranca y frena, en vez de moverse a velocidad constante y pararse
+ *  en seco. */
+function suavizar(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+/** Dónde se dibuja la unidad ahora mismo, interpolando entre la
+ *  posición anterior y la última confirmada. */
+function posicionActual(u: Unidad, ahora: number): [number, number] {
+  const t = Math.min(1, (ahora - u.desde) / TRANSICION_MS);
+  if (t >= 1) return u.destino;
+  const k = suavizar(t);
+  return [
+    u.origen[0] + (u.destino[0] - u.origen[0]) * k,
+    u.origen[1] + (u.destino[1] - u.origen[1]) * k,
+  ];
+}
+
 export default function LiveMapLayers() {
-  const [posiciones, setPosiciones] = useState<Record<string, PosicionUnidad>>({});
+  const [unidades, setUnidades] = useState<Record<string, Unidad>>({});
   const [eventos, setEventos] = useState<EventoEnMapa[]>([]);
   const [ahora, setAhora] = useState(() => Date.now());
 
-  // Reloj propio: hace que una unidad que dejó de reportar se apague
-  // sola, aunque no llegue nada nuevo que fuerce el render.
+  // Un solo bucle de animación para todas las unidades. Si el visitante
+  // pide menos movimiento no se anima: el marcador salta a cada
+  // posición nueva, que es el comportamiento honesto sin animación.
   useEffect(() => {
-    const id = setInterval(() => setAhora(Date.now()), 5000);
-    return () => clearInterval(id);
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    if (reduce) {
+      // Sin animación el reloj sigue avanzando, más lento: hace falta
+      // para que una unidad que se calla acabe dibujándose apagada.
+      const id = setInterval(() => setAhora(Date.now()), 5000);
+      return () => clearInterval(id);
+    }
+
+    let raf = 0;
+    let vivo = true;
+    const paso = () => {
+      if (!vivo) return;
+      setAhora(Date.now());
+      raf = requestAnimationFrame(paso);
+    };
+    raf = requestAnimationFrame(paso);
+    return () => {
+      vivo = false;
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
   useSocketEvent(
     'telemetry',
     useCallback((t: TelemetryBroadcast) => {
-      // Sin GPS no hay nada que ubicar. Es lo normal bajo techo.
       const gps = t.gps;
+      // Sin GPS no hay nada que ubicar. Es lo normal bajo techo.
       if (!gps) return;
-      const { lat, lon } = gps;
+      const nueva: [number, number] = [gps.lat, gps.lon];
 
-      setPosiciones((prev) => {
+      setUnidades((prev) => {
         const anterior = prev[t.nodeId];
-        const punto: [number, number] = [lat, lon];
-        const rastro: [number, number][] = [...(anterior?.rastro ?? []), punto].slice(-RASTRO_MAX);
+        const ahora = Date.now();
+
+        // La animación arranca donde el marcador se ve ahora, no en la
+        // última posición confirmada: si llega un fix a mitad de la
+        // transición, el icono no salta hacia atrás.
+        const origen = anterior ? posicionActual(anterior, ahora) : nueva;
+        const avance = anterior ? metros(anterior.destino, nueva) : 0;
+
         return {
           ...prev,
           [t.nodeId]: {
             nodeId: t.nodeId,
             unitId: t.unitId,
             role: t.role,
-            lat,
-            lon,
+            destino: nueva,
+            origen,
+            desde: ahora,
+            rumbo:
+              anterior && avance >= RUMBO_MIN_M
+                ? rumboEntre(anterior.destino, nueva)
+                : (anterior?.rumbo ?? null),
             speedKmh: gps.speedMs != null ? gps.speedMs * 3.6 : null,
             recibidoEn: t.receivedAt,
-            rastro,
+            rastro: [...(anterior?.rastro ?? []), nueva].slice(-RASTRO_MAX),
+            alerta: anterior?.alerta ?? null,
           },
         };
       });
@@ -102,14 +183,22 @@ export default function LiveMapLayers() {
   useSocketEvent(
     'event',
     useCallback((ev: EventBroadcast) => {
-      // Un evento sin GPS sí ocurrió, pero no se puede situar: aparece
-      // en la vista Eventos, no aquí.
+      // Marca la unidad aunque el evento no traiga GPS: que algo le
+      // pasó a esa carga es información aparte de dónde pasó.
+      const nodeId = ev.nodeId;
+      if (nodeId !== null) {
+        setUnidades((prev) => {
+          const u = prev[nodeId];
+          return u ? { ...prev, [nodeId]: { ...u, alerta: ev.severity } } : prev;
+        });
+      }
+
       const gps = ev.gps;
       if (!gps) return;
       setEventos((prev) =>
         [
           {
-            id: `${ev.nodeId}-${ev.ts}`,
+            id: `${ev.nodeId ?? ev.unitId}-${ev.ts}`,
             lat: gps.lat,
             lon: gps.lon,
             kind: ev.kind,
@@ -123,70 +212,72 @@ export default function LiveMapLayers() {
     }, []),
   );
 
-  const unidades = Object.values(posiciones);
+  const lista = Object.values(unidades);
   const eventosVigentes = eventos.filter((e) => ahora - e.ts < EVENTO_VIGENCIA_MS);
 
   return (
     <>
-      {/* Eventos primero, para que los marcadores de unidad queden
-          encima y no los tape una marca de evento. */}
+      {/* Eventos primero: los marcadores de unidad quedan encima. */}
       {eventosVigentes.map((ev) => (
-        <CircleMarker
+        <Marker
           key={ev.id}
-          center={[ev.lat, ev.lon]}
-          radius={ev.severity === 'critical' ? 11 : 8}
-          pathOptions={{
-            color: COLOR_SEVERIDAD[ev.severity],
-            fillColor: COLOR_SEVERIDAD[ev.severity],
-            fillOpacity: 0.28,
-            weight: 2,
-          }}
+          position={[ev.lat, ev.lon]}
+          icon={iconoEvento(ev.severity, ev.severity === 'critical')}
         >
-          <Tooltip direction="top" offset={[0, -8]}>
+          <Tooltip direction="top" offset={[0, -10]}>
             {eventKindLabel(ev.kind)}
-            {ev.value !== null ? ` · ${ev.value.toFixed(2)} ${eventValueUnit(ev.kind)}`.trimEnd() : ''}
+            {ev.value !== null
+              ? ` · ${ev.value.toFixed(2)} ${eventValueUnit(ev.kind)}`.trimEnd()
+              : ''}
           </Tooltip>
           <Popup>
             <strong>{eventKindLabel(ev.kind)}</strong>
             <br />
             {ev.value !== null
               ? `${ev.value.toFixed(2)} ${eventValueUnit(ev.kind)}`.trimEnd()
-              : 'sin valor'}
+              : 'sin valor medido'}
             <br />
             {formatTime(new Date(ev.ts).toISOString())}
           </Popup>
-        </CircleMarker>
+        </Marker>
       ))}
 
-      {unidades.map((u) => {
+      {lista.map((u) => {
+        const pos = posicionActual(u, ahora);
         const callada = ahora - u.recibidoEn > SIN_DATOS_MS;
+
         return (
           <div key={u.nodeId}>
             {u.rastro.length > 1 ? (
-              <Polyline
-                positions={u.rastro}
-                pathOptions={{
-                  color: '#49c79c',
-                  weight: 3,
-                  opacity: callada ? 0.25 : 0.65,
-                  dashArray: '5 6',
-                }}
-              />
+              <>
+                {/* Dos trazos: uno ancho y tenue como estela, otro fino
+                    encima, para que el rastro se lea sobre el mapa. */}
+                <Polyline
+                  positions={u.rastro}
+                  pathOptions={{ color: '#49c79c', weight: 8, opacity: callada ? 0.06 : 0.13 }}
+                />
+                <Polyline
+                  positions={u.rastro}
+                  pathOptions={{
+                    color: '#49c79c',
+                    weight: 2,
+                    opacity: callada ? 0.25 : 0.7,
+                    dashArray: '4 7',
+                  }}
+                />
+              </>
             ) : null}
 
-            <CircleMarker
-              center={[u.lat, u.lon]}
-              radius={9}
-              pathOptions={{
-                color: '#0b0e0d',
-                fillColor: callada ? '#6e7681' : '#49c79c',
-                fillOpacity: 1,
-                weight: 2,
-              }}
+            <Marker
+              position={pos}
+              icon={iconoUnidad({
+                rumbo: u.rumbo,
+                callada,
+                alerta: u.alerta,
+                etiqueta: u.unitId,
+              })}
+              zIndexOffset={500}
             >
-              <Tooltip direction="top" offset={[0, -9]} permanent>
-                {u.unitId}
-              </Tooltip>
               <Popup>
                 <strong>{u.nodeId}</strong>
                 <br />
@@ -198,7 +289,7 @@ export default function LiveMapLayers() {
                   ? `Sin datos desde ${formatTime(new Date(u.recibidoEn).toISOString())}`
                   : `Último dato ${formatTime(new Date(u.recibidoEn).toISOString())}`}
               </Popup>
-            </CircleMarker>
+            </Marker>
           </div>
         );
       })}
