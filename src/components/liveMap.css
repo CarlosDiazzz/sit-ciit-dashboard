@@ -15,9 +15,12 @@
 .unit-marker__icon {
   width: 22px;
   height: 54px;
-  /* El giro es en torno a la locomotora, no al centro del convoy: los
-     vagones barren detrás como en una vía real, en vez de orbitar. */
-  transform-origin: 50% 11px;
+  /* El giro va en el centro del convoy. Con el eje en la locomotora la
+     cola daba un latigazo en cada cambio de rumbo: cuanto más lejos
+     está un punto del eje, más recorrido barre por el mismo ángulo, y
+     el último vagón quedaba a 33 px. Desde el centro, morro y cola se
+     reparten el giro y el conjunto pivota como un tren largo. */
+  transform-origin: 50% 27px;
   transition: transform 700ms cubic-bezier(0.33, 1, 0.68, 1);
   /* Doble sombra: una corta y densa que despega la locomotora de la
      tesela, y otra larga y difusa que la asienta sobre el terreno. Con
@@ -49,8 +52,9 @@
   content: '';
   position: absolute;
   /* Rodea la locomotora, que es donde va el nodo, no el convoy entero:
-     un halo que abarcara los vagones taparía media vía. */
-  top: -6px;
+     un halo que abarcara los vagones taparía media vía. La locomotora
+     ocupa los primeros 19 px del lienzo. */
+  top: -2px;
   left: -6px;
   width: 34px;
   height: 34px;
@@ -148,7 +152,7 @@
 /* Punto que marca cuál de los dos es la fuente activa de la unidad. */
 .unit-marker__source {
   position: absolute;
-  top: -2px;
+  top: 1px;
   right: -1px;
   width: 8px;
   height: 8px;

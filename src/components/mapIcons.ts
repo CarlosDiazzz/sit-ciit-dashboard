@@ -41,6 +41,11 @@ function svgTren(relleno: string, borde: string, id: string): string {
         </linearGradient>
       </defs>
 
+      <!-- El convoy va de 1.4 a 37.8, cuyo centro (19.6) no es el del
+           lienzo (22). Se desplaza para que el centro del dibujo caiga
+           en el eje de giro: si no, el conjunto se descentra al rotar. -->
+      <g transform="translate(0 2.4)">
+
       <!-- Enganches: las barras que unen los cuerpos. Sin ellas los
            vagones parecen cajas sueltas siguiendo a la máquina. -->
       <g stroke="${borde}" stroke-width="1.6" stroke-linecap="round" opacity="0.9">
@@ -79,6 +84,8 @@ function svgTren(relleno: string, borde: string, id: string): string {
       <!-- Faro delantero. -->
       <circle cx="9" cy="4.5" r="1.4" fill="#ffe9a8" stroke="${borde}"
               stroke-width="0.8"/>
+
+      </g>
     </svg>`;
 }
 
@@ -163,9 +170,11 @@ function construirIconoUnidad({
         ${esFuente ? '<span class="unit-marker__source" title="Fuente activa"></span>' : ''}
       </div>`,
     iconSize: [22, 54],
-    // El ancla va en la locomotora (arriba), no en el centro del
-    // convoy: la posición GPS es la del nodo, que viaja en la máquina.
-    iconAnchor: [11, 11],
+    // El ancla coincide con el eje de giro del CSS (centro del convoy).
+    // Los dos tienen que moverse juntos: Leaflet clava este punto en la
+    // coordenada y el CSS gira alrededor del suyo, así que si difieren
+    // el convoy se desplaza al rotar.
+    iconAnchor: [11, 27],
   });
 }
 
