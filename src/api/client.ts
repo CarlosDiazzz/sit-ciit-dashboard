@@ -53,6 +53,22 @@ export class ApiError extends Error {
 }
 
 const TOKEN_KEY = 'sitciit.token';
+const USER_KEY = 'sitciit.user';
+
+/** Correo de la sesión, que el backend usa para identificar al emisor de
+ *  un comando mientras no exista el login con JWT (Fase 6). */
+function getUserEmail(): string | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && 'email' in parsed
+      ? String((parsed as { email: unknown }).email)
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 export function getToken(): string | null {
   try {
@@ -75,6 +91,7 @@ export function setToken(token: string | null): void {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
+  const email = getUserEmail();
 
   let response: Response;
   try {
@@ -83,6 +100,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // Puente hasta el JWT de la Fase 6: el backend resuelve el rol
+        // consultando este correo en la tabla users, no confía en el
+        // cliente para declararlo.
+        ...(email ? { 'x-user-email': email } : {}),
         ...init?.headers,
       },
     });
