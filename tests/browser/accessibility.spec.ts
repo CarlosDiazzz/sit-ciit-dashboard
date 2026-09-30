@@ -31,10 +31,13 @@ test('accessibility preferences, English navigation and account controls', async
   await expect(page.getByRole('heading', { name: 'Ruta', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Switch to English' }).click();
   await expect(page.getByRole('heading', { name: 'Route', exact: true })).toBeVisible();
-  for (const [route, heading] of [['/conectividad', 'Connectivity'], ['/unidad', 'Node monitoring'], ['/eventos', 'Events'], ['/auditoria', 'Administrative audit'], ['/comandos', 'Commands'], ['/bitacora', 'Logbook'], ['/nodos', 'Nodes'], ['/historial-nodos', 'Node history'], ['/avisos', 'My notifications'], ['/gestion', 'Logistics management']]) {
+  for (const [route, heading] of [['/conectividad', 'Connectivity'], ['/unidad', 'Node monitoring'], ['/eventos', 'Events'], ['/auditoria', 'Administrative audit'], ['/comandos', 'Commands'], ['/bitacora', 'Logbook'], ['/nodos', 'Nodes'], ['/historial-nodos', 'Node history'], ['/gestion', 'Logistics management']]) {
     await page.goto(route);
     await expect(page.getByRole('heading', { name: heading, exact: true }).first()).toBeVisible();
   }
+  await expect(page.getByRole('link', { name: /My notifications/ })).toHaveCount(0);
+  await page.goto('/avisos');
+  await expect(page).toHaveURL(/\/gestion$/);
   await page.goto('/gestion/companies');
   await page.getByRole('button', { name: 'New record', exact: true }).click();
   await expect(page.getByLabel('Code / reference', { exact: false })).toBeVisible();

@@ -16,8 +16,7 @@ export default function RequireAuth() {
 
   if (
     user.role === "cliente" &&
-    !pathname.startsWith("/gestion") &&
-    pathname !== "/avisos"
+    !pathname.startsWith("/gestion")
   )
     return <Navigate to="/gestion" replace />;
   return <Outlet />;

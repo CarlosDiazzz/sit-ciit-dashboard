@@ -14,7 +14,6 @@ import Eventos from "./pages/Eventos";
 import Comandos from "./pages/Comandos";
 import Bitacora from "./pages/Bitacora";
 import Login from "./pages/Login";
-import Avisos from "./pages/Avisos";
 import Gestion from "./pages/Gestion";
 import Auditoria from "./pages/Auditoria";
 import HistorialNodos from "./pages/HistorialNodos";
@@ -78,7 +77,7 @@ export default function App() {
               <Route path="/gestion" element={<Gestion />} />
               <Route path="/gestion/:resource" element={<Gestion />} />
               <Route path="/auditoria" element={<Auditoria />} />
-              <Route path="/avisos" element={<Avisos />} />
+              <Route path="/avisos" element={<Navigate to="/gestion" replace />} />
             </Route>
           </Route>
         </Routes>

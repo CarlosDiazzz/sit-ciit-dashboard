@@ -166,8 +166,6 @@ export const api = {
     if (params.cursor) q.set("cursor", params.cursor);
     return request<NodeHistoryPage>(`/node-history?${q}`);
   },
-  managementMyNotifications: () =>
-    request<any[]>("/management/my-notifications"),
   managementApply: (id: string, node_id: string) =>
     request<any>(`/management/monitoring-profiles/${id}/apply`, {
       method: "POST",

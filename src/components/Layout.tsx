@@ -189,15 +189,6 @@ export default function Layout() {
       theme: "control",
       end: false,
     });
-  nav.push({
-    to: "/avisos",
-    label: "Mis avisos",
-    deity: "Alertas",
-    domain: "Incidentes de tu operación",
-    icon: ShieldAlert,
-    theme: "tezcatlipoca",
-    end: false,
-  });
   if (user?.role === 'auditor') nav.push(AUDITORIA_NAV);
   const current =
     [...nav].sort((a, b) => b.to.length - a.to.length).find((item) =>
