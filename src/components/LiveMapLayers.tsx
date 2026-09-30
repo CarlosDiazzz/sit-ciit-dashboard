@@ -19,8 +19,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Marker, Polyline, Popup, Tooltip } from 'react-leaflet';
 
+import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
-import type { EventBroadcast, TelemetryBroadcast } from '../api/types';
+import type { EventBroadcast, TelemetryBroadcast, TelemetryPoint } from '../api/types';
 import type { EventSeverity } from '../contract/contract';
 import { eventKindLabel, eventValueUnit } from '../lib/labels';
 import { formatTime } from '../lib/format';
@@ -136,6 +137,86 @@ export default function LiveMapLayers() {
     return () => {
       vivo = false;
       cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  // Última posición real conocida al abrir el mapa: sin esto, una unidad
+  // que no estuviera publicando justo en este instante no aparecía en
+  // absoluto (ni marcador ni si está activa), aunque tuviera GPS real
+  // guardado de hace un momento. Se dibuja "callada" si corresponde —
+  // el componente ya distingue eso, solo hacía falta sembrar el dato.
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      let unidadesReales;
+      try {
+        unidadesReales = await api.listUnits();
+      } catch {
+        return; // sin unidades no hay nada que sembrar; se sigue en vivo
+      }
+
+      const seed: Record<string, Unidad> = {};
+
+      for (const unidad of unidadesReales) {
+        if (cancelled) return;
+        let rows: TelemetryPoint[];
+        try {
+          rows = await api.listTelemetry(unidad.unitCode);
+        } catch {
+          continue;
+        }
+
+        const porNodo = new Map<string, TelemetryPoint[]>();
+        for (const row of rows) {
+          if (row.gpsLat == null || row.gpsLon == null) continue;
+          const lista = porNodo.get(row.nodeCode) ?? [];
+          lista.push(row); // rows viene más reciente primero
+          porNodo.set(row.nodeCode, lista);
+        }
+
+        for (const [nodeCode, nodeRows] of porNodo) {
+          const ultimo = nodeRows[0]!;
+          const previo = nodeRows[1];
+          const destino: [number, number] = [ultimo.gpsLat!, ultimo.gpsLon!];
+          const posPrevia: [number, number] | null =
+            previo && previo.gpsLat != null && previo.gpsLon != null
+              ? [previo.gpsLat, previo.gpsLon]
+              : null;
+
+          seed[nodeCode] = {
+            nodeId: nodeCode,
+            unitId: unidad.unitCode,
+            role: ultimo.role,
+            destino,
+            origen: destino, // sin animación al sembrar: ya está "ahí"
+            desde: Date.now(),
+            rumbo:
+              posPrevia && metros(posPrevia, destino) >= RUMBO_MIN_M
+                ? rumboEntre(posPrevia, destino)
+                : null,
+            speedKmh: ultimo.gpsSpeedMs != null ? ultimo.gpsSpeedMs * 3.6 : null,
+            recibidoEn: new Date(ultimo.receivedAt).getTime(),
+            // Orden cronológico para el rastro, igual que como se va
+            // armando en vivo (más viejo primero).
+            rastro: [...nodeRows]
+              .reverse()
+              .slice(-RASTRO_MAX)
+              .map((r): [number, number] => [r.gpsLat!, r.gpsLon!]),
+            alerta: null,
+          };
+        }
+      }
+
+      if (!cancelled && Object.keys(seed).length > 0) {
+        // ...prev al final: si ya llegó algo real por socket mientras se
+        // cargaba la historia, ese dato en vivo gana.
+        setUnidades((prev) => ({ ...seed, ...prev }));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
   }, []);
 
