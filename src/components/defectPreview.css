@@ -1,0 +1,109 @@
+/* Vista previa dentro del popup del mapa.
+ *
+ * Los colores van fijos y no por tokens: Leaflet pinta el popup sobre
+ * fondo claro en los dos temas, asi que un token de texto claro seria
+ * ilegible aqui.
+ */
+
+.dpreview {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #dfe3de;
+}
+
+.dpreview__title {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b756e;
+}
+
+.dpreview__list {
+  margin: 0 0 5px;
+  padding: 0;
+  list-style: none;
+}
+
+.dpreview__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 5px;
+  margin: 0 -5px;
+  border-radius: 4px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 11.5px;
+}
+
+.dpreview__row:hover {
+  background: rgba(243, 154, 72, 0.14);
+  text-decoration: none;
+}
+
+.dpreview__value {
+  font-weight: 700;
+  color: #1b221e;
+  font-variant-numeric: tabular-nums;
+  min-width: 58px;
+}
+
+.dpreview__when {
+  flex: 1;
+  color: #6b756e;
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+}
+
+/* Marca del veredicto: distingue lo ya revisado de lo pendiente. */
+.dpreview__verdict {
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dpreview__verdict--confirmed {
+  background: rgba(200, 60, 55, 0.16);
+  color: #a33b36;
+}
+
+.dpreview__verdict--false_alarm {
+  background: rgba(60, 150, 90, 0.16);
+  color: #2f7a4d;
+}
+
+.dpreview__verdict--unclear {
+  background: rgba(190, 150, 40, 0.16);
+  color: #8a6a1c;
+}
+
+.dpreview__more {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  color: #8a938c;
+}
+
+.dpreview__cta {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #b96a1f;
+  text-decoration: none;
+}
+
+.dpreview__cta:hover {
+  text-decoration: underline;
+}
+
+.dpreview__note {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #dfe3de;
+  font-size: 11px;
+  color: #6b756e;
+}

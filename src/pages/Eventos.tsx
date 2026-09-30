@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
@@ -25,7 +25,11 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
   const [filter, setFilter] = useState('all');
   const [unit, setUnit] = useState('');
   const [kind, setKind] = useState('all');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // ?evento=<id> abre esa deteccion ya seleccionada. Lo usa el enlace
+  // desde un defecto del mapa: sin esto el operador aterrizaba en la
+  // lista y tenia que buscar cual de cien estaba revisando.
+  const [params] = useSearchParams();
+  const [selectedId, setSelectedId] = useState<string | null>(params.get('evento'));
   /** Veredictos dados en esta sesion, superpuestos a la lista cargada:
    *  evita recargarla entera y que el operador pierda su posicion. */
   const [veredictos, setVeredictos] = useState<
@@ -36,7 +40,13 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
   const sorted = prioritizeEvents(events);
   const pending = events.filter(e => !e.acknowledgedAt);
   const visible = sorted.filter(e => (filter === 'all' || (filter === 'pending' ? !e.acknowledgedAt : e.severity === filter)) && (!unit || e.unitId === unit) && (kind === 'all' || (kind === 'movement' ? ['impact', 'rollover', 'hard_brake', 'curve_overspeed', 'dynamic_impact', 'track_irregularity'].includes(e.kind) : e.kind === kind)));
-  const selected = visible.find(e => e.id === selectedId) ?? visible[0];
+  // Se busca primero en TODOS los eventos y no solo en los visibles: al
+  // llegar desde un defecto del mapa, un filtro activo lo ocultaria y se
+  // mostraria otro distinto sin avisar.
+  const selected =
+    (selectedId ? events.find(e => e.id === selectedId) : undefined) ??
+    visible.find(e => e.id === selectedId) ??
+    visible[0];
   const critical = pending.filter(e => e.severity === 'critical').length;
   return <>
     <div className="dss-metrics">
