@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { PagedRows } from '../components/Pagination';
 
 import { ApiError, api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
@@ -185,6 +186,7 @@ export default function Comandos() {
         }}
       >
         {(lista) => (
+          <PagedRows items={lista} label="Seguimiento de comandos">{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -199,7 +201,7 @@ export default function Comandos() {
                 </tr>
               </thead>
               <tbody>
-                {lista.map((cmd) => {
+                {rows.map((cmd) => {
                   const avance = avances[cmd.cmdId];
                   const estado = avance?.status ?? cmd.status;
                   const etiqueta =
@@ -226,6 +228,7 @@ export default function Comandos() {
               </tbody>
             </table>
           </div>
+          )}</PagedRows>
         )}
       </AsyncBoundary>
     </>

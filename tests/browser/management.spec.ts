@@ -234,6 +234,7 @@ test("gestión completa desde formularios reales, auditoría y portal por empres
   await expect(
     page.getByText("Inspección realizada", { exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Cerrar ventana" }).click();
   await page.getByRole("button", { name: "Editar", exact: true }).click();
   await page
     .getByLabel("Estado", { exact: true })

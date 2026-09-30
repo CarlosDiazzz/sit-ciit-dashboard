@@ -150,10 +150,10 @@ export const api = {
   managementResources: () => request<any[]>("/management/resources"),
   managementList: (
     resource: string,
-    params: { page: number; search?: string; archived?: boolean },
+    params: { page: number; limit?: number; search?: string; archived?: boolean },
   ) =>
     request<any>(
-      `/management/${resource}?${new URLSearchParams({ page: String(params.page), search: params.search ?? "", archived: String(params.archived ?? false) })}`,
+      `/management/${resource}?${new URLSearchParams({ page: String(params.page), limit: String(params.limit ?? 25), search: params.search ?? "", archived: String(params.archived ?? false) })}`,
     ),
   managementOptions: (resource: string) =>
     request<{ id: string; label: string }[]>(`/management/options/${resource}`),
@@ -178,9 +178,9 @@ export const api = {
     }),
   managementReport: (id: string) =>
     request<any>(`/management/reports/trips/${id}`),
-  managementAudit: (params: { page: number; search?: string }) =>
+  managementAudit: (params: { page: number; limit?: number; search?: string }) =>
     request<any>(
-      `/management/audit?${new URLSearchParams({ page: String(params.page), search: params.search ?? "" })}`,
+      `/management/audit?${new URLSearchParams({ page: String(params.page), limit: String(params.limit ?? 25), search: params.search ?? "" })}`,
     ),
   managementDeliveries: () =>
     request<any[]>("/management/notification-deliveries"),

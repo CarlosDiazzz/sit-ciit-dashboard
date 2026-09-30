@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { UserRound } from 'lucide-react';
+import { Pagination, PagedRows } from '../components/Pagination';
 import { api } from "../api/client";
 import { useApi } from "../api/useApi";
 import "./gestion.css";
 import "./tables.css";
 export default function Auditoria() {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
   const [filter, setFilter] = useState("");
   const audit = useApi<any>(
-    () => api.managementAudit({ page, search: filter }),
-    [page, filter],
+    () => api.managementAudit({ page, limit, search: filter }),
+    [page, limit, filter],
   );
   const deliveries = useApi<any[]>(() => api.managementDeliveries(), []);
   return (
@@ -35,8 +38,8 @@ export default function Auditoria() {
       {audit.loading ? (
         <p>Cargando…</p>
       ) : audit.error ? (
-        <p role="alert">{audit.error.userMessage}</p>
-      ) : (
+        <p role="alert">{audit.error.userMessage} <button className="btn" onClick={audit.reload}>Reintentar</button></p>
+      ) : !audit.data?.items.length ? <div className="workspace-empty"><strong>No hay cambios para esta búsqueda.</strong></div> : (
         <div className="table-wrap">
           <table className="table">
             <thead>
@@ -52,7 +55,7 @@ export default function Auditoria() {
               {audit.data?.items.map((r: any) => (
                 <tr key={r.id}>
                   <td>{new Date(r.created_at).toLocaleString("es-MX")}</td>
-                  <td>{r.actor_email}</td>
+                  <td><span className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={17} /></span>{r.actor_email ?? 'Sistema'}</span></td>
                   <td>{r.resource}</td>
                   <td>
                     {(
@@ -82,29 +85,14 @@ export default function Auditoria() {
           </table>
         </div>
       )}
-      <div className="management-toolbar">
-        <button
-          className="btn"
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-        >
-          Anterior
-        </button>
-        <span>Página {page}</span>
-        <button
-          className="btn"
-          disabled={page * 25 >= (audit.data?.total ?? 0)}
-          onClick={() => setPage(page + 1)}
-        >
-          Siguiente
-        </button>
-      </div>
+      <Pagination page={page} pageSize={limit} total={audit.data?.total ?? 0} disabled={audit.loading || !!audit.error} onPage={setPage} onPageSize={n => { setLimit(n); setPage(1); }} />
       <h2>Historial de notificaciones</h2>
       {deliveries.error ? (
         <p role="alert">{deliveries.error.userMessage}</p>
       ) : deliveries.loading ? (
         <p>Cargando…</p>
       ) : deliveries.data?.length ? (
+        <PagedRows items={deliveries.data} label="Historial de notificaciones">{rows => (
         <div className="table-wrap">
           <table className="table">
             <thead>
@@ -116,7 +104,7 @@ export default function Auditoria() {
               </tr>
             </thead>
             <tbody>
-              {deliveries.data.map((r) => (
+              {rows.map((r) => (
                 <tr key={r.id}>
                   <td>{new Date(r.created_at).toLocaleString("es-MX")}</td>
                   <td>{r.name}</td>
@@ -127,6 +115,7 @@ export default function Auditoria() {
             </tbody>
           </table>
         </div>
+        )}</PagedRows>
       ) : (
         <p>No hay notificaciones registradas.</p>
       )}

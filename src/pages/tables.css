@@ -16,6 +16,18 @@
   font-size: 13px;
 }
 
+.table thead th { padding:14px 18px; font-size:10px; letter-spacing:.75px; background:var(--surface-2); }
+.table tbody td { padding:14px 18px; line-height:1.5; }
+.table tbody tr { transition:background 120ms ease; }
+.table tbody tr:nth-child(even) { background:color-mix(in srgb,var(--surface-2) 30%,transparent); }
+.table tbody tr:hover { background:var(--accent-bg); }
+.table tbody tr:focus-within { background:var(--accent-bg); }
+.table td:first-child { color:var(--text-strong); font-weight:500; }
+.table td .btn { display:inline-flex; align-items:center; gap:6px; min-height:32px; font-size:11px; padding:6px 9px; }
+.table td select { font:inherit; padding:6px 8px; border:1px solid var(--border-strong); border-radius:6px; background:var(--surface); color:var(--text); }
+.table td small { color:var(--text-dim); }
+.table details summary { cursor:pointer; color:var(--accent); }
+
 .table thead th {
   position: sticky;
   top: 0;
