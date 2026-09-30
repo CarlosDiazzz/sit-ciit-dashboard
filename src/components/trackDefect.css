@@ -1,0 +1,258 @@
+/* Defectos de via: marcador y ficha en el mapa. */
+
+.defect-marker {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Solo lo confirmado late, y despacio: es mantenimiento pendiente, no
+   una emergencia. Si todo se moviera, nada destacaria. */
+.defect-marker--confirmado {
+  animation: defect-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes defect-breathe {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+/* Cuantas unidades lo vieron, junto al triangulo: es el dato que
+   sostiene la confirmacion. */
+.defect-marker__count {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--c, #f39a48);
+  border: 1.5px solid #0b0e0d;
+  color: #0b0e0d;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 10px;
+  text-align: center;
+}
+
+/* --- ficha --- */
+
+.defect-popup {
+  min-width: 210px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.defect-popup__tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.defect-popup__tag--confirmado {
+  background: rgba(243, 154, 72, 0.22);
+  color: #b96a1f;
+}
+
+.defect-popup__tag--probable {
+  background: rgba(217, 164, 65, 0.18);
+  color: #8a6a1c;
+}
+
+.defect-popup__tag--indicio {
+  background: rgba(139, 148, 158, 0.2);
+  color: #5d6a63;
+}
+
+.defect-popup__reason {
+  margin: 6px 0 8px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(243, 154, 72, 0.5);
+  color: #3d4640;
+}
+
+.defect-popup__stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px 10px;
+  margin: 0 0 8px;
+}
+
+.defect-popup__stats dt {
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b756e;
+}
+
+.defect-popup__stats dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1b221e;
+  font-variant-numeric: tabular-nums;
+}
+
+.defect-popup__seen {
+  margin: 0;
+  font-size: 10.5px;
+  color: #6b756e;
+}
+
+/* --- resumen en el panel lateral --- */
+
+.defects-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-bottom: var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+
+.defects-panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.defects-panel__title {
+  margin: 0;
+  font-size: 14px;
+}
+
+.defects-panel__window {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* La cifra de confirmados domina: es la conclusion, el resto es
+   contexto. */
+.defects-tally {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.defects-tally__main {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+}
+
+.defects-tally__main strong {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--warning);
+  font-variant-numeric: tabular-nums;
+}
+
+.defects-tally__main span {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  max-width: 9ch;
+  line-height: 1.3;
+}
+
+.defects-tally__side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.defects-tally__side b {
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.defects-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.defect-row {
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.defect-row--confirmado {
+  border-left-color: var(--warning);
+}
+
+.defect-row--probable {
+  border-left-color: var(--border-strong);
+}
+
+.defect-row__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.defect-row__kind {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.defect-row__units {
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.defect-row__reason {
+  margin: 3px 0 2px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.defect-row__meta {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.defects-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 11px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.defects-panel__note {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.defects-panel__note--error {
+  color: var(--critical);
+}

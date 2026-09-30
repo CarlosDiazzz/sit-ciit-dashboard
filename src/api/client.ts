@@ -15,6 +15,7 @@ import type {
   EventRecord,
   EventVerdict,
   EventWindow,
+  TrackDefectsResponse,
   IssueCommandRequest,
   LoginResponse,
   ManagedUser,
@@ -205,6 +206,10 @@ export const api = {
     request<TelemetryPoint[]>(
       `/telemetry?unitId=${encodeURIComponent(unitCode)}`,
     ),
+
+  /** Defectos de via confirmados por repeticion entre unidades. */
+  trackDefects: (days = 90) =>
+    request<TrackDefectsResponse>(`/track-defects?days=${days}`),
 
   listEvents: (params?: { unitId?: string; limit?: number }) => {
     const q = new URLSearchParams();

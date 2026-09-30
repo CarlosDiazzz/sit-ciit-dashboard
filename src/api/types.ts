@@ -364,3 +364,34 @@ export interface EventWindow {
   windowSeconds: number;
   samples: EventWindowSample[];
 }
+
+/** Nivel de confianza de un defecto agrupado. Lo decide la
+ *  independencia de las observaciones, no el numero de detecciones:
+ *  tres unidades distintas confirman, una sola no. */
+export type DefectConfidence = 'confirmado' | 'probable' | 'indicio';
+
+export interface TrackDefect {
+  lat: number;
+  lon: number;
+  /** Radio que cubre las detecciones agrupadas, en metros. Refleja la
+   *  incertidumbre del GPS, no el tamaño del defecto. */
+  radiusM: number;
+  kind: AnyEventKind;
+  confidence: DefectConfidence;
+  /** Por que se le asigno ese nivel, en una frase. */
+  reason: string;
+  distinctUnits: number;
+  distinctNodes: number;
+  passes: number;
+  detections: number;
+  averageValue: number | null;
+  firstSeen: string;
+  lastSeen: string;
+  eventIds: string[];
+}
+
+export interface TrackDefectsResponse {
+  windowDays: number;
+  analyzed: number;
+  defects: TrackDefect[];
+}
