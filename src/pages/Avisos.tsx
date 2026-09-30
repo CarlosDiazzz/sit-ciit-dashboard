@@ -1,4 +1,5 @@
 import { t as translate, locale } from '../accessibility/i18n';
+import { RefreshCw } from 'lucide-react';
 import { api } from "../api/client";
 import PageBreadcrumbs from "../components/PageBreadcrumbs";
 import { useApi } from "../api/useApi";
@@ -20,8 +21,17 @@ export default function Avisos() {
           <h1>{translate("Mis avisos")}</h1>
           <p>{translate("Notificaciones de incidentes dentro de tu ámbito de acceso.")}</p>
         </div>
-        <PageBreadcrumbs current="Mis avisos" />
-        <button className="btn" onClick={notices.reload}>{translate("Actualizar")}</button>
+        <div className="page-head-actions">
+          <PageBreadcrumbs current="Mis avisos" />
+          <button
+            className="btn page-refresh-btn"
+            onClick={notices.reload}
+            disabled={notices.loading}
+          >
+            <RefreshCw size={15} aria-hidden="true" />
+            {translate("Actualizar")}
+          </button>
+        </div>
       </div>
       {notices.loading ? (
         <p role="status">{translate("Cargando avisos…")}</p>
