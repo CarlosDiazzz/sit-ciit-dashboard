@@ -7,7 +7,7 @@ import { useApi } from '../api/useApi';
 import type { EventRecord } from '../api/types';
 import { AsyncBoundary } from '../components/States';
 import { LateBadge, SeverityBadge } from '../components/Badges';
-import { eventKindLabel } from '../lib/labels';
+import { eventKindLabel, eventValueUnit } from '../lib/labels';
 import { formatDateTime } from '../lib/format';
 import './tables.css';
 
@@ -61,7 +61,11 @@ export default function Eventos() {
                       {formatDateTime(ev.ts)}{' '}
                       <LateBadge ts={ev.ts} receivedAt={ev.receivedAt} />
                     </td>
-                    <td className="tabular">{ev.value ?? '—'}</td>
+                    <td className="tabular">
+                      {ev.value === null
+                        ? '—'
+                        : `${ev.value.toFixed(2)} ${eventValueUnit(ev.kind)}`.trim()}
+                    </td>
                     <td className="tabular">{ev.threshold ?? '—'}</td>
                     <td className="tabular">
                       {ev.acknowledgedAt ? formatDateTime(ev.acknowledgedAt) : '—'}
