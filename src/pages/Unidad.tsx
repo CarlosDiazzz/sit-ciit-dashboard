@@ -42,6 +42,36 @@ const ROLE_LABEL = { primary: 'Primario', backup: 'Respaldo' } as const;
  *  de historia, suficiente para ver un impacto sin saturar el render. */
 const MAX_POINTS = 60;
 
+/** Un salto mayor a esto entre dos muestras es una interrupcion, no el
+ *  ritmo normal de publicacion (1 Hz). Se corta la linea ahi: unir los
+ *  extremos dibujaria una transicion suave donde en realidad no hubo
+ *  datos, que es afirmar algo que no se midio. */
+const HUECO_MS = 10_000;
+
+/** Inserta un punto vacio donde hay una interrupcion, para que las
+ *  series se corten en vez de cruzar el hueco. */
+function marcarHuecos(puntos: ChartPoint[]): ChartPoint[] {
+  const salida: ChartPoint[] = [];
+  for (let i = 0; i < puntos.length; i += 1) {
+    const p = puntos[i]!;
+    const anterior = puntos[i - 1];
+    if (anterior && p.ts - anterior.ts > HUECO_MS) {
+      salida.push({
+        ts: anterior.ts + 1,
+        time: '',
+        x: null,
+        y: null,
+        z: null,
+        magnitude: null,
+        speedKmh: null,
+        rotacion: null,
+      });
+    }
+    salida.push(p);
+  }
+  return salida;
+}
+
 interface ChartPoint {
   ts: number;
   time: string;
@@ -161,7 +191,7 @@ export default function Unidad() {
           if (selectedRef.current !== nodeId) return; // se cambió de nuevo mientras cargaba
           const propias = rows.filter((r) => r.nodeCode === nodeId);
           if (propias.length === 0) return;
-          setPoints(propias.slice(0, MAX_POINTS).reverse().map(toChartPoint));
+          setPoints(marcarHuecos(propias.slice(0, MAX_POINTS).reverse().map(toChartPoint)));
         } catch {
           // Sin historia para este nodo no debe romper la selección —
           // se sigue esperando datos en vivo.
@@ -206,9 +236,29 @@ export default function Unidad() {
       }
     }
 
-    setPoints((prev) =>
-      [
+    setPoints((prev) => {
+      const ultimo = prev[prev.length - 1];
+      // Si el nodo estuvo callado (modo avion, tunel), se corta la
+      // linea en vez de unir los extremos.
+      const corte: ChartPoint[] =
+        ultimo && evt.ts - ultimo.ts > HUECO_MS
+          ? [
+              {
+                ts: ultimo.ts + 1,
+                time: '',
+                x: null,
+                y: null,
+                z: null,
+                magnitude: null,
+                speedKmh: null,
+                rotacion: null,
+              },
+            ]
+          : [];
+
+      return [
         ...prev,
+        ...corte,
         {
           ts: evt.ts,
           time: new Date(evt.ts).toLocaleTimeString('es-MX', { hour12: false }),
@@ -219,8 +269,8 @@ export default function Unidad() {
           speedKmh,
           rotacion: g ? Math.sqrt(g.x * g.x + g.y * g.y + g.z * g.z) : null,
         },
-      ].slice(-MAX_POINTS),
-    );
+      ].slice(-MAX_POINTS);
+    });
   }, []);
 
   useSocketEvent('telemetry', onTelemetry);
@@ -368,9 +418,9 @@ export default function Unidad() {
                   <YAxis domain={['auto', 'auto']} {...ejeComun} />
                   <Tooltip {...tooltipComun} />
                   <Legend wrapperStyle={{ fontSize: 12, color: colors.textSecondary }} />
-                  <Line type="monotone" dataKey="x" stroke={colors.seriesX} dot={false} isAnimationActive={false} connectNulls />
-                  <Line type="monotone" dataKey="y" stroke={colors.seriesY} dot={false} isAnimationActive={false} connectNulls />
-                  <Line type="monotone" dataKey="z" stroke={colors.seriesZ} dot={false} isAnimationActive={false} connectNulls />
+                  <Line type="monotone" dataKey="x" stroke={colors.seriesX} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="y" stroke={colors.seriesY} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="z" stroke={colors.seriesZ} dot={false} isAnimationActive={false} />
                   {/* |a| es la derivada de las tres series, no una cuarta
                       categoría: tinta neutra y trazo punteado. */}
                   <Line
@@ -381,7 +431,6 @@ export default function Unidad() {
                     strokeDasharray="4 3"
                     dot={false}
                     isAnimationActive={false}
-                    connectNulls
                   />
                 </LineChart>
               </ResponsiveContainer>

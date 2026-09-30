@@ -34,14 +34,14 @@ export default function App() {
     <SessionProvider>
       <BrowserRouter>
         <Routes>
-          {/* Todas las vistas comparten el armazón (barra lateral +
-              encabezado); el login también, para poder volver atrás. */}
-          <Route element={<Layout />}>
-            <Route path="/login" element={<Login />} />
+          {/* El acceso vive fuera del centro de control: la navegación
+              operativa solo se monta después de validar la sesión. */}
+          <Route path="/login" element={<Login />} />
 
-            {/* Sin sesión → a /login. Con sesión de cliente → mensaje de
-                acceso restringido, no las pantallas operativas. */}
-            <Route element={<RequireAuth />}>
+          {/* Sin sesión → a /login. Con sesión de cliente → mensaje de
+              acceso restringido, no las pantallas operativas. */}
+          <Route element={<RequireAuth />}>
+            <Route element={<Layout />}>
               <Route path="/" element={<Mapa />} />
               <Route path="/conectividad" element={<Conectividad />} />
               <Route path="/unidad" element={<Unidad />} />

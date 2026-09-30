@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <g fill="none" stroke="white" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M24 0 48 24 24 48 0 24Z M24 8 40 24 24 40 8 24Z M24 17 31 24 24 31 17 24Z"/>
+    <path d="M72 48 96 72 72 96 48 72Z M72 56 88 72 72 88 56 72Z M72 65 79 72 72 79 65 72Z"/>
+    <path d="M72 0 96 24 72 48 48 24Z M72 8 88 24 72 40 56 24Z"/>
+    <path d="M24 48 48 72 24 96 0 72Z M24 56 40 72 24 88 8 72Z"/>
+    <path d="M0 0 12 12 M84 12 96 0 M0 48 12 36 M36 60 48 48 M48 48 60 36 M84 60 96 48 M0 96 12 84 M36 84 48 96"/>
+  </g>
+</svg>
