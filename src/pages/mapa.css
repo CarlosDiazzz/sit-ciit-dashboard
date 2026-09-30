@@ -9,6 +9,16 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+
+.map-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.16);
 }
 
 .map {
@@ -20,7 +30,7 @@
 /* Las teselas de OSM son claras; se atenúan un poco para que no
  * deslumbren junto a la interfaz oscura, sin perder legibilidad. */
 .map .leaflet-tile-pane {
-  filter: brightness(0.82) saturate(0.85);
+  filter: brightness(0.72) saturate(0.72) sepia(0.12) hue-rotate(96deg);
 }
 
 .map .leaflet-control-attribution {
@@ -39,7 +49,18 @@
   padding: var(--s4);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background:
+    linear-gradient(180deg, rgba(var(--accent-rgb), 0.1), transparent 110px),
+    var(--surface);
+  box-shadow: var(--shadow-card);
+  border-top: 2px solid var(--accent);
+}
+
+.map-side h2::after {
+  content: ' · QUETZALCÓATL';
+  color: var(--accent);
+  font-size: 9px;
+  letter-spacing: 0.12em;
 }
 
 .unit-strip {
@@ -61,6 +82,12 @@
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   font-size: 13px;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.unit-strip li:hover {
+  border-color: var(--accent-border);
+  transform: translateX(2px);
 }
 
 .map-hint {

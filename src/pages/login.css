@@ -9,11 +9,15 @@
   flex-direction: column;
   gap: var(--s3);
   width: 100%;
-  max-width: 340px;
-  padding: var(--s5);
+  max-width: 390px;
+  padding: 32px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background:
+    linear-gradient(145deg, rgba(var(--accent-rgb), 0.12), transparent 46%),
+    var(--surface);
+  box-shadow: var(--shadow-card);
+  border-top: 2px solid var(--accent);
 }
 
 .login-hint {

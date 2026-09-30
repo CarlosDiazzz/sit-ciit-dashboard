@@ -15,7 +15,9 @@
   padding: var(--s3) var(--s4);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background:
+    linear-gradient(145deg, rgba(var(--accent-rgb), 0.06), transparent 55%),
+    var(--surface);
   color: var(--text);
   text-align: left;
   font: inherit;
@@ -24,11 +26,13 @@
 .node-card:hover {
   border-color: var(--accent-border);
   background: var(--surface-hover);
+  transform: translateY(-2px);
 }
 
 .node-card.is-selected {
   border-color: var(--accent);
   background: var(--accent-bg);
+  box-shadow: 0 12px 30px rgba(var(--accent-rgb), 0.12);
 }
 
 /* Un nodo que dejó de reportar sigue visible pero atenuado: su ausencia

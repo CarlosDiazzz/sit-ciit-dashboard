@@ -2,18 +2,20 @@
  * con estado de conexión y sesión, y el área de contenido.
  */
 
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useConnectionStatus } from '../api/socket';
 import { useSession } from '../auth/context';
 import './layout.css';
 
 const NAV = [
-  { to: '/', label: 'Mapa', end: true },
-  { to: '/unidad', label: 'Unidad' },
-  { to: '/eventos', label: 'Eventos' },
-  { to: '/comandos', label: 'Comandos' },
-  { to: '/bitacora', label: 'Bitácora' },
-];
+  { to: '/', label: 'Mapa', deity: 'Quetzalcóatl', domain: 'Ruta', glyph: 'Q', theme: 'quetzal', end: true },
+  { to: '/unidad', label: 'Unidad', deity: 'Tonatiuh', domain: 'Estado general', glyph: 'T', theme: 'tonatiuh', end: false },
+  { to: '/eventos', label: 'Eventos', deity: 'Tezcatlipoca', domain: 'Seguridad', glyph: 'Tz', theme: 'tezcatlipoca', end: false },
+  { to: '/comandos', label: 'Comandos', deity: 'Ehécatl', domain: 'Movimiento', glyph: 'E', theme: 'ehecatl', end: false },
+  { to: '/bitacora', label: 'Bitácora', deity: 'Tezcatlipoca', domain: 'Incidencias', glyph: 'Tz', theme: 'tezcatlipoca', end: false },
+] as const;
+
+const TLALOC = { deity: 'Tláloc', domain: 'Ambiente', glyph: 'Tl' };
 
 const ROLE_LABEL: Record<string, string> = {
   control_center: 'Centro de control',
@@ -39,17 +41,25 @@ function ConnectionIndicator() {
 
 export default function Layout() {
   const { user, signOut } = useSession();
+  const location = useLocation();
+  const current = NAV.find((item) =>
+    item.end ? location.pathname === item.to : location.pathname.startsWith(item.to),
+  ) ?? NAV[0];
 
   return (
-    <div className="shell">
+    <div className="shell" data-theme={current.theme}>
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">SIT</span>
+          <span className="brand-mark" aria-hidden="true">
+            <img src="/zenda-logo-dark.png" alt="" />
+          </span>
           <span className="brand-name">
-            CIIT
-            <small>Corredor Interoceánico</small>
+            Zenda
+            <small>Centro de monitoreo</small>
           </span>
         </div>
+
+        <p className="sidebar-kicker">Corredor Interoceánico · Línea Z</p>
 
         <nav className="nav">
           {NAV.map((item) => (
@@ -58,16 +68,41 @@ export default function Layout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`}
+              data-nav-theme={item.theme}
             >
-              {item.label}
+              <span className="nav-glyph" aria-hidden="true">{item.glyph}</span>
+              <span className="nav-copy">
+                <strong>{item.label}</strong>
+                <small>{item.deity} · {item.domain}</small>
+              </span>
             </NavLink>
           ))}
         </nav>
+
+        <div className="coming-soon" aria-label="Módulo ambiente próximamente">
+          <span className="nav-glyph" aria-hidden="true">{TLALOC.glyph}</span>
+          <span className="nav-copy">
+            <strong>{TLALOC.domain}</strong>
+            <small>{TLALOC.deity} · Próximamente</small>
+          </span>
+        </div>
+
+        <footer className="sidebar-foot">
+          <span className="mini-glyph" aria-hidden="true">◆</span>
+          Telemetría ferroviaria
+        </footer>
       </aside>
 
       <div className="main">
         <header className="topbar">
-          <ConnectionIndicator />
+          <div className="topbar-context">
+            <ConnectionIndicator />
+            <span className="context-divider" aria-hidden="true" />
+            <span className="section-context">
+              <strong>{current.deity}</strong>
+              <small>{current.domain}</small>
+            </span>
+          </div>
 
           <div className="topbar-right">
             {user ? (
