@@ -3,20 +3,27 @@
  */
 
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Activity, ClipboardList, CloudSun, Map as MapIcon, Radio, ShieldAlert } from 'lucide-react';
 import { useConnectionStatus } from '../api/socket';
 import { useSession } from '../auth/context';
 import AztecOrnament from './AztecOrnament';
 import './layout.css';
 
 const NAV = [
-  { to: '/', label: 'Mapa', deity: 'Quetzalcóatl', domain: 'Ruta', glyph: 'Q', theme: 'quetzal', end: true },
-  { to: '/unidad', label: 'Unidad', deity: 'Tonatiuh', domain: 'Estado general', glyph: 'T', theme: 'tonatiuh', end: false },
-  { to: '/eventos', label: 'Eventos', deity: 'Tezcatlipoca', domain: 'Seguridad', glyph: 'Tz', theme: 'tezcatlipoca', end: false },
-  { to: '/comandos', label: 'Comandos', deity: 'Ehécatl', domain: 'Movimiento', glyph: 'E', theme: 'ehecatl', end: false },
-  { to: '/bitacora', label: 'Bitácora', deity: 'Tezcatlipoca', domain: 'Incidencias', glyph: 'Tz', theme: 'tezcatlipoca', end: false },
+  // Quetzalcóatl — Mapa: Ruta
+  { to: '/', label: 'Mapa', domain: 'Ruta', icon: MapIcon, theme: 'quetzal', end: true },
+  // Tonatiuh — Unidad: Estado general
+  { to: '/unidad', label: 'Unidad', domain: 'Estado general', icon: Activity, theme: 'tonatiuh', end: false },
+  // Tezcatlipoca — Eventos: Seguridad
+  { to: '/eventos', label: 'Eventos', domain: 'Seguridad', icon: ShieldAlert, theme: 'tezcatlipoca', end: false },
+  // Ehécatl — Comandos: Movimiento
+  { to: '/comandos', label: 'Comandos', domain: 'Movimiento', icon: Radio, theme: 'ehecatl', end: false },
+  // Tezcatlipoca — Bitácora: Incidencias
+  { to: '/bitacora', label: 'Bitácora', domain: 'Incidencias', icon: ClipboardList, theme: 'tezcatlipoca', end: false },
 ] as const;
 
-const TLALOC = { deity: 'Tláloc', domain: 'Ambiente', glyph: 'Tl' };
+// Tláloc — módulo Ambiente, próximamente.
+const TLALOC = { domain: 'Ambiente', icon: CloudSun };
 
 const ROLE_LABEL: Record<string, string> = {
   control_center: 'Centro de control',
@@ -71,20 +78,20 @@ export default function Layout() {
               className={({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`}
               data-nav-theme={item.theme}
             >
-              <span className="nav-glyph" aria-hidden="true">{item.glyph}</span>
+              <span className="nav-glyph" aria-hidden="true"><item.icon size={18} strokeWidth={1.8} /></span>
               <span className="nav-copy">
                 <strong>{item.label}</strong>
-                <small>{item.deity} · {item.domain}</small>
+                <small>{item.domain}</small>
               </span>
             </NavLink>
           ))}
         </nav>
 
         <div className="coming-soon" aria-label="Módulo ambiente próximamente">
-          <span className="nav-glyph" aria-hidden="true">{TLALOC.glyph}</span>
+          <span className="nav-glyph" aria-hidden="true"><TLALOC.icon size={18} strokeWidth={1.8} /></span>
           <span className="nav-copy">
             <strong>{TLALOC.domain}</strong>
-            <small>{TLALOC.deity} · Próximamente</small>
+            <small>Próximamente</small>
           </span>
         </div>
 
@@ -102,7 +109,6 @@ export default function Layout() {
               <ConnectionIndicator />
               <span className="context-divider" aria-hidden="true" />
               <span className="section-context">
-                <strong>{current.deity}</strong>
                 <small>{current.domain}</small>
               </span>
             </div>
