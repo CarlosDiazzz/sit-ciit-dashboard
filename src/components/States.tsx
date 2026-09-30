@@ -8,12 +8,13 @@
 import type { ReactNode } from 'react';
 import type { ApiError } from '../api/client';
 import './states.css';
+import StatusTrain from './StatusTrain';
 
 export function Loading({ label = 'Cargando…' }: { label?: string }) {
   return (
-    <div className="state" role="status" aria-live="polite">
-      <span className="state-spinner" aria-hidden="true" />
-      <p className="state-text">{label}</p>
+    <div className="state state-loading" role="status" aria-live="polite" aria-busy="true">
+      <span className="state-eyebrow">SINCRONIZANDO INFORMACIÓN</span><StatusTrain />
+      <p className="state-title">{label}</p><p className="state-text">Estamos consultando los datos de la operación.</p><span className="state-progress" aria-hidden="true" />
     </div>
   );
 }
@@ -26,12 +27,12 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="state state-error" role="alert">
+    <div className="state state-error" role="alert"><span className="state-eyebrow">INFORMACIÓN NO DISPONIBLE</span><StatusTrain />
       <p className="state-title">No se pudieron cargar los datos</p>
-      <p className="state-text">{error.userMessage}</p>
+      <p className="state-text">{error.kind === 'network' ? 'No pudimos conectar con el servidor. Comprueba tu conexión y vuelve a intentarlo.' : error.userMessage}</p><p className="state-guidance">No es posible evaluar el estado de la operación con esta consulta.</p>
       {error.status ? <p className="state-detail mono">HTTP {error.status}</p> : null}
       {onRetry ? (
-        <button type="button" className="btn" onClick={onRetry}>
+        <button type="button" className="btn state-retry" onClick={onRetry}>
           Reintentar
         </button>
       ) : null}
@@ -65,7 +66,7 @@ export function AsyncBoundary<T>({
   empty: { title: string; hint?: ReactNode };
   children: (data: T) => ReactNode;
 }) {
-  if (state.loading && state.data === null) return <Loading />;
+  if (state.loading) return <Loading />;
   if (state.error) return <ErrorState error={state.error} onRetry={state.reload} />;
   if (state.data === null || (Array.isArray(state.data) && state.data.length === 0)) {
     return <EmptyState title={empty.title} hint={empty.hint} />;
