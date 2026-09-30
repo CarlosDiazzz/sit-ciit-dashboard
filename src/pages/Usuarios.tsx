@@ -4,6 +4,8 @@
  */
 
 import { useState } from 'react';
+import { UserRound } from 'lucide-react';
+import { PagedRows } from '../components/Pagination';
 
 import { ApiError, api } from '../api/client';
 import { useApi } from '../api/useApi';
@@ -137,6 +139,7 @@ export default function Usuarios() {
         empty={{ title: 'No hay usuarios', hint: 'Crea el primero con el formulario de arriba.' }}
       >
         {(lista) => (
+          <PagedRows items={lista} label="Personas con acceso">{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -148,10 +151,10 @@ export default function Usuarios() {
                 </tr>
               </thead>
               <tbody>
-                {lista.map((u) => (
+                {rows.map((u) => (
                   <tr key={u.id}>
                     <td>
-                      {u.email}
+                      <span className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={18} /></span>{u.email}</span>
                       {u.id === user.id ? <span className="tag">tú</span> : null}
                     </td>
                     <td>
@@ -176,6 +179,7 @@ export default function Usuarios() {
               </tbody>
             </table>
           </div>
+          )}</PagedRows>
         )}
       </AsyncBoundary>
     </>

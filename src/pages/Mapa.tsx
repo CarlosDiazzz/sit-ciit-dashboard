@@ -12,7 +12,9 @@ import type { Unit } from '../api/types';
 import { ErrorState, Loading } from '../components/States';
 import LiveMapLayers from '../components/LiveMapLayers';
 import NodeStatusPanel from '../components/NodeStatusPanel';
-import type { TelemetryBroadcast } from '../api/types';
+import TrackDefectLayer from '../components/TrackDefectLayer';
+import TrackDefectSummary from '../components/TrackDefectSummary';
+import type { TelemetryBroadcast, TrackDefectsResponse } from '../api/types';
 import { MEDIAS_AGUAS_JUNCTION, parseMainRailRoute, parseRailConnections, type MapCoordinate, type RailConnection } from '../lib/mapData';
 import './mapa.css';
 
@@ -55,6 +57,10 @@ export default function Mapa() {
   const [railRoute, setRailRoute] = useState<MapCoordinate[]>([]);
   const [railConnections, setRailConnections] = useState<RailConnection[]>([]);
   const [mapDataError, setMapDataError] = useState<string | null>(null);
+  // Defectos de via confirmados por repeticion. Se cargan una vez: no
+  // cambian con cada mensaje, solo cuando pasa otro tren por el punto.
+  const defectos = useApi<TrackDefectsResponse>(() => api.trackDefects());
+  const [verIndicios, setVerIndicios] = useState(false);
   /** Ultimo mensaje por nodo: da la velocidad en vivo del panel sin
    *  abrir un segundo socket. */
   const [ultimaTelemetria, setUltimaTelemetria] = useState<Record<string, TelemetryBroadcast>>({});
@@ -116,6 +122,11 @@ export default function Mapa() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <TrackDefectLayer
+              defects={defectos.data?.defects ?? []}
+              mostrarIndicios={verIndicios}
+            />
+
             <LiveMapLayers onTelemetria={recibirTelemetria} />
 
             <FitMapToData route={railRoute} connections={railConnections} />
@@ -164,7 +175,14 @@ export default function Mapa() {
           ) : state.error ? (
             <ErrorState error={state.error} onRetry={state.reload} />
           ) : (
-            <NodeStatusPanel units={state.data} ultimaTelemetria={ultimaTelemetria} />
+            <>
+              <TrackDefectSummary
+                estado={defectos}
+                verIndicios={verIndicios}
+                onVerIndicios={setVerIndicios}
+              />
+              <NodeStatusPanel units={state.data} ultimaTelemetria={ultimaTelemetria} />
+            </>
           )}
         </aside>
       </div>

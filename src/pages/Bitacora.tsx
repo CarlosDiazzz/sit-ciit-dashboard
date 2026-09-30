@@ -1,4 +1,5 @@
 import DecisionBrief from '../components/DecisionBrief';
+import { PagedRows } from '../components/Pagination';
 /* Bitácora: cada cambio de estado de cada comando, para auditoría.
  *
  * A diferencia de la vista de Comandos, que muestra el estado actual,
@@ -45,6 +46,7 @@ export default function Bitacora() {
         }}
       >
         {(entradas) => (
+          <PagedRows items={entradas} label="Historial de comandos">{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -58,7 +60,7 @@ export default function Bitacora() {
                 </tr>
               </thead>
               <tbody>
-                {entradas.map((e) => (
+                {rows.map((e) => (
                   <tr key={e.id}>
                     <td className="tabular">{formatDateTime(e.occurredAt)}</td>
                     <td>{ACCION_LABEL[e.action] ?? e.action}</td>
@@ -73,6 +75,7 @@ export default function Bitacora() {
               </tbody>
             </table>
           </div>
+          )}</PagedRows>
         )}
       </AsyncBoundary>
     </>

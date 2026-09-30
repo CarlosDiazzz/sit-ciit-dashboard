@@ -6,6 +6,8 @@
  */
 
 import { useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { PagedRows } from '../components/Pagination';
 
 import { ApiError, api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
@@ -41,7 +43,10 @@ export default function Comandos() {
   const unidades = useApi<Unit[]>(() => api.listUnits());
   const comandos = useApi<Command[]>(() => api.listCommands({ limit: 100 }), []);
 
-  const [nodo, setNodo] = useState('');
+  // ?nodo=unit-01-b llega desde un evento: el formulario abre con ese
+  // destino ya elegido en vez de obligar a buscarlo en la lista.
+  const [params] = useSearchParams();
+  const [nodo, setNodo] = useState(params.get('nodo') ?? '');
   const [accion, setAccion] = useState<CmdAction>('trigger_alarm');
   const [valor, setValor] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -185,6 +190,7 @@ export default function Comandos() {
         }}
       >
         {(lista) => (
+          <PagedRows items={lista} label="Seguimiento de comandos">{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -199,7 +205,7 @@ export default function Comandos() {
                 </tr>
               </thead>
               <tbody>
-                {lista.map((cmd) => {
+                {rows.map((cmd) => {
                   const avance = avances[cmd.cmdId];
                   const estado = avance?.status ?? cmd.status;
                   const etiqueta =
@@ -226,6 +232,7 @@ export default function Comandos() {
               </tbody>
             </table>
           </div>
+          )}</PagedRows>
         )}
       </AsyncBoundary>
     </>

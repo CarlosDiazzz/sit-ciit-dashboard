@@ -15,7 +15,9 @@ import type {
   CreateNodeRequest,
   CreateUserRequest,
   EventRecord,
+  EventVerdict,
   EventWindow,
+  TrackDefectsResponse,
   IssueCommandRequest,
   LoginResponse,
   ManagedUser,
@@ -175,10 +177,10 @@ export const api = {
   managementResources: () => request<any[]>("/management/resources"),
   managementList: (
     resource: string,
-    params: { page: number; search?: string; archived?: boolean },
+    params: { page: number; limit?: number; search?: string; archived?: boolean },
   ) =>
     request<any>(
-      `/management/${resource}?${new URLSearchParams({ page: String(params.page), search: params.search ?? "", archived: String(params.archived ?? false) })}`,
+      `/management/${resource}?${new URLSearchParams({ page: String(params.page), limit: String(params.limit ?? 25), search: params.search ?? "", archived: String(params.archived ?? false) })}`,
     ),
   managementOptions: (resource: string) =>
     request<{ id: string; label: string }[]>(`/management/options/${resource}`),
@@ -203,9 +205,9 @@ export const api = {
     }),
   managementReport: (id: string) =>
     request<any>(`/management/reports/trips/${id}`),
-  managementAudit: (params: { page: number; search?: string }) =>
+  managementAudit: (params: { page: number; limit?: number; search?: string }) =>
     request<any>(
-      `/management/audit?${new URLSearchParams({ page: String(params.page), search: params.search ?? "" })}`,
+      `/management/audit?${new URLSearchParams({ page: String(params.page), limit: String(params.limit ?? 25), search: params.search ?? "" })}`,
     ),
   managementDeliveries: () =>
     request<any[]>("/management/notification-deliveries"),
@@ -230,6 +232,10 @@ export const api = {
       `/telemetry?unitId=${encodeURIComponent(unitCode)}`,
     ),
 
+  /** Defectos de via confirmados por repeticion entre unidades. */
+  trackDefects: (days = 90) =>
+    request<TrackDefectsResponse>(`/track-defects?days=${days}`),
+
   listEvents: (params?: { unitId?: string; limit?: number }) => {
     const q = new URLSearchParams();
     if (params?.unitId) q.set("unitId", params.unitId);
@@ -242,6 +248,14 @@ export const api = {
    *  de via de un frenon, que pueden tener el mismo pico. */
   eventWindow: (eventId: string, seconds = 4) =>
     request<EventWindow>(`/events/${eventId}/window?seconds=${seconds}`),
+
+  /** Registra si la deteccion acerto. Cada veredicto es un ejemplo
+   *  etiquetado para afinar umbrales mas adelante. */
+  setEventVerdict: (eventId: string, verdict: EventVerdict, note?: string) =>
+    request<{ verdict: EventVerdict; note: string | null }>(`/events/${eventId}/verdict`, {
+      method: 'POST',
+      body: JSON.stringify({ verdict, note }),
+    }),
 
   acknowledgeEvent: (eventId: string) =>
     request<EventRecord>(`/events/${eventId}/ack`, { method: "POST" }),

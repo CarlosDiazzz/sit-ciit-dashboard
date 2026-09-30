@@ -14,7 +14,7 @@ test("gestión completa desde formularios reales, auditoría y portal por empres
     .fill("browser-test-password");
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Salir", exact: true }),
+    page.getByRole("button", { name: "Cerrar sesión", exact: true }),
   ).toBeVisible();
   const auth = await request.post("http://127.0.0.1:4310/auth/login", {
     data: { email: "admin@browser.invalid", password: "browser-test-password" },
@@ -234,6 +234,7 @@ test("gestión completa desde formularios reales, auditoría y portal por empres
   await expect(
     page.getByText("Inspección realizada", { exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Cerrar ventana" }).click();
   await page.getByRole("button", { name: "Editar", exact: true }).click();
   await page
     .getByLabel("Estado", { exact: true })
@@ -284,7 +285,7 @@ test("gestión completa desde formularios reales, auditoría y portal por empres
   await expect(
     page.getByRole("cell", { name: "Avisos Navegador", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Salir", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar sesión", exact: true }).click();
   await page.goto("/login");
   await page
     .getByLabel("Correo", { exact: true })

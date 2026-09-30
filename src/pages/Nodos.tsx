@@ -212,6 +212,7 @@ export default function Nodos() {
         }}
       >
         {(lista) => (
+          <PagedRows items={lista} label="Dispositivos registrados">{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -225,7 +226,7 @@ export default function Nodos() {
                 </tr>
               </thead>
               <tbody>
-                {lista.map((n) => (
+                {rows.map((n) => (
                   <tr key={n.id}>
                     <td className="mono">{n.nodeCode}</td>
                     <td className="mono">{n.unitCode}</td>
@@ -283,8 +284,10 @@ export default function Nodos() {
               </tbody>
             </table>
           </div>
+          )}</PagedRows>
         )}
       </AsyncBoundary>
     </>
   );
 }
+import { PagedRows } from '../components/Pagination';

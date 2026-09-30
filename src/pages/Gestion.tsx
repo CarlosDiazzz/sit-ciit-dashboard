@@ -1,8 +1,12 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, NavLink, useOutletContext, useParams, useSearchParams } from "react-router-dom";
+import { ArrowRight, Archive, ClipboardList, Download, Eye, FileText, LayoutGrid, Pencil, Plus, RefreshCw, Search, ShieldCheck, UserRound, X } from 'lucide-react';
 import { api, ApiError } from "../api/client";
-import { useApi } from "../api/useApi";
+import { useApi, type AsyncState } from "../api/useApi";
 import { useSession } from "../auth/context";
+import Dialog from '../components/Dialog';
+import { Pagination } from '../components/Pagination';
+import { managementGroups, managementUi, normalizeSearch, type ManagementResource } from '../lib/managementUi';
 import "./tables.css";
 import "./usuarios.css";
 import "./gestion.css";
@@ -72,13 +76,24 @@ export default function Gestion() {
   return <GestionModule key={resource ?? "index"} resource={resource ?? ""} />;
 }
 function GestionModule({ resource }: { resource: string }) {
-  const definitions = useApi<Resource[]>(() => api.managementResources(), []);
+  const { resources: definitions } = useOutletContext<{ resources: AsyncState<ManagementResource[]> }>();
   const selected = definitions.data?.find((r) => r.key === resource);
   const { user } = useSession();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("");
-  const [archived, setArchived] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const page = Math.max(1, Math.floor(Number(params.get('page')) || 1));
+  const limit = [10, 25, 50, 100].includes(Number(params.get('limit'))) ? Number(params.get('limit')) : 10;
+  const filter = params.get('q') ?? '';
+  const archived = params.get('archived') === 'true';
+  const [search, setSearch] = useState(filter);
+  const [moduleSearch, setModuleSearch] = useState('');
+  const detailRequest = useRef(0);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const updateQuery = useCallback((values: Record<string, string | number | boolean>) => {
+    setParams(previous => { const next = new URLSearchParams(previous); for (const [key, value] of Object.entries(values)) { if (value === '' || value === false) next.delete(key); else next.set(key, String(value)); } return next; }, { replace: true });
+  }, [setParams]);
+  // Keep the editable search draft in sync when the URL filter changes via browser history.
+  // oxlint-disable-next-line react/set-state-in-effect
+  useEffect(() => { setSearch(current => current === filter ? current : filter); }, [filter]);
   const [editing, setEditing] = useState<RecordData | null | undefined>(
     undefined,
   );
@@ -103,11 +118,14 @@ function GestionModule({ resource }: { resource: string }) {
   );
   const data = useApi<Page>(
     async () =>
-      resource
-        ? api.managementList(resource, { page, search: filter, archived })
+      selected
+        ? api.managementList(resource, { page, limit, search: filter, archived })
         : { items: [], total: 0, page: 1, limit: 25 },
-    [resource, page, filter, archived],
+    [selected?.key, page, limit, filter, archived],
   );
+  useEffect(() => {
+    if (!data.loading && !data.error && data.data && page > Math.max(1, Math.ceil(data.data.total / limit))) updateQuery({ page: Math.max(1, Math.ceil(data.data.total / limit)) });
+  }, [data.data, data.loading, data.error, page, limit, updateQuery]);
   const references = useApi<Record<string, Option[]>>(async () => {
     if (!selected || !selected.canWrite) return {};
     const keys = [
@@ -132,6 +150,7 @@ function GestionModule({ resource }: { resource: string }) {
     setEditing(row);
     const next = { ...defaults(selected!), ...(row ?? {}) };
     delete next.password;
+    for (const f of selected!.fields) if (f.type === 'date' && next[f.key]) next[f.key] = String(next[f.key]).slice(0, 10);
     setForm(next);
   }
   async function save(e: React.FormEvent) {
@@ -159,6 +178,7 @@ function GestionModule({ resource }: { resource: string }) {
       if (editing) await api.managementUpdate(resource, editing.id, payload);
       else await api.managementCreate(resource, payload);
       setEditing(undefined);
+      setDetail(null);
       setNotice("Registro guardado.");
       data.reload();
       references.reload();
@@ -187,28 +207,25 @@ function GestionModule({ resource }: { resource: string }) {
     }
   }
   async function inspect(row: RecordData) {
+    const request = ++detailRequest.current;
     setDetail(row);
     setNotes([]);
+    setApplications([]);
+    setApplyNode('');
+    setNote('');
+    setEvidence('');
     setReport(null);
     setError("");
-    if (resource === "incidents") {
-      try {
-        setNotes(await api.managementNotes(row.id));
-      } catch (e) {
-        setError(message(e));
-      }
-    }
-    if (resource === "monitoring-profiles") {
-      try {
-        setApplications(await api.managementApplications(row.id));
-      } catch (e) {
-        setError(message(e));
-      }
-    }
+    setDetailLoading(true);
+    try {
+      if (resource === 'incidents') { const result = await api.managementNotes(row.id); if (request === detailRequest.current) setNotes(result); }
+      if (resource === 'monitoring-profiles') { const result = await api.managementApplications(row.id); if (request === detailRequest.current) setApplications(result); }
+    } catch (e) { if (request === detailRequest.current) setError(message(e)); }
+    finally { if (request === detailRequest.current) setDetailLoading(false); }
   }
   async function addNote(e: React.FormEvent) {
     e.preventDefault();
-    if (!detail) return;
+    if (!detail || busy) return;
     setBusy(true);
     setError("");
     try {
@@ -276,7 +293,7 @@ function GestionModule({ resource }: { resource: string }) {
       : f.type === "datetime" && v
         ? new Date(String(v)).toLocaleString("es-MX")
         : display(v));
-  if (definitions.loading) return <p role="status">Cargando módulos…</p>;
+  if (definitions.loading) return <div className="workspace-empty" role="status"><RefreshCw size={28} /><strong>Cargando módulos…</strong></div>;
   if (definitions.error)
     return (
       <div role="alert">
@@ -289,59 +306,73 @@ function GestionModule({ resource }: { resource: string }) {
   if (!resource)
     return (
       <>
-        <div className="page-head">
+        <div className="page-head management-hero">
           <div>
+            <span className="management-eyebrow">CENTRO DE OPERACIONES</span>
             <h1>Gestión logística</h1>
             <p>
               Administra los recursos y sigue la carga desde la preparación
               hasta la entrega.
             </p>
           </div>
+          <div className="management-hero-mark" aria-hidden="true"><LayoutGrid size={48} /></div>
         </div>
-        <div className="management-cards">
-          {definitions.data?.map((r) => (
+        <div className="management-overview"><span><strong>{definitions.data?.length ?? 0}</strong> módulos disponibles</span><span><ShieldCheck size={16} /> Acceso según tu rol</span><span>Buscar cualquier pestaña <kbd>Ctrl K</kbd></span></div>
+        <label className="module-search"><Search size={18} /><input aria-label="Filtrar módulos" placeholder="Encuentra un módulo de logística…" value={moduleSearch} onChange={e => setModuleSearch(e.target.value)} /></label>
+        {managementGroups.map(group => {
+          const matches = definitions.data?.filter(r => managementUi(r.key).group === group && normalizeSearch(`${r.label} ${managementUi(r.key).description}`).includes(normalizeSearch(moduleSearch))) ?? [];
+          if (!matches.length) return null;
+          return <section className="management-group" key={group}><h2>{group}<span>{matches.length}</span></h2><div className="management-cards">
+          {matches.map((r) => { const meta = managementUi(r.key); return (
             <Link
               className="management-card"
               key={r.key}
               to={`/gestion/${r.key}`}
             >
+              <div className="management-card-top"><span className="module-icon"><meta.icon size={23} /></span><ArrowRight size={18} /></div>
               <strong>{r.label}</strong>
+              <p>{meta.description}</p>
               <span>
                 {r.canWrite ? "Administrar registros" : "Consultar registros"}
               </span>
             </Link>
-          ))}
+          ); })}
+        </div></section>; })}
+        {!definitions.data?.some(r => normalizeSearch(`${r.label} ${managementUi(r.key).description}`).includes(normalizeSearch(moduleSearch))) && <div className="workspace-empty"><Search size={28} /><strong>No hay módulos con ese nombre</strong><button className="btn" onClick={() => setModuleSearch('')}>Ver todos los módulos</button></div>}
           {["admin", "control_center", "auditor"].includes(
             user?.role ?? "",
           ) && (
-            <Link className="management-card" to="/auditoria">
+            <Link className="management-audit-link" to="/auditoria"><ClipboardList size={20} />
               <strong>Auditoría administrativa</strong>
               <span>Cambios y responsables</span>
             </Link>
           )}
-        </div>
       </>
     );
   if (!selected)
     return <p role="alert">Este módulo no está disponible para tu cuenta.</p>;
-  const columns = selected.fields
-    .filter((f) => f.type !== "password" && !f.roles)
-    .slice(0, 5);
+  const meta = managementUi(resource);
+  const preferred: Record<string, string[]> = {
+    users: ['email', 'role', 'company_id', 'phone'],
+    shipments: ['code', 'name', 'company_id', 'origin_id', 'destination_id', 'weight_kg', 'status'],
+    trips: ['code', 'name', 'route_id', 'unit_id', 'planned_departure', 'status'],
+    incidents: ['code', 'name', 'unit_id', 'assigned_to', 'severity', 'status'],
+    maintenance: ['code', 'name', 'node_id', 'technician_id', 'scheduled_at', 'status'],
+    units: ['unit_code', 'label', 'company_id', 'capacity_kg', 'status'],
+    containers: ['code', 'name', 'container_type', 'capacity_kg', 'status'],
+  };
+  const columns = preferred[resource] ? preferred[resource].flatMap(key => selected.fields.filter(f => f.key === key)) : selected.fields.filter(f => f.type !== 'password' && !f.roles).slice(0, 6);
   return (
     <>
+      <nav className="management-tabs" aria-label="Pestañas de logística"><NavLink to="/gestion" end><LayoutGrid size={15} /> Todos los módulos</NavLink>{definitions.data?.map(r => { const Icon = managementUi(r.key).icon; return <NavLink key={r.key} to={`/gestion/${r.key}`}><Icon size={15} />{r.label}</NavLink>; })}</nav>
       <div className="page-head">
-        <div>
-          <Link to="/gestion">← Módulos</Link>
+        <div className="management-title"><span className="module-icon"><meta.icon size={25} /></span><div>
           <h1>{selected.label}</h1>
-          <p>
-            {editable
-              ? "Altas, edición y archivo con conservación del historial."
-              : "Consulta de registros dentro de tu ámbito de acceso."}
-          </p>
-        </div>
+          <p>{meta.description}</p>
+        </div></div>
         {selected.canCreate && (
           <button className="btn btn-primary" onClick={() => start(null)}>
-            Nuevo registro
+            <Plus size={17} /> Nuevo registro
           </button>
         )}
       </div>
@@ -374,8 +405,10 @@ function GestionModule({ resource }: { resource: string }) {
         </p>
       )}
       {editing !== undefined && (
+        <Dialog wide title={`${editing ? 'Editar' : 'Nuevo registro'} · ${selected.label}`} onClose={() => { if (!busy) setEditing(undefined); }}>
+        {error && <p className="user-error" role="alert">{error}</p>}
         <form className="user-form" onSubmit={save}>
-          <h2>{editing ? "Editar registro" : "Nuevo registro"}</h2>
+          <p className="management-form-hint">Los campos con * son obligatorios.{editing && resource === 'users' ? ' Deja la contraseña vacía para conservar la actual.' : ''}</p>
           {references.loading ? (
             <p>Cargando catálogos…</p>
           ) : references.error ? (
@@ -399,7 +432,7 @@ function GestionModule({ resource }: { resource: string }) {
                       .slice(0, 16);
                 }
                 return (
-                  <label className="field" key={f.key}>
+                  <label className={`field${f.type === 'boolean' ? ' management-toggle' : ''}${f.type === 'textarea' ? ' management-wide-field' : ''}`} key={f.key}>
                     <span>
                       {f.label}
                       {f.required ? " *" : ""}
@@ -449,9 +482,7 @@ function GestionModule({ resource }: { resource: string }) {
                         aria-label={f.label}
                         type={f.type === "datetime" ? "datetime-local" : f.type}
                         value={String(value)}
-                        required={
-                          f.required || (f.type === "password" && !editing)
-                        }
+                        required={f.required || (f.type === "password" && !editing)}
                         min={f.min}
                         max={f.max}
                         step={
@@ -492,55 +523,56 @@ function GestionModule({ resource }: { resource: string }) {
             </button>
           </div>
         </form>
+        </Dialog>
       )}
+      <section className="data-table-panel">
       <form
-        className="management-toolbar"
+        className="management-toolbar management-table-toolbar"
         onSubmit={(e) => {
           e.preventDefault();
-          setPage(1);
-          setFilter(search);
+          updateQuery({ page: 1, q: search.trim() });
         }}
       >
-        <input
+        <div className="management-search"><Search size={17} /><input
           aria-label="Buscar registros"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por código o nombre…"
-        />
+          placeholder={resource === 'users' ? 'Buscar por nombre o correo…' : 'Buscar por código o nombre…'}
+        /></div>
         <button className="btn">Buscar</button>
+        {filter && <button className="btn" type="button" onClick={() => { setSearch(''); updateQuery({ q: '', page: 1 }); }}><X size={14} /> Limpiar</button>}
         <label>
           <input
             type="checkbox"
             checked={archived}
             onChange={(e) => {
-              setArchived(e.target.checked);
-              setPage(1);
+              updateQuery({ archived: e.target.checked, page: 1 });
             }}
           />{" "}
           Incluir archivados
         </label>
-        <button className="btn" type="button" onClick={data.reload}>
-          Actualizar
+        <button className="btn" type="button" disabled={data.loading} onClick={data.reload}>
+          <RefreshCw size={15} /> Actualizar
         </button>
       </form>
       {data.loading ? (
-        <p role="status">Cargando registros…</p>
+        <div className="workspace-empty" role="status"><RefreshCw size={28} /><strong>Cargando registros…</strong></div>
       ) : data.error ? (
-        <p role="alert">
+        <div className="workspace-empty" role="alert">
           {data.error.userMessage}
           <button className="btn" onClick={data.reload}>
             Reintentar
           </button>
-        </p>
+        </div>
       ) : !data.data?.items.length ? (
-        <p>No hay registros para estos filtros.</p>
+        <div className="workspace-empty"><meta.icon size={34} /><strong>No hay registros para estos filtros.</strong><p>{filter ? 'Cambia la búsqueda para encontrar otros registros.' : `Los registros de ${selected.label.toLowerCase()} aparecerán aquí.`}</p>{filter ? <button className="btn" onClick={() => updateQuery({ q: '', page: 1 })}>Limpiar búsqueda</button> : selected.canCreate && <button className="btn btn-primary" onClick={() => start(null)}><Plus size={16} /> Crear primer registro</button>}</div>
       ) : (
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
                 {columns.map((f) => (
-                  <th key={f.key}>{f.label}</th>
+                  <th scope="col" key={f.key}>{resource === 'users' && f.key === 'email' ? 'Persona' : f.label}</th>
                 ))}
                 <th>Vigencia</th>
                 <th>Acciones</th>
@@ -551,10 +583,10 @@ function GestionModule({ resource }: { resource: string }) {
                 <tr key={row.id}>
                   {columns.map((f) => (
                     <td key={f.key}>
-                      {row._labels?.[f.key] ?? valueLabel(f, row[f.key])}
+                      {resource === 'users' && f.key === 'email' ? <div className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={19} /></span><span><strong>{[row.first_name, row.last_name].filter(Boolean).join(' ') || row.email}{row.id === user?.id && <span className="tag">Tú</span>}</strong><small>{row.email}</small></span></div> : ['status', 'severity', 'role'].includes(f.key) ? <span className="record-status" data-status={row[f.key]}>{valueLabel(f, row[f.key])}</span> : row._labels?.[f.key] ?? valueLabel(f, row[f.key])}
                     </td>
                   ))}
-                  <td>{row.active ? "Activo" : "Archivado"}</td>
+                  <td><span className="record-status" data-status={row.active ? 'active' : 'archived'}>{row.active ? "Activo" : "Archivado"}</span></td>
                   <td>
                     {resource === "nodes" && (
                       <>
@@ -569,7 +601,7 @@ function GestionModule({ resource }: { resource: string }) {
                     )}
                     <div className="management-actions">
                       <button className="btn" onClick={() => void inspect(row)}>
-                        Detalle
+                        <Eye size={14} /> Detalle
                       </button>
                       {resource === "trips" && (
                         <button
@@ -577,7 +609,7 @@ function GestionModule({ resource }: { resource: string }) {
                           disabled={busy}
                           onClick={() => void loadReport(row)}
                         >
-                          Reporte
+                          <FileText size={14} /> Reporte
                         </button>
                       )}
                       {editable && row.active && (
@@ -587,14 +619,14 @@ function GestionModule({ resource }: { resource: string }) {
                             disabled={busy}
                             onClick={() => start(row)}
                           >
-                            Editar
+                            <Pencil size={14} /> Editar
                           </button>
                           <button
                             className="btn"
                             disabled={busy || row.id === user?.id}
                             onClick={() => void archive(row)}
                           >
-                            Archivar
+                            <Archive size={14} /> Archivar
                           </button>
                         </>
                       )}
@@ -615,32 +647,15 @@ function GestionModule({ resource }: { resource: string }) {
           </table>
         </div>
       )}
-      <div className="management-toolbar">
-        <button
-          className="btn"
-          disabled={page === 1 || data.loading}
-          onClick={() => setPage(page - 1)}
-        >
-          Anterior
-        </button>
-        <span>
-          Página {page} · {data.data?.total ?? 0} registros
-        </span>
-        <button
-          className="btn"
-          disabled={data.loading || page * 25 >= (data.data?.total ?? 0)}
-          onClick={() => setPage(page + 1)}
-        >
-          Siguiente
-        </button>
-      </div>
+      <Pagination page={page} pageSize={limit} total={data.data?.total ?? 0} disabled={data.loading || !!data.error} onPage={n => updateQuery({ page: n })} onPageSize={n => updateQuery({ page: 1, limit: n })} />
+      </section>
       {detail && (
+        <Dialog wide title={`Detalle · ${selected.label}`} onClose={() => { if (!busy) { detailRequest.current++; setDetail(null); } }}>
+        {error && <p className="user-error" role="alert">{error}</p>}
         <section className="user-form">
           <div className="management-toolbar">
             <h2>Detalle del registro</h2>
-            <button className="btn" onClick={() => setDetail(null)}>
-              Cerrar
-            </button>
+            <span className="record-status" data-status={detail.active ? 'active' : 'archived'}>{detail.active ? 'Activo' : 'Archivado'}</span>
           </div>
           <dl className="management-detail">
             {selected.fields
@@ -670,6 +685,7 @@ function GestionModule({ resource }: { resource: string }) {
               </div>
             )}
           </dl>
+          {detailLoading && <p role="status">Cargando historial…</p>}
           {resource === "monitoring-profiles" && (
             <>
               <h3>Aplicaciones al dispositivo</h3>
@@ -764,8 +780,10 @@ function GestionModule({ resource }: { resource: string }) {
             </>
           )}
         </section>
+        </Dialog>
       )}
       {report && (
+        <Dialog wide title={`Reporte de viaje · ${report.trip.name}`} onClose={() => setReport(null)}>
         <section className="user-form">
           <h2>Reporte: {report.trip.name}</h2>
           <dl className="management-detail">
@@ -818,12 +836,13 @@ function GestionModule({ resource }: { resource: string }) {
               URL.revokeObjectURL(url);
             }}
           >
-            Descargar reporte
+            <Download size={15} /> Descargar reporte
           </button>
           <button className="btn" onClick={() => setReport(null)}>
             Cerrar
           </button>
         </section>
+        </Dialog>
       )}
     </>
   );

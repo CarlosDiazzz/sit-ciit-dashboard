@@ -6,7 +6,8 @@ import DecisionBrief from "../components/DecisionBrief";
  * calcula el GPS del celular) — no se deriva ni se estima aquí.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   CartesianGrid,
   Legend,
@@ -174,10 +175,13 @@ export default function Unidad() {
   const [filtro, setFiltro] = useState("");
 
   const [points, setPoints] = useState<ChartPoint[]>([]);
-  const [lastByNode, setLastByNode] = useState<
-    Record<string, TelemetryBroadcast>
-  >({});
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});
+  // ?nodo=unit-01-b abre la vista ya centrada en ese nodo. Lo usa el
+  // enlace desde un evento: sin esto el operador aterrizaba en la vista
+  // general y tenia que buscar cual estaba revisando.
+  const [params] = useSearchParams();
+  const nodoPedido = params.get('nodo');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(nodoPedido);
   const [isMoving, setIsMoving] = useState(false);
   // Reloj compartido: hace que los "hace N s" de las tarjetas avancen
   // aunque no llegue telemetria nueva (asi se ve que un nodo se callo).
@@ -187,7 +191,9 @@ export default function Unidad() {
 
   // El manejador del socket se recrea al cambiar de nodo; la ref permite
   // leer la selección vigente sin volver a suscribirse en cada cambio.
-  const selectedRef = useRef<string | null>(null);
+  // Arranca con el nodo de la URL: si quedara en null, el primer
+  // mensaje del socket pisaria la seleccion pedida.
+  const selectedRef = useRef<string | null>(nodoPedido);
 
   const selectNode = useCallback((nodeId: string) => {
     selectedRef.current = nodeId;

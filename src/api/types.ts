@@ -111,6 +111,8 @@ export interface TelemetryPoint {
   gpsAccuracyM: number | null;
 }
 
+export type EventVerdict = 'confirmed' | 'false_alarm' | 'unclear';
+
 export interface EventRecord {
   id: string;
   unitId: string;
@@ -132,6 +134,10 @@ export interface EventRecord {
   receivedAt: string;
   acknowledgedAt: string | null;
   acknowledgedBy: string | null;
+  /** Si la deteccion acerto, segun el operador. null mientras nadie lo
+   *  haya juzgado: no se infiere una etiqueta que no se dio. */
+  verdict?: EventVerdict | null;
+  verdictNote?: string | null;
   /** Detalle estructurado — hoy solo lo llena weather_risk (temperatura,
    *  humedad, lluvia y qué reglas dispararon, con su fuente citada). */
   details: Record<string, unknown> | null;
@@ -388,4 +394,35 @@ export interface NodeHistoryPage {
   nextCursor: string | null;
   snapshot: string;
   limit: number;
+}
+
+/** Nivel de confianza de un defecto agrupado. Lo decide la
+ *  independencia de las observaciones, no el numero de detecciones:
+ *  tres unidades distintas confirman, una sola no. */
+export type DefectConfidence = 'confirmado' | 'probable' | 'indicio';
+
+export interface TrackDefect {
+  lat: number;
+  lon: number;
+  /** Radio que cubre las detecciones agrupadas, en metros. Refleja la
+   *  incertidumbre del GPS, no el tamaño del defecto. */
+  radiusM: number;
+  kind: AnyEventKind;
+  confidence: DefectConfidence;
+  /** Por que se le asigno ese nivel, en una frase. */
+  reason: string;
+  distinctUnits: number;
+  distinctNodes: number;
+  passes: number;
+  detections: number;
+  averageValue: number | null;
+  firstSeen: string;
+  lastSeen: string;
+  eventIds: string[];
+}
+
+export interface TrackDefectsResponse {
+  windowDays: number;
+  analyzed: number;
+  defects: TrackDefect[];
 }
