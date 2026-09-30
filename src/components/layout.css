@@ -8,6 +8,7 @@
 .shell[data-theme='tonatiuh'] { --accent: var(--tonatiuh); --accent-rgb: 243, 154, 72; --accent-soft: #ffd09d; }
 .shell[data-theme='tezcatlipoca'] { --accent: var(--tezcatlipoca); --accent-rgb: 86, 139, 180; --accent-soft: #aad0ec; }
 .shell[data-theme='ehecatl'] { --accent: var(--ehecatl); --accent-rgb: 213, 95, 92; --accent-soft: #efaaa8; }
+.shell[data-theme='comandos'] { --accent: var(--comandos); --accent-rgb: 182, 133, 244; --accent-soft: #dec3ff; }
 
 /* --- Barra lateral ---------------------------------------------------- */
 
@@ -198,6 +199,7 @@
 [data-nav-theme='tonatiuh'] { --nav-color: var(--tonatiuh); }
 [data-nav-theme='tezcatlipoca'] { --nav-color: var(--tezcatlipoca); }
 [data-nav-theme='ehecatl'] { --nav-color: var(--ehecatl); }
+[data-nav-theme='comandos'] { --nav-color: var(--comandos); }
 .nav-link:not(.is-active) .nav-glyph { color: var(--nav-color); border-color: color-mix(in srgb, var(--nav-color) 35%, transparent); }
 
 /* --- Encabezado ------------------------------------------------------- */
@@ -262,9 +264,11 @@
 }
 
 .shell[data-theme='quetzal'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(72%) sepia(24%) saturate(1045%) hue-rotate(107deg) brightness(93%) contrast(88%); }
+.shell[data-theme='tlaloc'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(72%) sepia(80%) saturate(1148%) hue-rotate(165deg) brightness(96%) contrast(90%); }
 .shell[data-theme='tonatiuh'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(68%) sepia(81%) saturate(1299%) hue-rotate(328deg) brightness(101%) contrast(91%); }
 .shell[data-theme='tezcatlipoca'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(57%) sepia(22%) saturate(1134%) hue-rotate(163deg) brightness(87%) contrast(87%); }
 .shell[data-theme='ehecatl'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(50%) sepia(34%) saturate(1397%) hue-rotate(313deg) brightness(92%) contrast(92%); }
+.shell[data-theme='comandos'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(63%) sepia(36%) saturate(1266%) hue-rotate(218deg) brightness(98%) contrast(96%); }
 
 .topbar-content {
   display: flex;
