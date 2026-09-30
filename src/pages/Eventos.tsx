@@ -10,11 +10,12 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
-import type { EventBroadcast, EventRecord } from '../api/types';
+import type { EventBroadcast, EventRecord, EventVerdict } from '../api/types';
 import { AsyncBoundary, EmptyState } from '../components/States';
 import { LateBadge, SeverityBadge } from '../components/Badges';
 import { eventKindLabel, eventValueUnit } from '../lib/labels';
 import EventSignal from '../components/EventSignal';
+import EventVerdictPanel from '../components/EventVerdict';
 import { eventGuidance, prioritizeEvents } from '../lib/decisions';
 import { formatAgo, formatDateTime } from '../lib/format';
 import './tables.css';
@@ -24,6 +25,11 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
   const [unit, setUnit] = useState('');
   const [kind, setKind] = useState('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Veredictos dados en esta sesion, superpuestos a la lista cargada:
+   *  evita recargarla entera y que el operador pierda su posicion. */
+  const [veredictos, setVeredictos] = useState<
+    Record<string, { verdict: EventVerdict; note: string | null }>
+  >({});
   const [, tick] = useState(0);
   useEffect(() => { const timer = setInterval(() => tick(n => n + 1), 10000); return () => clearInterval(timer); }, []);
   const sorted = prioritizeEvents(events);
@@ -58,6 +64,17 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
             <small>La confirmación de lectura de la alerta no verifica físicamente el incidente.</small>
           </section>}
           <dl className="dss-facts"><div><dt>Lectura registrada</dt><dd>{selected.value === null ? 'No disponible' : String(selected.value) + ' ' + eventValueUnit(selected.kind)}</dd></div><div><dt>Umbral del evento</dt><dd>{selected.threshold === null ? 'No disponible' : String(selected.threshold) + ' ' + eventValueUnit(selected.kind)}</dd></div><div><dt>Ocurrió</dt><dd>{formatDateTime(selected.ts)}<small>{formatAgo(selected.ts)}</small></dd></div><div><dt>Recibido</dt><dd>{formatDateTime(selected.receivedAt)} <LateBadge ts={selected.ts} receivedAt={selected.receivedAt} /></dd></div><div><dt>Fuente</dt><dd>{selected.nodeId ?? 'Comparación a nivel unidad'}</dd></div><div><dt>Confirmación</dt><dd>{selected.acknowledgedAt ? formatDateTime(selected.acknowledgedAt) : 'Pendiente'}</dd></div></dl>
+          <EventVerdictPanel
+            eventId={selected.id}
+            actual={veredictos[selected.id]?.verdict ?? selected.verdict}
+            nota={veredictos[selected.id]?.note ?? selected.verdictNote}
+            onGuardado={(veredicto, nota) =>
+              setVeredictos((prev) => ({
+                ...prev,
+                [selected.id]: { verdict: veredicto, note: nota },
+              }))
+            }
+          />
           <EventSignal eventId={selected.id} />
           <p className="dss-caption">{eventValueUnit(selected.kind) ? 'Unidad de medida indicada según el contrato. ' : 'El registro no especifica la unidad de medida. '}La severidad proviene del evento; no confirma por sí sola el estado actual de la carga.</p>
           <section className="dss-recommendation"><span className="dss-kicker">03 / DECIDIR</span><h3>Acción sugerida</h3><p>{eventGuidance[selected.kind] ?? 'Verifica la evidencia con el operador antes de actuar.'}</p><div className="dss-actions"><Link to="/unidad" className="btn">Consultar telemetría ↗</Link><Link to="/comandos">Seguimiento de comandos →</Link></div><small>Orientación para revisión humana. No ejecuta acciones automáticas.</small></section>

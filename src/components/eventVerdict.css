@@ -1,0 +1,129 @@
+/* Veredicto del operador, en el panel de evidencia. */
+
+.verdict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.verdict-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.verdict-head h4 {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-strong);
+}
+
+.verdict-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.verdict-tag--pending {
+  color: var(--text-dim);
+  background: var(--offline-bg);
+}
+
+.verdict-tag--confirmed {
+  color: var(--critical);
+  background: var(--critical-bg);
+}
+
+.verdict-tag--false_alarm {
+  color: var(--online);
+  background: var(--online-bg);
+}
+
+.verdict-tag--unclear {
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+
+/* Tres opciones del mismo peso: ninguna es la respuesta "correcta" y el
+   diseño no debe empujar hacia una. */
+.verdict-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+}
+
+.verdict-btn {
+  padding: var(--s2) var(--s1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+
+.verdict-btn:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  background: var(--surface-hover);
+}
+
+.verdict-btn.is-active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.verdict-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.verdict-note {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.verdict-note input {
+  padding: var(--s2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.verdict-note input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.verdict-hint {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.verdict-error {
+  margin: 0;
+  font-size: 11px;
+  color: var(--critical);
+}

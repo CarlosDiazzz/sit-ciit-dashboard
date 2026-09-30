@@ -13,6 +13,7 @@ import type {
   CreateNodeRequest,
   CreateUserRequest,
   EventRecord,
+  EventVerdict,
   EventWindow,
   IssueCommandRequest,
   LoginResponse,
@@ -217,6 +218,14 @@ export const api = {
    *  de via de un frenon, que pueden tener el mismo pico. */
   eventWindow: (eventId: string, seconds = 4) =>
     request<EventWindow>(`/events/${eventId}/window?seconds=${seconds}`),
+
+  /** Registra si la deteccion acerto. Cada veredicto es un ejemplo
+   *  etiquetado para afinar umbrales mas adelante. */
+  setEventVerdict: (eventId: string, verdict: EventVerdict, note?: string) =>
+    request<{ verdict: EventVerdict; note: string | null }>(`/events/${eventId}/verdict`, {
+      method: 'POST',
+      body: JSON.stringify({ verdict, note }),
+    }),
 
   acknowledgeEvent: (eventId: string) =>
     request<EventRecord>(`/events/${eventId}/ack`, { method: "POST" }),
