@@ -103,7 +103,7 @@ const NODOS_NAV = {
 
 const AUDITORIA_NAV = {
   to: "/auditoria",
-  label: "Historial de nodos",
+  label: "Auditoría administrativa",
   deity: "Seguimiento",
   domain: "Cambios y responsables",
   icon: ClipboardList,
