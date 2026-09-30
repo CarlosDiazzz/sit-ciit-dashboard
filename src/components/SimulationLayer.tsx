@@ -20,6 +20,7 @@ import {
   avanzarSimulacion,
   iniciarSimulacion,
   interpolarPosiciones,
+  horaSimulada,
   type EstadoSimulacion,
   type TrenSimulado,
 } from '../lib/simulacion';
@@ -38,21 +39,27 @@ export default function SimulationLayer({
   ruta,
   activa,
   onDefectos,
+  onReloj,
 }: {
   ruta: MapCoordinate[];
   activa: boolean;
   /** Los defectos simulados suben al panel lateral, que ya sabe
    *  pintarlos: no hace falta una vista aparte. */
   onDefectos: (d: TrackDefect[]) => void;
+  /** Hora de operación que representa la demo, para el aviso. */
+  onReloj?: (hora: string) => void;
 }) {
   const [estado, setEstado] = useState<EstadoSimulacion | null>(null);
   const onDefectosRef = useRef(onDefectos);
   onDefectosRef.current = onDefectos;
+  const onRelojRef = useRef(onReloj);
+  onRelojRef.current = onReloj;
 
   useEffect(() => {
     if (!activa || ruta.length < 2) {
       setEstado(null);
       onDefectosRef.current([]);
+      onRelojRef.current?.('');
       return;
     }
 
@@ -71,6 +78,7 @@ export default function SimulationLayer({
       actual = avanzarSimulacion(actual, rutaXY, PASO_MS / 1000);
       setEstado(actual);
       onDefectosRef.current(actual.defectos);
+      onRelojRef.current?.(horaSimulada(actual.tiempo));
     }, PASO_MS);
 
     if (reduce) return () => clearInterval(id);

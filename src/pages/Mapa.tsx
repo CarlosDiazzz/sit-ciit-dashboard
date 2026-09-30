@@ -24,6 +24,7 @@ import type {
 } from '../api/types';
 import { MEDIAS_AGUAS_JUNCTION, parseMainRailRoute, parseRailConnections, type MapCoordinate, type RailConnection } from '../lib/mapData';
 import { muestrearRuta } from '../lib/routeProjection';
+import { FACTOR_TIEMPO } from '../lib/simulacion';
 import './mapa.css';
 
 // Cada cuánto se muestrea la ruta real para pedir antenas reales cerca:
@@ -88,6 +89,8 @@ export default function Mapa() {
   // una sala. Apagada por defecto y avisada en pantalla mientras corre.
   const [simulando, setSimulando] = useState(false);
   const [defectosSim, setDefectosSim] = useState<TrackDefect[]>([]);
+  /** Hora de operación que representa la demo. */
+  const [relojSim, setRelojSim] = useState('');
   /** Ultimo mensaje por nodo: da la velocidad en vivo del panel sin
    *  abrir un segundo socket. */
   const [ultimaTelemetria, setUltimaTelemetria] = useState<Record<string, TelemetryBroadcast>>({});
@@ -166,7 +169,16 @@ export default function Mapa() {
         <div className="map-frame">
           {simulando ? (
             <p className="sim-banner" role="status">
+              <span className="sim-banner__dot" aria-hidden="true" />
               Simulación activa · las unidades SIM y sus alertas no son mediciones reales
+              {/* El reloj acelerado: cinco minutos de pantalla son cinco
+                  horas de operación. Sin decirlo, un tren que cruza
+                  300 km durante la demo no cuadra. */}
+              {relojSim ? (
+                <span className="sim-banner__clock">
+                  {relojSim} <b>×{FACTOR_TIEMPO}</b>
+                </span>
+              ) : null}
             </p>
           ) : null}
           <MapContainer center={CENTRO} zoom={8} className="map">
@@ -177,6 +189,7 @@ export default function Mapa() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <SimulationLayer
+              onReloj={setRelojSim}
               ruta={railRoute}
               activa={simulando}
               onDefectos={setDefectosSim}

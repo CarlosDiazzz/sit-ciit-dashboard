@@ -106,6 +106,10 @@
   transform: translateX(-50%);
   z-index: 500;
   margin: 0;
+  /* Flex para alinear el punto, el texto y el reloj en una fila. */
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
   padding: var(--s2) var(--s4);
   border: 1px solid var(--warning);
   border-radius: 999px;
@@ -131,8 +135,47 @@
 
 @media (max-width: 560px) {
   .sim-banner {
+    flex-wrap: wrap;
+    justify-content: center;
     white-space: normal;
     max-width: 90%;
     text-align: center;
   }
+}
+
+/* Reloj de la demo: la hora de operación que representa y el factor de
+   aceleración. Va en el mismo aviso que ya advierte que esto es una
+   simulación, porque responde a la misma pregunta — qué de esto es
+   real. El punto late para que se lea como algo en curso. */
+.sim-banner__clock {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(11, 14, 13, 0.28);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.sim-banner__clock b {
+  margin-left: 3px;
+  opacity: 0.75;
+  font-weight: 700;
+}
+
+.sim-banner__dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+  animation: sim-latido 2s ease-in-out infinite;
+}
+
+@keyframes sim-latido {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-banner__dot { animation: none; }
 }

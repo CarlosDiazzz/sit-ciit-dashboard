@@ -51,8 +51,11 @@ export interface TrenSimulado {
   nodoActivo: string;
   /** Posición a lo largo de la ruta, de 0 a 1. */
   avance: number;
-  /** Fracción de ruta por segundo. */
+  /** Fracción de ruta por segundo, a velocidad de crucero. */
   velocidad: number;
+  /** Velocidad de crucero de esta unidad, en km/h. La instantánea
+   *  (`speedKmh`) oscila alrededor de esta según el trazado. */
+  crucero: number;
   lat: number;
   lon: number;
   rumbo: number | null;
@@ -78,6 +81,28 @@ export interface AlertaSimulada {
   ts: number;
   nodeId: string;
   unitId: string;
+}
+
+/** Factor de aceleración del tiempo: un minuto de demo es una hora de
+ *  operación. Con esto un tren de carga a 62 km/h cruza el corredor
+ *  entero en unos 5 minutos — se ve avanzar sin que el movimiento
+ *  parezca teletransporte, y la velocidad que muestra la ficha es la
+ *  que realmente lleva.
+ *
+ *  Antes la velocidad de avance salía de una constante ajustada a ojo y
+ *  los trenes iban a ~6000 km/h aparentes mientras la ficha declaraba
+ *  62: el desfase era de 97x. Ahora se deriva de la longitud real del
+ *  trazado, así que las dos cifras no pueden separarse. */
+export const FACTOR_TIEMPO = 60;
+
+/** Longitud del trazado de la Línea Z que recorren los trenes, medida
+ *  sobre el GeoJSON de OSM que carga el mapa (sit-ciit-infra/data). Es
+ *  lo que convierte km/h en fracción de ruta por segundo. */
+const LONGITUD_CORREDOR_KM = 300;
+
+/** Fracción de ruta que avanza por segundo de demo un tren a `kmh`. */
+function avancePorSegundo(kmh: number): number {
+  return (kmh * FACTOR_TIEMPO) / 3600 / LONGITUD_CORREDOR_KM;
 }
 
 /** Puntos del corredor donde la vía provoca una reacción medible. No son
@@ -281,9 +306,8 @@ export function iniciarSimulacion(ruta: [number, number][]): EstadoSimulacion {
         ],
         nodoActivo: `${c.unitId}-a`,
         avance: c.avance,
-        // Velocidad de avance escalada: la ruta completa en ~4 min de
-        // demo en vez de las 5 h que tardaría de verdad.
-        velocidad: (c.kmh / 60) * 0.00009,
+        velocidad: avancePorSegundo(c.kmh),
+        crucero: c.kmh,
         lat: p.lat,
         lon: p.lon,
         rumbo,
@@ -325,7 +349,9 @@ export function interpolarPosiciones(
   return {
     ...estado,
     trenes: estado.trenes.map((tr) => {
-      let avance = tr.avance + tr.velocidad * dtSegundos * tr.sentido * 60;
+      // El x60 del factor de tiempo ya está dentro de `velocidad`: aquí
+      // solo se multiplica por los segundos transcurridos.
+      let avance = tr.avance + tr.velocidad * dtSegundos * tr.sentido;
 
       // El rebote en los extremos se decide aquí igual que en el paso
       // completo: si no, el tren se pasaría del final entre dos pasos.
@@ -355,8 +381,13 @@ export function interpolarPosiciones(
 let contadorAlertas = 0;
 
 /** Cada cuánto baja un punto de batería el nodo activo, en segundos de
- *  simulación. El activo publica a mayor frecuencia y consume más. */
-const SEGUNDOS_POR_PUNTO_BATERIA = 8;
+ *  demo. El activo publica a mayor frecuencia y consume más.
+ *
+ *  Un celular publicando telemetría a 10 Hz con el GPS encendido aguanta
+ *  del orden de 8 h, o sea ~1 punto cada 5 min de operación. Al factor
+ *  de tiempo eso son 5 s de demo, que además deja ver el failover de la
+ *  unidad 02 (arranca al 18 %) a los ~65 s de arrancar. */
+const SEGUNDOS_POR_PUNTO_BATERIA = 5;
 
 /** Por debajo de esto el nodo se apaga y la unidad cambia de fuente.
  *  Es la misma idea que el failover por falta de heartbeat en el
@@ -399,7 +430,25 @@ export function avanzarSimulacion(
 
     // La velocidad real baja en las curvas cerradas, como haría un
     // maquinista. Da variación a la gráfica sin inventarla.
-    const speedKmh = Math.round(tr.speedKmh * (1 - curva * 0.18) * 10) / 10;
+    // Un tren de carga no cambia de velocidad de golpe: arrastra miles
+    // de toneladas. Se calcula a qué velocidad *debería* ir en este
+    // punto y se tiende hacia ella poco a poco, así la ficha muestra una
+    // aguja que sube y baja como la de una locomotora real en vez de
+    // saltar entre valores.
+    //
+    // Antes esto partía de `tr.speedKmh`, que ya venía reducido: la
+    // velocidad decaía un poco en cada paso y no se recuperaba nunca.
+    const objetivo = tr.crucero * (1 - curva * 0.22) * (sinCobertura ? 0.94 : 1);
+    // Constante de tiempo de ~6 s de demo, que al factor x60 son 6 min
+    // de operación: el orden de magnitud con que un convoy cargado
+    // gana o pierde velocidad.
+    const inercia = Math.min(1, dtSegundos / 6);
+    const speedKmh = Math.round((tr.speedKmh + (objetivo - tr.speedKmh) * inercia) * 10) / 10;
+
+    // La posición avanza con la velocidad que realmente lleva, no con
+    // la de crucero: si no, la ficha diría 48 km/h mientras el tren se
+    // desplaza como si fuera a 62.
+    const velocidad = avancePorSegundo(speedKmh);
 
     // --- estado de los nodos ------------------------------------------
     let nodoActivo = tr.nodoActivo;
@@ -479,6 +528,7 @@ export function avanzarSimulacion(
       lon: p.lon,
       rumbo: sentido === 1 ? p.rumbo : p.rumbo === null ? null : p.rumbo + 180,
       speedKmh,
+      velocidad,
       nodos,
       nodoActivo,
       seq,
@@ -600,6 +650,22 @@ function recalcularDefectos(
       eventIds: suyas.map((a) => a.id),
     };
   }).filter((d): d is TrackDefect => d !== null);
+}
+
+/** Hora de operación que representa la demo, como HH:MM.
+ *
+ *  La simulación arranca a las 06:00 —turno de mañana, con luz, que es
+ *  cuando circula la carga— y el reloj corre al factor de tiempo. Se
+ *  muestra junto al aviso para que quede claro que los cinco minutos de
+ *  pantalla son cinco horas de operación: sin eso, un tren que cruza
+ *  300 km en lo que dura la demo parece imposible, que es justo la duda
+ *  que no conviene dejar en el aire. */
+export function horaSimulada(tiempoS: number): string {
+  const HORA_INICIO = 6;
+  const minutos = HORA_INICIO * 60 + (tiempoS * FACTOR_TIEMPO) / 60;
+  const h = Math.floor(minutos / 60) % 24;
+  const m = Math.floor(minutos % 60);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 /** Nombre del punto caliente más cercano, para la ficha de la alerta. */
