@@ -1,3 +1,4 @@
+import DecisionBrief from '../components/DecisionBrief';
 /* Bitácora: historial completo de transiciones de comandos, para
  * auditoría (quién mandó qué y cuándo). Fase 4.
  */
@@ -22,6 +23,7 @@ export default function Bitacora() {
         </div>
       </div>
 
+      <DecisionBrief title="Reconstruye la secuencia de la intervención" evidence="Cada entrada representa una transición de estado. Compara los tiempos y motivos del mismo comando para comprender qué ocurrió." action="Revisa el seguimiento del comando para distinguir una solicitud enviada de una ejecución confirmada." to="/comandos" linkLabel="Revisar comandos" />
       <AsyncBoundary
         state={state}
         empty={{

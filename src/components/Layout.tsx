@@ -6,6 +6,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useConnectionStatus } from '../api/socket';
 import { useSession } from '../auth/context';
 import './layout.css';
+import './decision.css';
 
 const NAV = [
   { to: '/', label: 'Mapa', deity: 'Quetzalcóatl', domain: 'Ruta', glyph: 'Q', theme: 'quetzal', end: true },
@@ -26,7 +27,7 @@ function ConnectionIndicator() {
   const status = useConnectionStatus();
   const label =
     status === 'online'
-      ? 'Datos en vivo'
+      ? 'Canal en vivo conectado'
       : status === 'connecting'
         ? 'Conectando…'
         : 'Sin conexión';

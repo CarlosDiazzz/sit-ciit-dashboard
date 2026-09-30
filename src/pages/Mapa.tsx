@@ -1,3 +1,4 @@
+import DecisionBrief from '../components/DecisionBrief';
 /* Mapa del corredor: posición en vivo de las unidades sobre el trazado
  * real de la Línea Z.
  *
@@ -30,6 +31,7 @@ export default function Mapa() {
         </div>
       </div>
 
+      <DecisionBrief title="Supervisa la cobertura antes de interpretar la ruta" evidence="El mapa aporta contexto geográfico. Aún no muestra la posición de las unidades ni permite evaluar retrasos o una hora de llegada." action="Revisa la fuente activa y el último reporte de la unidad antes de tomar una decisión sobre su recorrido." to="/unidad" linkLabel="Revisar unidades" />
       <div className="map-layout">
         <div className="map-frame">
           <MapContainer center={CENTRO} zoom={8} className="map">

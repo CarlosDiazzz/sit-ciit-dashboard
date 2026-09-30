@@ -1,3 +1,4 @@
+import DecisionBrief from '../components/DecisionBrief';
 /* Vista Unidad: estado de los nodos, aceleración y velocidad en vivo.
  *
  * La telemetría llega por Socket.IO: el backend reemite cada mensaje que
@@ -176,6 +177,15 @@ export default function Unidad() {
         ) : null}
       </div>
 
+      <DecisionBrief
+        title={selectedNodeId ? `Fuente observada: ${selectedNodeId}` : 'Aún no hay una fuente para evaluar'}
+        evidence={selectedNodeId && lastByNode[selectedNodeId]
+          ? `Última recepción: ${formatAgo(new Date(lastByNode[selectedNodeId].receivedAt).toISOString())}. Las gráficas conservan hasta 60 muestras recibidas en esta sesión; una lectura retenida no garantiza el estado actual.`
+          : 'Esperando telemetría. Sin lecturas no se puede determinar el movimiento ni el estado de la carga.'}
+        action="Compara los nodos principal y de respaldo. Si observas un cambio brusco, consulta los eventos y verifica el contexto con el operador."
+        to="/eventos"
+        linkLabel="Revisar incidencias"
+      />
       <NodeComparison
         lastByNode={lastByNode}
         ahora={ahora}

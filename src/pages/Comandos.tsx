@@ -1,3 +1,4 @@
+import DecisionBrief from '../components/DecisionBrief';
 /* Envío de comandos y seguimiento sent -> delivered -> executed/rejected.
  * El formulario de emisión llega en la Fase 4; aquí queda el seguimiento
  * y el control de autoridad por rol.
@@ -42,6 +43,7 @@ export default function Comandos() {
         </div>
       </div>
 
+      <DecisionBrief title="Enviado no significa ejecutado" evidence="Comprueba la entrega y la confirmación del nodo. Un rechazo requiere revisar su motivo; un comando pendiente no acredita una acción realizada." action="Contrasta el seguimiento con la bitácora antes de solicitar otra intervención. El envío de comandos aún no está disponible en esta vista." to="/bitacora" linkLabel="Consultar trazabilidad" />
       <AsyncBoundary
         state={state}
         empty={{
@@ -54,7 +56,7 @@ export default function Comandos() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Acción</th>
+                  <th>Nodo destino</th><th>Acción</th>
                   <th>Estado</th>
                   <th>Emitido</th>
                   <th>Entregado</th>
@@ -65,7 +67,7 @@ export default function Comandos() {
               <tbody>
                 {comandos.map((cmd) => (
                   <tr key={cmd.id}>
-                    <td>{ACTION_LABEL[cmd.action] ?? cmd.action}</td>
+                    <td className="mono">{cmd.targetNodeId}</td><td>{ACTION_LABEL[cmd.action] ?? cmd.action}</td>
                     <td>
                       <CommandStatusBadge status={cmd.status} />
                     </td>

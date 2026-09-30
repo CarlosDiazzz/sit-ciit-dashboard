@@ -10,7 +10,7 @@ const EVENT_LABEL: Record<AnyEventKind, string> = {
   impact: 'Impacto',
   door_open: 'Puerta abierta',
   door_closed: 'Puerta cerrada',
-  rollover: 'Volcadura',
+  rollover: 'Posible volcadura',
   threshold_exceeded: 'Umbral excedido',
   source_failover: 'Cambio de fuente',
   sensor_disagreement: 'Discrepancia de sensores',
@@ -19,3 +19,4 @@ const EVENT_LABEL: Record<AnyEventKind, string> = {
 export function eventKindLabel(kind: AnyEventKind): string {
   return EVENT_LABEL[kind] ?? kind;
 }
+
