@@ -221,7 +221,9 @@ export default function Layout() {
               alt={""}
             />
           </span>
-          <span className="brand-name">{translate("Zentra")}<small>{translate("Control")}</small>
+          <span className="brand-name">
+            Zenda
+            <small>Control</small>
           </span>
         </div>
 
