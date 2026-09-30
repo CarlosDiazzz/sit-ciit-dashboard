@@ -1,5 +1,13 @@
 export type MapCoordinate = [latitude: number, longitude: number];
 
+export interface RailConnection {
+  name: 'Línea G' | 'Línea K';
+  segments: MapCoordinate[][];
+}
+
+// Empalme real de las líneas Z y G en los nodos del archivo Overpass.
+export const MEDIAS_AGUAS_JUNCTION: MapCoordinate = [17.6798489, -95.0265953];
+
 interface OverpassNode {
   type: 'node';
   id: number;
@@ -193,4 +201,34 @@ export function parseMainRailRoute(input: unknown): MapCoordinate[] {
     throw new Error('No se pudo construir una ruta continua entre Coatzacoalcos y Salina Cruz.');
   }
   return route;
+}
+
+/** Conexiones solicitadas: G hacia el centro del país y K por Juchitán. */
+export function parseRailConnections(input: unknown): RailConnection[] {
+  if (typeof input !== 'object' || input === null || !('elements' in input) || !Array.isArray(input.elements)) {
+    throw new Error('El archivo mapData.txt no tiene elementos geográficos válidos.');
+  }
+  const elements = input.elements as NonNullable<OverpassResponse['elements']>;
+  const nodes = new Map<number, MapCoordinate>();
+  for (const element of elements) {
+    if (element.type === 'node' && 'lat' in element && 'lon' in element) {
+      nodes.set(element.id, [element.lat, element.lon]);
+    }
+  }
+
+  return (['Línea G', 'Línea K'] as const).map((name) => {
+    const seen = new Set<number>();
+    const segments = elements.flatMap((element) => {
+      if (
+        element.type !== 'way' || !('nodes' in element) ||
+        element.tags?.railway !== 'rail' || element.tags.name !== name ||
+        element.tags.service || element.tags.usage !== 'main' || seen.has(element.id)
+      ) return [];
+      seen.add(element.id);
+      const coordinates = element.nodes.map((id) => nodes.get(id));
+      if (coordinates.length < 2 || coordinates.some((point) => point === undefined)) return [];
+      return [coordinates as MapCoordinate[]];
+    });
+    return { name, segments };
+  }).filter((connection) => connection.segments.length > 0);
 }
