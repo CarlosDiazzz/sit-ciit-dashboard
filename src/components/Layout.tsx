@@ -5,9 +5,11 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useConnectionStatus } from '../api/socket';
 import { useSession } from '../auth/context';
+import { useColorMode } from '../hooks/useColorMode';
 import AztecOrnament from './AztecOrnament';
 import './layout.css';
 import './decision.css';
+import './theme.css';
 
 const NAV = [
   { to: '/', label: 'Ruta', deity: 'Quetzalcóatl', domain: 'Ubicación, recorrido y ETA', glyph: 'Q', theme: 'quetzal', end: true },
@@ -41,13 +43,14 @@ function ConnectionIndicator() {
 
 export default function Layout() {
   const { user, signOut } = useSession();
+  const { mode, toggle } = useColorMode();
   const location = useLocation();
   const current = NAV.find((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to),
   ) ?? NAV[0];
 
   return (
-    <div className="shell" data-theme={current.theme}>
+    <div className="shell" data-theme={current.theme} data-color-mode={mode}>
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
@@ -99,6 +102,18 @@ export default function Layout() {
             </div>
 
             <div className="topbar-right">
+              <button
+                type="button"
+                className="theme-toggle"
+                onClick={toggle}
+                aria-label={mode === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
+                title={mode === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
+              >
+                <span className="theme-toggle-icon" aria-hidden="true">
+                  {mode === 'light' ? '☾' : '☀'}
+                </span>
+                <span>{mode === 'light' ? 'Oscuro' : 'Claro'}</span>
+              </button>
               {user ? (
                 <>
                   <span className="user">

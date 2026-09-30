@@ -28,6 +28,7 @@ import SpeedGauge from '../components/SpeedGauge';
 import { AsyncBoundary } from '../components/States';
 import { chartPalette } from '../lib/chartColors';
 import { formatAgo, formatNumber } from '../lib/format';
+import { useColorMode } from '../hooks/useColorMode';
 import './tables.css';
 import './unidad.css';
 
@@ -59,7 +60,8 @@ const MOVEMENT_EXIT_G = 0.03;
 
 export default function Unidad() {
   const state = useApi<Unit[]>(() => api.listUnits());
-  const colors = chartPalette();
+  const { mode } = useColorMode();
+  const colors = chartPalette(mode === 'dark');
 
   const [points, setPoints] = useState<ChartPoint[]>([]);
   const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});
