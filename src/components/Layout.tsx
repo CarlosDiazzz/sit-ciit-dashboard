@@ -216,7 +216,7 @@ export default function Layout() {
             />
           </span>
           <span className="brand-name">
-            Zentra
+            Zenda
             <small>Control</small>
           </span>
         </div>
