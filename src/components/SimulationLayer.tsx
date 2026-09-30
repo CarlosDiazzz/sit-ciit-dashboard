@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Capa de simulación del corredor.
  *
  * Dibuja los trenes simulados y sus alertas con los mismos iconos que
@@ -71,14 +72,14 @@ export default function SimulationLayer({
           icon={iconoEvento(a.severity, a.severity === 'critical')}
         >
           <Tooltip direction="top" offset={[0, -10]}>
-            {eventKindLabel(a.kind)} · {a.value.toFixed(2)} {eventValueUnit(a.kind)}
+            {translate(eventKindLabel(a.kind))} · {translate(a.value.toFixed(2))} {translate(eventValueUnit(a.kind))}
           </Tooltip>
           <Popup>
-            <strong>{eventKindLabel(a.kind)}</strong>
+            <strong>{translate(eventKindLabel(a.kind))}</strong>
             <br />
-            {a.value.toFixed(2)} {eventValueUnit(a.kind)}
+            {translate(a.value.toFixed(2))} {translate(eventValueUnit(a.kind))}
             <br />
-            {a.nodeId} · {formatTime(new Date(a.ts).toISOString())}
+            {translate(a.nodeId)} · {translate(formatTime(new Date(a.ts).toISOString()))}
           </Popup>
         </Marker>
       ))}
@@ -98,13 +99,11 @@ export default function SimulationLayer({
           zIndexOffset={400}
         >
           <Popup>
-            <strong>{t.unitId}</strong>
+            <strong>{translate(t.unitId)}</strong>
             <br />
-            {t.speedKmh} km/h
-            <br />
-            {Math.round(t.avance * 100)} % del corredor
-            <br />
-            <em>Unidad simulada</em>
+            {t.speedKmh}{translate(" km/h")}<br />
+            {Math.round(t.avance * 100)}{translate(" % del corredor")}<br />
+            <em>{translate("Unidad simulada")}</em>
           </Popup>
         </Marker>
       ))}

@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Comparación lado a lado de los nodos que están reportando.
  *
  * Con varios nodos en la misma unidad (primary y backup) lo que importa
@@ -53,8 +54,8 @@ export default function NodeComparison({
   return (
     <section className="node-compare">
       <div className="card-head">
-        <h2>Nodos reportando</h2>
-        <span className="chart-meta">{nodos.length} activo(s)</span>
+        <h2>{translate("Nodos reportando")}</h2>
+        <span className="chart-meta">{nodos.length}{translate(" activo(s)")}</span>
       </div>
 
       <div className="node-grid">
@@ -85,31 +86,31 @@ export default function NodeComparison({
               onClick={() => onSelect(n.nodeId)}
             >
               <div className="node-card-head">
-                <span className="node-code mono">{n.nodeId}</span>
-                <span className={`node-role node-role-${n.role}`}>{ROLE_LABEL[n.role]}</span>
+                <span className="node-code mono">{translate(n.nodeId)}</span>
+                <span className={`node-role node-role-${n.role}`}>{translate(ROLE_LABEL[n.role])}</span>
               </div>
 
               <dl className="node-stats">
-                <dt>Unidad</dt>
-                <dd className="mono">{n.unitId}</dd>
+                <dt>{translate("Unidad")}</dt>
+                <dd className="mono">{translate(n.unitId)}</dd>
 
-                <dt>Secuencia</dt>
+                <dt>{translate("Secuencia")}</dt>
                 <dd>{n.seq}</dd>
 
-                <dt>|a|</dt>
-                <dd>{n.accel ? formatNumber(magnitud(n.accel), 2) : '—'}</dd>
+                <dt>{translate("|a|")}</dt>
+                <dd>{translate(n.accel ? formatNumber(magnitud(n.accel), 2) : '—')}</dd>
 
-                <dt>Velocidad</dt>
+                <dt>{translate("Velocidad")}</dt>
                 <dd>
-                  {n.gps?.speedMs != null ? `${formatNumber(n.gps.speedMs * 3.6, 1)} km/h` : '—'}
+                  {translate(n.gps?.speedMs != null ? `${formatNumber(n.gps.speedMs * 3.6, 1)} km/h` : '—')}
                 </dd>
 
-                <dt>Último dato</dt>
-                <dd>{silencioMs < 1500 ? 'ahora' : `hace ${Math.round(silencioMs / 1000)} s`}</dd>
+                <dt>{translate("Último dato")}</dt>
+                <dd>{translate(silencioMs < 1500 ? 'ahora' : `hace ${Math.round(silencioMs / 1000)} s`)}</dd>
               </dl>
 
-              {callado ? <p className="node-warn">Sin datos recientes</p> : null}
-              {discrepa ? <p className="node-warn">Discrepa del otro nodo</p> : null}
+              {callado ? <p className="node-warn">{translate("Sin datos recientes")}</p> : null}
+              {discrepa ? <p className="node-warn">{translate("Discrepa del otro nodo")}</p> : null}
             </button>
           );
         })}

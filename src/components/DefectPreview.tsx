@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Vista previa de las detecciones que componen un defecto.
  *
  * La ficha del mapa daba las cifras agregadas —cuántas unidades, cuántas
@@ -57,16 +58,15 @@ export default function DefectPreview({
     };
   }, [eventIds]);
 
-  if (error) return <p className="dpreview__note">{error}</p>;
-  if (eventos === null) return <p className="dpreview__note">Cargando detecciones…</p>;
+  if (error) return <p className="dpreview__note">{translate(error)}</p>;
+  if (eventos === null) return <p className="dpreview__note">{translate("Cargando detecciones…")}</p>;
 
   // Un defecto simulado no tiene eventos en la base: sus ids no
   // corresponden a filas reales.
   if (eventos.length === 0) {
     return (
       <p className="dpreview__note">
-        {eventIds.length} detección{eventIds.length === 1 ? '' : 'es'} agrupadas.
-      </p>
+        {eventIds.length}{translate(" detección")}{translate(eventIds.length === 1 ? '' : 'es')}{translate(" agrupadas.")}</p>
     );
   }
 
@@ -77,8 +77,7 @@ export default function DefectPreview({
 
   return (
     <div className="dpreview">
-      <span className="dpreview__title">
-        Detecciones ({eventos.length})
+      <span className="dpreview__title">{translate("Detecciones (")}{eventos.length})
       </span>
 
       <ul className="dpreview__list">
@@ -86,18 +85,18 @@ export default function DefectPreview({
           <li key={e.id}>
             <Link to={`/eventos?evento=${e.id}`} className="dpreview__row">
               <span className="dpreview__value">
-                {e.value === null ? '—' : `${e.value.toFixed(2)}${unidad ? ` ${unidad}` : ''}`}
+                {translate(e.value === null ? '—' : `${e.value.toFixed(2)}${unidad ? ` ${unidad}` : ''}`)}
               </span>
-              <span className="dpreview__when">{formatDateTime(e.ts)}</span>
+              <span className="dpreview__when">{translate(formatDateTime(e.ts))}</span>
               {/* El veredicto, cuando lo hay: distingue un punto que
                   alguien ya revisó de uno sin tocar. */}
               {e.verdict ? (
                 <span className={`dpreview__verdict dpreview__verdict--${e.verdict}`}>
-                  {e.verdict === 'confirmed'
+                  {translate(e.verdict === 'confirmed'
                     ? 'real'
                     : e.verdict === 'false_alarm'
                       ? 'falsa'
-                      : '?'}
+                      : '?')}
                 </span>
               ) : null}
             </Link>
@@ -106,12 +105,10 @@ export default function DefectPreview({
       </ul>
 
       {eventos.length > MAX_FILAS ? (
-        <span className="dpreview__more">y {eventos.length - MAX_FILAS} más</span>
+        <span className="dpreview__more">{translate("y ")}{eventos.length - MAX_FILAS}{translate(" más")}</span>
       ) : null}
 
-      <Link to={`/eventos?evento=${recientes[0]!.id}`} className="dpreview__cta">
-        Abrir en el centro de alertas →
-      </Link>
+      <Link to={`/eventos?evento=${recientes[0]!.id}`} className="dpreview__cta">{translate("Abrir en el centro de alertas →")}</Link>
     </div>
   );
 }

@@ -157,7 +157,7 @@
 .shell[data-color-mode='light'] .page-head h1 {
   color: var(--accent);
   font-family: 'Clarendon', 'Rockwell', 'Roboto Slab', var(--display);
-  font-size: 36px;
+  font-size: 2.571429rem;
   font-weight: 600;
   letter-spacing: 0;
 }

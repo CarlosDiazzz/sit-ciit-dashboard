@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Estado de los nodos conectados, en el panel del mapa.
  *
  * Sustituye a las tarjetas fijas que decían "Trazado disponible" y
@@ -121,11 +122,8 @@ export default function NodeStatusPanel({
   if (filas.length === 0) {
     return (
       <section className="nodes-panel">
-        <h2 className="nodes-panel__head">Nodos</h2>
-        <p className="nodes-panel__empty">
-          Ningún nodo dado de alta. Aparecen aquí en cuanto uno publique su
-          primer mensaje.
-        </p>
+        <h2 className="nodes-panel__head">{translate("Nodos")}</h2>
+        <p className="nodes-panel__empty">{translate("Ningún nodo dado de alta. Aparecen aquí en cuanto uno publique su primer mensaje.")}</p>
       </section>
     );
   }
@@ -133,9 +131,9 @@ export default function NodeStatusPanel({
   return (
     <section className="nodes-panel">
       <div className="nodes-panel__head">
-        <h2>Nodos</h2>
+        <h2>{translate("Nodos")}</h2>
         <span className={conProblema > 0 ? 'nodes-panel__count is-alert' : 'nodes-panel__count'}>
-          {conProblema > 0 ? `${conProblema} requiere${conProblema === 1 ? '' : 'n'} atención` : 'Todos al día'}
+          {translate(conProblema > 0 ? `${conProblema} requiere${conProblema === 1 ? '' : 'n'} atención` : 'Todos al día')}
         </span>
       </div>
 
@@ -144,45 +142,43 @@ export default function NodeStatusPanel({
           <li key={f.nodeCode} className={`node-row node-row--${f.gravedad}`}>
             <div className="node-row__top">
               <span className="node-row__code">
-                {f.nodeCode}
-                <em>{f.role === 'primary' ? 'primario' : 'respaldo'}</em>
+                {translate(f.nodeCode)}
+                <em>{translate(f.role === 'primary' ? 'primario' : 'respaldo')}</em>
               </span>
-              {f.esFuente ? <span className="node-row__source">fuente</span> : null}
+              {f.esFuente ? <span className="node-row__source">{translate("fuente")}</span> : null}
             </div>
 
             {/* Las métricas van en la misma posición en cada tarjeta:
                 así se comparan dos nodos de un vistazo. */}
             <dl className="node-row__metrics">
               <div>
-                <dt>Batería</dt>
+                <dt>{translate("Batería")}</dt>
                 <dd className={f.bateria !== null && f.bateria <= BATERIA_CRITICA ? 'is-critical' : undefined}>
-                  {f.bateria === null ? '—' : `${Math.round(f.bateria)} %`}
+                  {translate(f.bateria === null ? '—' : `${Math.round(f.bateria)} %`)}
                 </dd>
               </div>
               <div>
-                <dt>Cola</dt>
+                <dt>{translate("Cola")}</dt>
                 <dd className={f.cola !== null && f.cola >= COLA_ALERTA ? 'is-warning' : undefined}>
-                  {f.cola ?? '—'}
+                  {translate(f.cola ?? '—')}
                 </dd>
               </div>
               <div>
-                <dt>Velocidad</dt>
-                <dd>{f.velocidadKmh === null ? '—' : `${f.velocidadKmh.toFixed(0)} km/h`}</dd>
+                <dt>{translate("Velocidad")}</dt>
+                <dd>{translate(f.velocidadKmh === null ? '—' : `${f.velocidadKmh.toFixed(0)} km/h`)}</dd>
               </div>
               <div>
-                <dt>Latido</dt>
-                <dd>{f.heartbeatMs === null ? 'nunca' : formatAgo(new Date(ahora - f.heartbeatMs).toISOString())}</dd>
+                <dt>{translate("Latido")}</dt>
+                <dd>{translate(f.heartbeatMs === null ? 'nunca' : formatAgo(new Date(ahora - f.heartbeatMs).toISOString()))}</dd>
               </div>
             </dl>
 
-            {f.motivo ? <p className="node-row__reason">{f.motivo}</p> : null}
+            {f.motivo ? <p className="node-row__reason">{translate(f.motivo)}</p> : null}
           </li>
         ))}
       </ul>
 
-      <Link to="/unidad" className="nodes-panel__link">
-        Ver telemetría en vivo →
-      </Link>
+      <Link to="/unidad" className="nodes-panel__link">{translate("Ver telemetría en vivo →")}</Link>
     </section>
   );
 }

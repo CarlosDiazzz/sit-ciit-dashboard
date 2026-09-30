@@ -1,3 +1,4 @@
+import { t, locale } from '../accessibility/i18n';
 /* Iconos del mapa como divIcon de Leaflet.
  *
  * Se construyen con SVG inline en vez de imágenes: heredan los tokens
@@ -54,7 +55,7 @@ const cacheUnidad = new Map<string, DivIcon>();
  *  icono de 26 px y forzaria reconstruirlo por nada. */
 function claveUnidad(o: IconoUnidadOpts): string {
   const r = o.rumbo === null ? 'x' : Math.round(o.rumbo / 5) * 5;
-  return `${r}|${o.callada}|${o.alerta ?? '-'}|${o.etiqueta}|${o.role}|${o.esFuente}`;
+  return `${locale()}|${r}|${o.callada}|${o.alerta ?? '-'}|${o.etiqueta}|${o.role}|${o.esFuente}`;
 }
 
 export function iconoUnidad(opts: IconoUnidadOpts): DivIcon {
@@ -96,7 +97,7 @@ function construirIconoUnidad({
         <span class="unit-marker__label">
           ${etiqueta}<b class="unit-marker__role">${role === 'primary' ? 'P' : 'B'}</b>
         </span>
-        ${esFuente ? '<span class="unit-marker__source" title="Fuente activa"></span>' : ''}
+        ${esFuente ? `<span class="unit-marker__source" title="${t('Fuente activa')}"></span>` : ''}
       </div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 13],

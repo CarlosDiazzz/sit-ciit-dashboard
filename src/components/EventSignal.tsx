@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* La señal alrededor de un evento.
  *
  * Un evento dice "2.59 g a las 07:54". Eso no basta para saber qué pasó:
@@ -62,14 +63,11 @@ export default function EventSignal({ eventId }: { eventId: string }) {
     };
   }, [eventId]);
 
-  if (cargando) return <p className="signal-note">Cargando la señal…</p>;
-  if (error) return <p className="signal-note signal-note--error">{error}</p>;
+  if (cargando) return <p className="signal-note">{translate("Cargando la señal…")}</p>;
+  if (error) return <p className="signal-note signal-note--error">{translate(error)}</p>;
   if (!datos || datos.samples.length === 0) {
     return (
-      <p className="signal-note">
-        No hay telemetría guardada alrededor de este evento. Ocurre cuando el
-        nodo detectó algo sin estar publicando lecturas.
-      </p>
+      <p className="signal-note">{translate("No hay telemetría guardada alrededor de este evento. Ocurre cuando el nodo detectó algo sin estar publicando lecturas.")}</p>
     );
   }
 
@@ -90,10 +88,9 @@ export default function EventSignal({ eventId }: { eventId: string }) {
   return (
     <div className="signal">
       <div className="signal-head">
-        <h4>Señal registrada</h4>
+        <h4>{translate("Señal registrada")}</h4>
         <span className="signal-meta">
-          {datos.samples.length} lecturas · ±{datos.windowSeconds} s
-        </span>
+          {datos.samples.length}{translate(" lecturas · ±")}{datos.windowSeconds}{translate(" s")}</span>
       </div>
 
       <div className="signal-chart">
@@ -142,7 +139,7 @@ export default function EventSignal({ eventId }: { eventId: string }) {
             <Line
               type="monotone"
               dataKey="magnitud"
-              name="|a| g"
+              name={translate("|a| g")}
               stroke={colors.seriesX}
               dot={false}
               isAnimationActive={false}
@@ -151,7 +148,7 @@ export default function EventSignal({ eventId }: { eventId: string }) {
             <Line
               type="monotone"
               dataKey="rotacion"
-              name="rad/s"
+              name={translate("rad/s")}
               stroke={colors.seriesZ}
               strokeDasharray="4 3"
               dot={false}
@@ -164,25 +161,22 @@ export default function EventSignal({ eventId }: { eventId: string }) {
 
       <dl className="signal-stats">
         <div>
-          <dt>Pico medido</dt>
-          <dd>{pico > 0 ? `${pico.toFixed(2)} g` : '—'}</dd>
+          <dt>{translate("Pico medido")}</dt>
+          <dd>{translate(pico > 0 ? `${pico.toFixed(2)} g` : '—')}</dd>
         </div>
         <div>
-          <dt>Antes / después</dt>
+          <dt>{translate("Antes / después")}</dt>
           <dd>
             {antes} / {puntos.length - antes}
           </dd>
         </div>
         <div>
-          <dt>Umbral</dt>
-          <dd>{datos.event.threshold !== null ? datos.event.threshold.toFixed(2) : '—'}</dd>
+          <dt>{translate("Umbral")}</dt>
+          <dd>{translate(datos.event.threshold !== null ? datos.event.threshold.toFixed(2) : '—')}</dd>
         </div>
       </dl>
 
-      <p className="signal-hint">
-        Un pico agudo de décimas de segundo es un golpe; una meseta que dura
-        segundos es un frenado o una curva.
-      </p>
+      <p className="signal-hint">{translate("Un pico agudo de décimas de segundo es un golpe; una meseta que dura segundos es un frenado o una curva.")}</p>
     </div>
   );
 }

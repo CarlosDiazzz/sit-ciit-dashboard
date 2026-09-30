@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Defectos de vía sobre el mapa.
  *
  * Un defecto no es un punto: es una zona con incertidumbre. El GPS de
@@ -97,49 +98,47 @@ export default function TrackDefectLayer({
 
             <Marker position={[d.lat, d.lon]} icon={iconoDefecto(d)} zIndexOffset={300}>
               <Tooltip direction="top" offset={[0, -16]}>
-                {eventKindLabel(d.kind)} · {e.etiqueta}
+                {translate(eventKindLabel(d.kind))} · {translate(e.etiqueta)}
               </Tooltip>
 
               <Popup>
                 <div className="defect-popup">
-                  <strong>{eventKindLabel(d.kind)}</strong>
+                  <strong>{translate(eventKindLabel(d.kind))}</strong>
                   <span className={`defect-popup__tag defect-popup__tag--${d.confidence}`}>
-                    {e.etiqueta}
+                    {translate(e.etiqueta)}
                   </span>
 
                   {/* La frase que explica el nivel: es lo que hace
                       defendible la conclusión ante quien pregunte. */}
-                  <p className="defect-popup__reason">{d.reason}</p>
+                  <p className="defect-popup__reason">{translate(d.reason)}</p>
 
                   <dl className="defect-popup__stats">
                     <div>
-                      <dt>Unidades</dt>
+                      <dt>{translate("Unidades")}</dt>
                       <dd>{d.distinctUnits}</dd>
                     </div>
                     <div>
-                      <dt>Pasadas</dt>
+                      <dt>{translate("Pasadas")}</dt>
                       <dd>{d.passes}</dd>
                     </div>
                     <div>
-                      <dt>Intensidad media</dt>
+                      <dt>{translate("Intensidad media")}</dt>
                       <dd>
-                        {d.averageValue === null
+                        {translate(d.averageValue === null
                           ? '—'
-                          : `${d.averageValue.toFixed(2)}${unidad ? ` ${unidad}` : ''}`}
+                          : `${d.averageValue.toFixed(2)}${unidad ? ` ${unidad}` : ''}`)}
                       </dd>
                     </div>
                     <div>
-                      <dt>Zona</dt>
-                      <dd>±{Math.max(30, d.radiusM)} m</dd>
+                      <dt>{translate("Zona")}</dt>
+                      <dd>±{Math.max(30, d.radiusM)}{translate(" m")}</dd>
                     </div>
                   </dl>
 
                   <DefectPreview eventIds={d.eventIds} kind={d.kind} />
 
-                  <p className="defect-popup__seen">
-                    Primera vez {formatDateTime(d.firstSeen)}
-                    <br />
-                    Última {formatDateTime(d.lastSeen)}
+                  <p className="defect-popup__seen">{translate("Primera vez ")}{translate(formatDateTime(d.firstSeen))}
+                    <br />{translate("Última ")}{translate(formatDateTime(d.lastSeen))}
                   </p>
                 </div>
               </Popup>

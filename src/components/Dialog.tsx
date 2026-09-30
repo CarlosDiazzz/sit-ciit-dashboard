@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import './workspace.css';
@@ -10,10 +11,10 @@ export default function Dialog({ title, onClose, children, wide = false }: { tit
     dialog.showModal();
     return () => { dialog.close(); previous?.focus(); };
   }, []);
-  return <dialog ref={ref} className={`workspace-dialog${wide ? ' workspace-dialog-wide' : ''}`} aria-label={title}
+  return <dialog ref={ref} className={`workspace-dialog${wide ? ' workspace-dialog-wide' : ''}`} aria-label={translate(title)}
     onCancel={e => { e.preventDefault(); onClose(); }}
     onClick={e => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) onClose(); } }}>
-    <div className="workspace-dialog-head"><h2>{title}</h2><button type="button" className="icon-action" aria-label="Cerrar ventana" onClick={onClose}><X size={19} /></button></div>
-    {children}
+    <div className="workspace-dialog-head"><h2>{translate(title)}</h2><button type="button" className="icon-action" aria-label={translate("Cerrar ventana")} onClick={onClose}><X size={19} /></button></div>
+    {translate(children)}
   </dialog>;
 }

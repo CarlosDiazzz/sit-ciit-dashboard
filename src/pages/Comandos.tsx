@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Emisión de comandos y seguimiento sent → delivered → executed/rejected.
  *
  * El formulario oculta las acciones que el rol de la sesión no puede
@@ -113,13 +114,13 @@ export default function Comandos() {
     <>
       <div className="page-head">
         <div>
-          <h1>Comandos</h1>
+          <h1>{translate("Comandos")}</h1>
           <p>
-            {user
+            {translate(user
               ? can('set_sampling_rate')
                 ? 'Tu rol puede emitir cualquier comando.'
                 : 'Tu rol solo puede activar y detener alarmas.'
-              : 'Inicia sesión para emitir comandos.'}
+              : 'Inicia sesión para emitir comandos.')}
           </p>
         </div>
         <PageBreadcrumbs current="Comandos" />
@@ -129,20 +130,20 @@ export default function Comandos() {
         <form className="cmd-form" onSubmit={emitir}>
           <div className="cmd-fields">
             <label className="field">
-              <span>Nodo destino</span>
+              <span>{translate("Nodo destino")}</span>
               <select value={nodo} onChange={(e) => setNodo(e.target.value)} required>
-                <option value="">Elegir…</option>
+                <option value="">{translate("Elegir…")}</option>
                 {nodos.map((n) => (
                   <option key={n.id} value={n.nodeCode}>
-                    {n.nodeCode} ({n.role === 'primary' ? 'primario' : 'respaldo'})
-                    {n.isOnline ? '' : ' — sin conexión'}
+                    {translate(n.nodeCode)} ({translate(n.role === 'primary' ? 'primario' : 'respaldo')})
+                    {translate(n.isOnline ? '' : ' — sin conexión')}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="field">
-              <span>Acción</span>
+              <span>{translate("Acción")}</span>
               <select
                 value={accion}
                 onChange={(e) => {
@@ -152,7 +153,7 @@ export default function Comandos() {
               >
                 {permitidas.map((a) => (
                   <option key={a.action} value={a.action}>
-                    {a.label}
+                    {translate(a.label)}
                   </option>
                 ))}
               </select>
@@ -160,37 +161,31 @@ export default function Comandos() {
 
             {param ? (
               <label className="field">
-                <span>{param.etiqueta}</span>
+                <span>{translate(param.etiqueta)}</span>
                 <input
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
-                  placeholder={param.placeholder}
+                  placeholder={translate(param.placeholder)}
                   required
                 />
               </label>
             ) : null}
 
             <button type="submit" className="btn btn-primary" disabled={enviando || !nodo}>
-              {enviando ? 'Enviando…' : 'Enviar comando'}
+              {translate(enviando ? 'Enviando…' : 'Enviar comando')}
             </button>
           </div>
 
           {/* Un nodo sin conexión no rechaza el comando: el broker lo
               retiene hasta que vuelva (clean:false en el contrato). */}
-          <p className="cmd-nota">
-            Si el nodo está sin conexión el comando queda en <b>Enviado</b> hasta que
-            reconecte.
-          </p>
+          <p className="cmd-nota">{translate("Si el nodo está sin conexión el comando queda en ")}<b>{translate("Enviado")}</b>{translate(" hasta que reconecte.")}</p>
 
-          {error ? <p className="cmd-error" role="alert">{error}</p> : null}
-          {aviso ? <p className="cmd-aviso" role="status">{aviso}</p> : null}
+          {error ? <p className="cmd-error" role="alert">{translate(error)}</p> : null}
+          {aviso ? <p className="cmd-aviso" role="status">{translate(aviso)}</p> : null}
 
           {permitidas.length < ACCIONES.length ? (
             <p className="cmd-nota">
-              {ACCIONES.length - permitidas.length} acciones ocultas: requieren rol de
-              centro de control ({OPERATOR_ALLOWED_ACTIONS.length} disponibles para
-              operador).
-            </p>
+              {ACCIONES.length - permitidas.length}{translate(" acciones ocultas: requieren rol de centro de control (")}{OPERATOR_ALLOWED_ACTIONS.length}{translate(" disponibles para operador).")}</p>
           ) : null}
         </form>
       ) : null}
@@ -203,18 +198,18 @@ export default function Comandos() {
         }}
       >
         {(lista) => (
-          <PagedRows items={lista} label="Seguimiento de comandos">{rows => (
+          <PagedRows items={lista} label={translate("Seguimiento de comandos")}>{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Acción</th>
-                  <th>Nodo</th>
-                  <th>Estado</th>
-                  <th>Emitido</th>
-                  <th>Entregado</th>
-                  <th>Ejecutado</th>
-                  <th>Emitió</th>
+                  <th>{translate("Acción")}</th>
+                  <th>{translate("Nodo")}</th>
+                  <th>{translate("Estado")}</th>
+                  <th>{translate("Emitido")}</th>
+                  <th>{translate("Entregado")}</th>
+                  <th>{translate("Ejecutado")}</th>
+                  <th>{translate("Emitió")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,19 +221,19 @@ export default function Comandos() {
                   return (
                     <tr key={cmd.id} className={avance ? 'is-fresh' : undefined}>
                       <td>
-                        {etiqueta}
-                        {cmd.reason ? <span className="tag">{cmd.reason}</span> : null}
+                        {translate(etiqueta)}
+                        {cmd.reason ? <span className="tag">{translate(cmd.reason)}</span> : null}
                       </td>
-                      <td className="mono">{cmd.targetNodeCode}</td>
+                      <td className="mono">{translate(cmd.targetNodeCode)}</td>
                       <td>
                         <CommandStatusBadge status={estado} />
                       </td>
-                      <td className="tabular">{formatDateTime(cmd.issuedAt)}</td>
-                      <td className="tabular">{formatDateTime(cmd.deliveredAt)}</td>
+                      <td className="tabular">{translate(formatDateTime(cmd.issuedAt))}</td>
+                      <td className="tabular">{translate(formatDateTime(cmd.deliveredAt))}</td>
                       <td className="tabular">
-                        {formatDateTime(cmd.executedAt ?? cmd.rejectedAt)}
+                        {translate(formatDateTime(cmd.executedAt ?? cmd.rejectedAt))}
                       </td>
-                      <td>{cmd.issuedByEmail}</td>
+                      <td>{translate(cmd.issuedByEmail)}</td>
                     </tr>
                   );
                 })}

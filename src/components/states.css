@@ -17,11 +17,11 @@
   color: var(--state-ink);
 }
 .state-loading, .state-error { min-height: 410px; }
-.state-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .18em; color: var(--state-muted); }
-.state-title { color: var(--state-ink); font-size: 19px; font-weight: 600; line-height: 1.4; }
-.state-text { color: #bdbdbd; max-width: 48ch; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
-.state-guidance { color: var(--state-muted); max-width: 48ch; font-size: 12px; line-height: 1.6; }
-.state-detail { color: var(--state-muted); font-size: 11px; padding: 3px 9px; border: 1px solid #393939; border-radius: 4px; }
+.state-eyebrow { font-size: 0.714286rem; font-weight: 600; letter-spacing: .18em; color: var(--state-muted); }
+.state-title { color: var(--state-ink); font-size: 1.357143rem; font-weight: 600; line-height: 1.4; }
+.state-text { color: #bdbdbd; max-width: 48ch; font-size: 0.928571rem; line-height: 1.7; overflow-wrap: anywhere; }
+.state-guidance { color: var(--state-muted); max-width: 48ch; font-size: 0.857143rem; line-height: 1.6; }
+.state-detail { color: var(--state-muted); font-size: 0.785714rem; padding: 3px 9px; border: 1px solid #393939; border-radius: 4px; }
 .status-train { width: min(280px, 100%); overflow: hidden; margin: 8px 0 12px; color: #d4d4d4; }
 .status-train svg { display: block; width: 100%; }
 .train-fill { fill: var(--state-surface); }
@@ -39,8 +39,8 @@
 .btn { padding: var(--s2) var(--s4); border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-2); color: var(--text-strong); }
 .btn:hover { background: var(--surface-hover); border-color: var(--accent-border); }
 .btn-primary { background: var(--accent); border-color: var(--accent-border); color: #08110d; font-weight: 650; }
-.state .state-retry { margin-top: 6px; padding: 10px 22px; border: 1px solid #e5e5e5; border-radius: 6px; background: #ededed; color: #141414; font-size: 12px; font-weight: 650; }
+.state .state-retry { margin-top: 6px; padding: 10px 22px; border: 1px solid #e5e5e5; border-radius: 6px; background: #ededed; color: #141414; font-size: 0.857143rem; font-weight: 650; }
 .state .state-retry:hover { background: #fff; border-color: #fff; }
 .state .state-retry:focus-visible { outline: 2px solid white; outline-offset: 4px; }
-@media (max-width: 600px) { .state { padding: 32px 18px; } .state-loading,.state-error { min-height: 350px; } .state-title { font-size: 17px; } }
+@media (max-width: 600px) { .state { padding: 32px 18px; } .state-loading,.state-error { min-height: 350px; } .state-title { font-size: 1.214286rem; } }
 @media (prefers-reduced-motion: reduce) { .state-loading *, .state-progress::after { animation: none !important; } .state-progress::after { width: 100%; opacity: .6; } }

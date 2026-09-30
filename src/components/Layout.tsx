@@ -1,3 +1,6 @@
+import { setPreferences, usePreferences } from '../accessibility/preferences';
+import AccessibilityPanel from '../accessibility/AccessibilityPanel';
+import { t as translate } from '../accessibility/i18n';
 /* Armazón del centro de control: barra lateral de navegación, encabezado
  * con estado de conexión y sesión, y el área de contenido.
  */
@@ -8,6 +11,7 @@ import {
   Activity,
   ClipboardList,
   DoorOpen,
+  Languages,
   Map as MapIcon,
   Moon,
   Radio,
@@ -130,9 +134,9 @@ function ConnectionIndicator() {
         : "Sin conexión";
 
   return (
-    <span className={`conn conn-${status}`} title={`WebSocket: ${status}`}>
+    <span className={`conn conn-${status}`} title={translate(`WebSocket: ${status}`)}>
       <span className="conn-dot" aria-hidden="true" />
-      {label}
+      {translate(label)}
     </span>
   );
 }
@@ -140,6 +144,7 @@ function ConnectionIndicator() {
 export default function Layout() {
   const { user, signOut } = useSession();
   const { mode, toggle } = useColorMode();
+  const preferences = usePreferences();
   const location = useLocation();
   const topbarRef = useRef<HTMLElement>(null);
   const previousPath = useRef(location.pathname);
@@ -207,26 +212,25 @@ export default function Layout() {
 
   return (
     <div className="shell" data-theme={current.theme} data-color-mode={mode}>
+      <a className="skip-link" href="#main-content">{translate("Saltar al contenido")}</a>
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
             <img
               src={mode === "light" ? "/LogoClaro.png" : "/zenda-logo-dark.png"}
-              alt=""
+              alt={""}
             />
           </span>
-          <span className="brand-name">
-            Zentra
-            <small>Control</small>
+          <span className="brand-name">{translate("Zentra")}<small>{translate("Control")}</small>
           </span>
         </div>
 
         <p className="sidebar-kicker">
-          <span className="sidebar-corridor">Corredor Interoceánico · Línea Z</span>
+          <span className="sidebar-corridor">{translate("Corredor Interoceánico · Línea Z")}</span>
           <span className="sidebar-greca" aria-hidden="true" />
         </p>
 
-        <nav className="nav" aria-label="Navegación principal">
+        <nav className="nav" aria-label={translate("Navegación principal")}>
           {nav.map((item) => (
             <NavLink
               key={item.to}
@@ -241,8 +245,8 @@ export default function Layout() {
                 <item.icon size={20} strokeWidth={2} />
               </span>
               <span className="nav-copy">
-                <strong>{item.label}</strong>
-                <small>{item.domain}</small>
+                <strong>{translate(item.label)}</strong>
+                <small>{translate(item.domain)}</small>
               </span>
             </NavLink>
           ))}
@@ -251,9 +255,7 @@ export default function Layout() {
         <footer className="sidebar-foot">
           <span className="mini-glyph" aria-hidden="true">
             ◆
-          </span>
-          Telemetría ferroviaria
-        </footer>
+          </span>{translate("Telemetría ferroviaria")}<AccessibilityPanel /></footer>
       </aside>
 
       <div className="main">
@@ -264,8 +266,8 @@ export default function Layout() {
               <ConnectionIndicator />
               <span className="context-divider" aria-hidden="true" />
               <span className="section-context">
-                <strong>{current.deity}</strong>
-                <small>{current.domain}</small>
+                <strong>{translate(current.deity)}</strong>
+                <small>{translate(current.domain)}</small>
               </span>
             </div>
 
@@ -275,25 +277,32 @@ export default function Layout() {
                 <>
                   <span className="person-avatar" aria-hidden="true"><UserRound size={18} /></span>
                   <span className="user">
-                    {user.email}
-                    <small>{userRoleLabel(user.role)}</small>
+                    {translate(user.email)}
+                    <small>{translate(userRoleLabel(user.role))}</small>
                   </span>
                   <div className="account-actions">
                     <button
                       type="button"
                       className="icon-action"
                       onClick={toggle}
-                      aria-label={mode === "light" ? "Activar modo oscuro" : "Activar modo claro"}
-                      title={mode === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                      aria-label={translate(mode === "light" ? "Activar modo oscuro" : "Activar modo claro")}
+                      title={translate(mode === "light" ? "Activar modo oscuro" : "Activar modo claro")}
                     >
                       {mode === "light" ? <Moon size={18} /> : <Sun size={18} />}
                     </button>
                     <button
                       type="button"
                       className="icon-action"
+                      onClick={() => setPreferences({ language: preferences.language === 'es' ? 'en' : 'es' })}
+                      aria-label={preferences.language === 'es' ? 'Switch to English' : 'Cambiar a español'}
+                      title={preferences.language === 'es' ? 'Switch to English' : 'Cambiar a español'}
+                    ><Languages size={18} /></button>
+                    <button
+                      type="button"
+                      className="icon-action signout-action"
                       onClick={signOut}
-                      aria-label="Cerrar sesión"
-                      title="Cerrar sesión"
+                      aria-label={translate("Cerrar sesión")}
+                      title={translate("Cerrar sesión")}
                     >
                       <DoorOpen size={18} />
                     </button>
@@ -305,14 +314,12 @@ export default function Layout() {
                     type="button"
                     className="icon-action"
                     onClick={toggle}
-                    aria-label={mode === "light" ? "Activar modo oscuro" : "Activar modo claro"}
-                    title={mode === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                    aria-label={translate(mode === "light" ? "Activar modo oscuro" : "Activar modo claro")}
+                    title={translate(mode === "light" ? "Activar modo oscuro" : "Activar modo claro")}
                   >
                     {mode === "light" ? <Moon size={18} /> : <Sun size={18} />}
                   </button>
-                  <NavLink to="/login" className="btn btn-primary">
-                    Iniciar sesión
-                  </NavLink>
+                  <NavLink to="/login" className="btn btn-primary">{translate("Iniciar sesión")}</NavLink>
                 </>
               )}
             </div>
@@ -320,8 +327,8 @@ export default function Layout() {
           <AztecOrnament kind="serpent" />
         </header>
 
-        <main className="content">
-          {location.pathname === "/historial-nodos" && <nav className="breadcrumbs" aria-label="Migajas de pan"><Link to="/"><span aria-hidden="true">⌂</span> Inicio</Link><span aria-hidden="true">›</span><span aria-current="page">Historial de nodos</span></nav>}
+        <main className="content" id="main-content" tabIndex={-1}>
+          {location.pathname === "/historial-nodos" && <nav className="breadcrumbs" aria-label={translate("Migajas de pan")}><Link to="/"><span aria-hidden="true">⌂</span>{translate(" Inicio")}</Link><span aria-hidden="true">›</span><span aria-current="page">{translate("Historial de nodos")}</span></nav>}
           <Outlet context={{ resources }} />
         </main>
       </div>

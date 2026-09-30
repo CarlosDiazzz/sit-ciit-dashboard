@@ -1,3 +1,4 @@
+import { useReducedMotion } from '../accessibility/useReducedMotion';
 import { useEffect, useRef, useState } from 'react';
 
 // Anima la transición visual entre un valor real y el siguiente (ease-out
@@ -5,11 +6,13 @@ import { useEffect, useRef, useState } from 'react';
 // *muestra* el cambio entre dos lecturas reales. Así se siente "en vivo"
 // aunque el dato de fondo (GPS) solo llegue cada varios segundos.
 export function useAnimatedNumber(target: number | null, durationMs = 800): number | null {
+  const reducedMotion = useReducedMotion();
   const [display, setDisplay] = useState(target);
   const fromRef = useRef(target);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (reducedMotion) { fromRef.current = target; return; }
     if (target == null) {
       setDisplay(null);
       fromRef.current = null;
@@ -36,7 +39,7 @@ export function useAnimatedNumber(target: number | null, durationMs = 800): numb
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, durationMs]);
+  }, [target, durationMs, reducedMotion]);
 
-  return display;
+  return reducedMotion ? target : display;
 }

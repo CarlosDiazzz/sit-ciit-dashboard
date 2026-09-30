@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 import { Link } from "react-router-dom";
 /* CRUD de nodos — solo control_center. El secreto es lo único que
  * autentica a un celular como un nodo real (contrato v1.3.0): sin él,
@@ -40,8 +41,8 @@ export default function Nodos() {
       <>
         <div className="page-head">
           <div>
-            <h1>Nodos</h1>
-            <p>Esta sección es solo para el centro de control.</p>
+            <h1>{translate("Nodos")}</h1>
+            <p>{translate("Esta sección es solo para el centro de control.")}</p>
           </div>
           <PageBreadcrumbs current="Nodos" />
         </div>
@@ -71,7 +72,7 @@ export default function Nodos() {
   async function regenerar(n: NodeCredentialRecord) {
     if (
       !confirm(
-        `¿Regenerar el secreto de ${n.nodeCode}? El anterior deja de servir de inmediato.`,
+        translate(`¿Regenerar el secreto de ${n.nodeCode}? El anterior deja de servir de inmediato.`),
       )
     )
       return;
@@ -91,7 +92,7 @@ export default function Nodos() {
   async function reactivar(n: NodeCredentialRecord) {
     if (
       !confirm(
-        `¿Reactivar ${n.nodeCode} y generar un secreto nuevo? Tendrás que actualizar el celular.`,
+        translate(`¿Reactivar ${n.nodeCode} y generar un secreto nuevo? Tendrás que actualizar el celular.`),
       )
     )
       return;
@@ -110,7 +111,7 @@ export default function Nodos() {
 
   async function borrar(n: NodeCredentialRecord) {
     if (
-      !confirm(`¿Archivar el nodo ${n.nodeCode}? Su historial se conservará.`)
+      !confirm(translate(`¿Archivar el nodo ${n.nodeCode}? Su historial se conservará.`))
     )
       return;
     try {
@@ -129,80 +130,72 @@ export default function Nodos() {
     <>
       <div className="page-head">
         <div>
-          <h1>Nodos</h1>
-          <p>
-            Alta de nodos y su secreto — sin él, un celular no puede publicar
-            nada.
-          </p>
+          <h1>{translate("Nodos")}</h1>
+          <p>{translate("Alta de nodos y su secreto — sin él, un celular no puede publicar nada.")}</p>
         </div>
         <PageBreadcrumbs current="Nodos" />
       </div>
 
       {revelado ? (
         <div className="user-form" style={{ borderColor: "var(--warning)" }}>
-          <p className="user-aviso" role="status">
-            Secreto de <strong>{revelado.nodeCode}</strong> — cópialo ahora, no
-            se vuelve a mostrar:
-          </p>
+          <p className="user-aviso" role="status">{translate("Secreto de ")}<strong>{translate(revelado.nodeCode)}</strong>{translate(" — cópialo ahora, no se vuelve a mostrar:")}</p>
           <p className="mono" style={{ wordBreak: "break-all", fontSize: 14 }}>
-            {revelado.secret}
+            {translate(revelado.secret)}
           </p>
           <button
             type="button"
             className="btn"
             onClick={() => setRevelado(null)}
-          >
-            Ya lo copié
-          </button>
+          >{translate("Ya lo copié")}</button>
         </div>
       ) : null}
 
       <form className="user-form" onSubmit={crear}>
         <div className="user-fields">
           <label className="field">
-            <span>Código del nodo</span>
+            <span>{translate("Código del nodo")}</span>
             <input
               value={nodeCode}
               onChange={(e) => setNodeCode(e.target.value)}
-              placeholder="unit-04-a"
+              placeholder={translate("unit-04-a")}
               required
               autoCapitalize="none"
             />
           </label>
 
           <label className="field">
-            <span>Código de la unidad</span>
+            <span>{translate("Código de la unidad")}</span>
             <input
               value={unitCode}
               onChange={(e) => setUnitCode(e.target.value)}
-              placeholder="unit-04"
+              placeholder={translate("unit-04")}
               required
               autoCapitalize="none"
             />
           </label>
 
           <label className="field">
-            <span>Rol</span>
+            <span>{translate("Rol")}</span>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as NodeRole)}
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {r === "primary" ? "Primario" : "Respaldo"}
+                  {translate(r === "primary" ? "Primario" : "Respaldo")}
                 </option>
               ))}
             </select>
           </label>
 
           <button type="submit" className="btn btn-primary" disabled={enviando}>
-            {enviando ? "Creando…" : "Crear nodo"}
+            {translate(enviando ? "Creando…" : "Crear nodo")}
           </button>
         </div>
 
         {error ? (
           <p className="user-error" role="alert">
-            {error}
+            {translate(error)}
           </p>
         ) : null}
       </form>
@@ -215,71 +208,63 @@ export default function Nodos() {
         }}
       >
         {(lista) => (
-          <PagedRows items={lista} label="Dispositivos registrados">{rows => (
+          <PagedRows items={lista} label={translate("Dispositivos registrados")}>{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Nodo</th>
-                  <th>Unidad</th>
-                  <th>Rol</th>
-                  <th>Secreto</th>
-                  <th>Conexión</th>
+                  <th>{translate("Nodo")}</th>
+                  <th>{translate("Unidad")}</th>
+                  <th>{translate("Rol")}</th>
+                  <th>{translate("Secreto")}</th>
+                  <th>{translate("Conexión")}</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((n) => (
                   <tr key={n.id}>
-                    <td className="mono">{n.nodeCode}</td>
-                    <td className="mono">{n.unitCode}</td>
-                    <td>{n.role === "primary" ? "Primario" : "Respaldo"}</td>
+                    <td className="mono">{translate(n.nodeCode)}</td>
+                    <td className="mono">{translate(n.unitCode)}</td>
+                    <td>{translate(n.role === "primary" ? "Primario" : "Respaldo")}</td>
                     <td>
                       <span
                         className={`badge ${n.hasSecret ? "badge-online" : "badge-warning"}`}
                       >
-                        {n.hasSecret ? "Con secreto" : "Sin secreto"}
+                        {translate(n.hasSecret ? "Con secreto" : "Sin secreto")}
                       </span>
                     </td>
                     <td>
                       {n.active ? (
                         <ConnectionBadge online={n.isOnline} />
                       ) : (
-                        <span>Archivado</span>
+                        <span>{translate("Archivado")}</span>
                       )}
                     </td>
                     <td>
                       <Link
                         className="btn"
                         to={`/historial-nodos?nodo=${n.id}`}
-                      >
-                        Historial
-                      </Link>{" "}
+                      >{translate("Historial")}</Link>{" "}
                       {n.active ? (
                         <>
                           <button
                             type="button"
                             className="btn"
                             onClick={() => regenerar(n)}
-                          >
-                            Regenerar secreto
-                          </button>{" "}
+                          >{translate("Regenerar secreto")}</button>{" "}
                           <button
                             type="button"
                             className="btn"
                             onClick={() => borrar(n)}
-                          >
-                            Archivar
-                          </button>
+                          >{translate("Archivar")}</button>
                         </>
                       ) : (
                         <button
                           type="button"
                           className="btn"
                           onClick={() => reactivar(n)}
-                        >
-                          Reactivar y renovar secreto
-                        </button>
+                        >{translate("Reactivar y renovar secreto")}</button>
                       )}
                     </td>
                   </tr>
