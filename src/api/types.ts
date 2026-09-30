@@ -303,6 +303,9 @@ export interface EventBroadcast {
   value?: number;
   threshold?: number;
   gps?: { lat: number; lon: number };
+  /** Velocidad real del último fix GPS — hoy solo la manda signal_lost,
+   *  para estimar el avance del nodo mientras sigue sin señal. */
+  speedMs?: number;
   /** epoch ms, reloj del dispositivo. */
   ts: number;
 }
@@ -425,4 +428,19 @@ export interface TrackDefectsResponse {
   windowDays: number;
   analyzed: number;
   defects: TrackDefect[];
+}
+
+/** Antena real (OpenCelliD), cacheada por el backend. `rangeM` es el
+ *  rango real que reporta OpenCelliD para esa torre — null cuando esa
+ *  torre en particular no lo trae (nunca se rellena con un supuesto
+ *  aquí; eso, si hace falta, se decide y se marca como tal en donde se
+ *  usa, no en el tipo). */
+export interface CellTower {
+  lat: number;
+  lon: number;
+  radio: string | null;
+  rangeM: number | null;
+  mcc: number | null;
+  mnc: number | null;
+  samples: number | null;
 }

@@ -35,7 +35,7 @@ interface OverpassResponse {
 const ORIGEN_CORREDOR: MapCoordinate = [18.14905, -94.4447];
 const DESTINO_CORREDOR: MapCoordinate = [16.175, -95.194];
 
-function distanceMeters(a: MapCoordinate, b: MapCoordinate): number {
+export function distanceMeters(a: MapCoordinate, b: MapCoordinate): number {
   const latitudeMeters = (a[0] - b[0]) * 111_320;
   const longitudeMeters = (a[1] - b[1]) * 111_320 * Math.cos(((a[0] + b[0]) / 2 * Math.PI) / 180);
   return Math.hypot(latitudeMeters, longitudeMeters);

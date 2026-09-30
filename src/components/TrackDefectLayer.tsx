@@ -17,6 +17,7 @@ import { divIcon } from 'leaflet';
 import type { DefectConfidence, TrackDefect } from '../api/types';
 import { eventKindLabel, eventValueUnit } from '../lib/labels';
 import { formatDateTime } from '../lib/format';
+import DefectPreview from './DefectPreview';
 import './trackDefect.css';
 
 /** Ámbar para lo confirmado: es mantenimiento pendiente, no una
@@ -132,6 +133,8 @@ export default function TrackDefectLayer({
                       <dd>±{Math.max(30, d.radiusM)} m</dd>
                     </div>
                   </dl>
+
+                  <DefectPreview eventIds={d.eventIds} kind={d.kind} />
 
                   <p className="defect-popup__seen">
                     Primera vez {formatDateTime(d.firstSeen)}

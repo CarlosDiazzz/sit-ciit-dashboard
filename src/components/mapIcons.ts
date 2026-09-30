@@ -156,3 +156,54 @@ export function iconoEvento(severidad: EventSeverity, critico: boolean): DivIcon
   cacheEvento.set(clave, creado);
   return creado;
 }
+
+/** Silueta de tren igual que iconoUnidad pero punteada y semitransparente
+ *  — se lee como "esto es un cálculo, no una posición real medida". */
+function svgTrenEstimado(color: string): string {
+  return `
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <path
+        d="M12 1.5 L18 7 L18 19 Q18 22 15 22 L9 22 Q6 22 6 19 L6 7 Z"
+        fill="none" stroke="${color}" stroke-width="1.8" stroke-dasharray="3,2" stroke-linejoin="round"/>
+    </svg>`;
+}
+
+const cacheEstimado = new Map<string, DivIcon>();
+
+/** Posición estimada de un nodo sin señal, proyectada sobre la ruta real
+ *  a partir de su última velocidad real conocida — nunca se confunde
+ *  visualmente con iconoUnidad (posición medida) por ser punteado y
+ *  semitransparente. */
+export function iconoEstimado(rumbo: number | null): DivIcon {
+  const clave = rumbo === null ? 'x' : Math.round(rumbo / 5) * 5;
+  const guardado = cacheEstimado.get(clave.toString());
+  if (guardado) return guardado;
+
+  const color = '#6e7681';
+  const giro = rumbo ?? 0;
+  const creado = divIcon({
+    className: '',
+    html: `<div class="estimated-marker" style="transform: rotate(${giro}deg)">${svgTrenEstimado(color)}</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+  cacheEstimado.set(clave.toString(), creado);
+  return creado;
+}
+
+/** Antena real (OpenCelliD) — un punto simple, no compite visualmente
+ *  con nada que reporte un evento o una unidad real. La posición de la
+ *  antena siempre es real; lo que puede ser supuesto es su rango (se
+ *  marca aparte, en el texto del ETA, no en este ícono). */
+let cacheAntena: DivIcon | null = null;
+
+export function iconoAntena(): DivIcon {
+  if (cacheAntena) return cacheAntena;
+  cacheAntena = divIcon({
+    className: '',
+    html: `<span class="antenna-marker"></span>`,
+    iconSize: [10, 10],
+    iconAnchor: [5, 5],
+  });
+  return cacheAntena;
+}
