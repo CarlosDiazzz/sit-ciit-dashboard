@@ -33,7 +33,12 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[] = []): Asyn
     setLoading(true);
     setError(null);
 
-    fetcher()
+    // Límite de espera visual: una consulta bloqueada debe terminar en error.
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new ApiError('http', 'El servidor tardó demasiado en responder. Vuelve a intentarlo.')), 15000);
+    });
+    Promise.race([Promise.resolve().then(fetcher), timeout])
       .then((result) => {
         if (vigente) setData(result);
       })
@@ -44,11 +49,13 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[] = []): Asyn
         );
       })
       .finally(() => {
+        clearTimeout(timeoutId);
         if (vigente) setLoading(false);
       });
 
     return () => {
       vigente = false;
+      clearTimeout(timeoutId);
     };
     // El fetcher se recrea en cada render; las dependencias reales las
     // declara quien llama al hook.

@@ -413,3 +413,9 @@
   .topbar-content { gap: 10px; }
   .topbar-context .conn { font-size: 12px; }
 }
+
+.shell[data-theme='tlaloc']{--accent:var(--tlaloc);--accent-rgb:85,189,233;--accent-soft:#a9e1f7}
+.shell[data-theme='control']{--accent:#c9d1d3;--accent-rgb:201,209,211;--accent-soft:#eef2f3}
+[data-nav-theme='tlaloc']{--nav-color:var(--tlaloc)}
+[data-nav-theme='control']{--nav-color:#c9d1d3}
+.nav-copy small{white-space:normal;line-height:1.5}
