@@ -106,6 +106,11 @@ export interface TelemetryPoint {
 export interface EventRecord {
   id: string;
   unitId: string;
+  /** Codigo del contrato ("unit-01"). El unitId de arriba es el UUID de
+   *  la base, que sirve para agrupar pero no se muestra: un operador no
+   *  reconoce 63898a12-ff5e-42ca-8a50-4758d4e4b96a. */
+  unitCode?: string | null;
+  nodeCode?: string | null;
   /** null en eventos a nivel unidad (failover, disagreement): comparan
    *  primary contra backup, no pertenecen a un solo nodo. */
   nodeId: string | null;
