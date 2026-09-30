@@ -10,6 +10,7 @@ import { useApi } from '../api/useApi';
 import type { Unit } from '../api/types';
 import { ErrorState, Loading } from '../components/States';
 import { ConnectionBadge } from '../components/Badges';
+import LiveMapLayers from '../components/LiveMapLayers';
 import { MEDIAS_AGUAS_JUNCTION, parseMainRailRoute, parseRailConnections, type MapCoordinate, type RailConnection } from '../lib/mapData';
 import './mapa.css';
 
@@ -95,6 +96,8 @@ export default function Mapa() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <LiveMapLayers />
+
             <FitMapToData route={railRoute} connections={railConnections} />
             {railConnections.map((connection) => (
               <Polyline
