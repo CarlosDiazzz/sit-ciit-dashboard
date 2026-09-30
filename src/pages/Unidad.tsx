@@ -26,6 +26,8 @@ import { useSession } from '../auth/context';
 import { ConnectionBadge, MovementBadge } from '../components/Badges';
 import NodeComparison from '../components/NodeComparison';
 import SpeedGauge from '../components/SpeedGauge';
+import AttitudeIndicator from '../components/AttitudeIndicator';
+import { actitudDesde } from '../lib/actitud';
 import { AsyncBoundary } from '../components/States';
 import WeatherRiskPanel from '../components/WeatherRiskPanel';
 import { chartPalette } from '../lib/chartColors';
@@ -40,6 +42,36 @@ const ROLE_LABEL = { primary: 'Primario', backup: 'Respaldo' } as const;
  *  de historia, suficiente para ver un impacto sin saturar el render. */
 const MAX_POINTS = 60;
 
+/** Un salto mayor a esto entre dos muestras es una interrupcion, no el
+ *  ritmo normal de publicacion (1 Hz). Se corta la linea ahi: unir los
+ *  extremos dibujaria una transicion suave donde en realidad no hubo
+ *  datos, que es afirmar algo que no se midio. */
+const HUECO_MS = 10_000;
+
+/** Inserta un punto vacio donde hay una interrupcion, para que las
+ *  series se corten en vez de cruzar el hueco. */
+function marcarHuecos(puntos: ChartPoint[]): ChartPoint[] {
+  const salida: ChartPoint[] = [];
+  for (let i = 0; i < puntos.length; i += 1) {
+    const p = puntos[i]!;
+    const anterior = puntos[i - 1];
+    if (anterior && p.ts - anterior.ts > HUECO_MS) {
+      salida.push({
+        ts: anterior.ts + 1,
+        time: '',
+        x: null,
+        y: null,
+        z: null,
+        magnitude: null,
+        speedKmh: null,
+        rotacion: null,
+      });
+    }
+    salida.push(p);
+  }
+  return salida;
+}
+
 interface ChartPoint {
   ts: number;
   time: string;
@@ -48,6 +80,10 @@ interface ChartPoint {
   z: number | null;
   magnitude: number | null;
   speedKmh: number | null;
+  /** Magnitud de la velocidad angular en rad/s. Va en su propia grafica:
+   *  mezclarla con la aceleracion en un mismo eje seria engañoso, son
+   *  magnitudes distintas. */
+  rotacion: number | null;
 }
 
 /** Convierte una fila real de /telemetry a la misma forma que llega por
@@ -83,7 +119,7 @@ function toBroadcast(unitCode: string, row: TelemetryPoint): TelemetryBroadcast 
 }
 
 function toChartPoint(row: TelemetryPoint): ChartPoint {
-  const { accelX, accelY, accelZ } = row;
+  const { accelX, accelY, accelZ, gyroX, gyroY, gyroZ } = row;
   return {
     ts: new Date(row.ts).getTime(),
     time: new Date(row.ts).toLocaleTimeString('es-MX', { hour12: false }),
@@ -95,6 +131,10 @@ function toChartPoint(row: TelemetryPoint): ChartPoint {
         ? Math.sqrt(accelX ** 2 + accelY ** 2 + accelZ ** 2)
         : null,
     speedKmh: row.gpsSpeedMs != null ? row.gpsSpeedMs * 3.6 : null,
+    rotacion:
+      gyroX != null && gyroY != null && gyroZ != null
+        ? Math.sqrt(gyroX ** 2 + gyroY ** 2 + gyroZ ** 2)
+        : null,
   };
 }
 
@@ -151,7 +191,7 @@ export default function Unidad() {
           if (selectedRef.current !== nodeId) return; // se cambió de nuevo mientras cargaba
           const propias = rows.filter((r) => r.nodeCode === nodeId);
           if (propias.length === 0) return;
-          setPoints(propias.slice(0, MAX_POINTS).reverse().map(toChartPoint));
+          setPoints(marcarHuecos(propias.slice(0, MAX_POINTS).reverse().map(toChartPoint)));
         } catch {
           // Sin historia para este nodo no debe romper la selección —
           // se sigue esperando datos en vivo.
@@ -181,6 +221,7 @@ export default function Unidad() {
     if (!evt.accel && speedKmh == null) return;
 
     const a = evt.accel;
+    const g = evt.gyro;
 
     if (a) {
       const magnitude = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
@@ -195,9 +236,29 @@ export default function Unidad() {
       }
     }
 
-    setPoints((prev) =>
-      [
+    setPoints((prev) => {
+      const ultimo = prev[prev.length - 1];
+      // Si el nodo estuvo callado (modo avion, tunel), se corta la
+      // linea en vez de unir los extremos.
+      const corte: ChartPoint[] =
+        ultimo && evt.ts - ultimo.ts > HUECO_MS
+          ? [
+              {
+                ts: ultimo.ts + 1,
+                time: '',
+                x: null,
+                y: null,
+                z: null,
+                magnitude: null,
+                speedKmh: null,
+                rotacion: null,
+              },
+            ]
+          : [];
+
+      return [
         ...prev,
+        ...corte,
         {
           ts: evt.ts,
           time: new Date(evt.ts).toLocaleTimeString('es-MX', { hour12: false }),
@@ -206,9 +267,10 @@ export default function Unidad() {
           z: a?.z ?? null,
           magnitude: a ? Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) : null,
           speedKmh,
+          rotacion: g ? Math.sqrt(g.x * g.x + g.y * g.y + g.z * g.z) : null,
         },
-      ].slice(-MAX_POINTS),
-    );
+      ].slice(-MAX_POINTS);
+    });
   }, []);
 
   useSocketEvent('telemetry', onTelemetry);
@@ -338,6 +400,11 @@ export default function Unidad() {
         </section>
       ) : (
         <div className="live-grid">
+          <AttitudeIndicator
+            actitud={actitudDesde(selectedNodeId ? lastByNode[selectedNodeId] : undefined)}
+            nodeCode={selectedNodeId}
+          />
+
           <section className="chart-card">
             <div className="card-head">
               <h2>Aceleración</h2>
@@ -351,9 +418,9 @@ export default function Unidad() {
                   <YAxis domain={['auto', 'auto']} {...ejeComun} />
                   <Tooltip {...tooltipComun} />
                   <Legend wrapperStyle={{ fontSize: 12, color: colors.textSecondary }} />
-                  <Line type="monotone" dataKey="x" stroke={colors.seriesX} dot={false} isAnimationActive={false} connectNulls />
-                  <Line type="monotone" dataKey="y" stroke={colors.seriesY} dot={false} isAnimationActive={false} connectNulls />
-                  <Line type="monotone" dataKey="z" stroke={colors.seriesZ} dot={false} isAnimationActive={false} connectNulls />
+                  <Line type="monotone" dataKey="x" stroke={colors.seriesX} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="y" stroke={colors.seriesY} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="z" stroke={colors.seriesZ} dot={false} isAnimationActive={false} />
                   {/* |a| es la derivada de las tres series, no una cuarta
                       categoría: tinta neutra y trazo punteado. */}
                   <Line
@@ -364,7 +431,6 @@ export default function Unidad() {
                     strokeDasharray="4 3"
                     dot={false}
                     isAnimationActive={false}
-                    connectNulls
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -396,6 +462,35 @@ export default function Unidad() {
                     dataKey="speedKmh"
                     name="km/h"
                     stroke={colors.seriesSpeed}
+                    dot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+
+          <section className="chart-card">
+            <div className="card-head">
+              <h2>Rotación</h2>
+              <span className="chart-meta">giroscopio · rad/s</span>
+            </div>
+            <div className="chart-frame chart-frame-sm">
+              <ResponsiveContainer>
+                <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGrid stroke={colors.grid} vertical={false} />
+                  <XAxis dataKey="time" minTickGap={40} {...ejeComun} />
+                  <YAxis domain={[0, 'auto']} {...ejeComun} />
+                  <Tooltip {...tooltipComun} />
+                  {/* En su propia grafica y no junto a la aceleracion:
+                      son magnitudes distintas (rad/s frente a g) y
+                      compartir eje daria una comparacion falsa. */}
+                  <Line
+                    type="monotone"
+                    dataKey="rotacion"
+                    name="rad/s"
+                    stroke={colors.seriesY}
                     dot={false}
                     isAnimationActive={false}
                     connectNulls

@@ -16,8 +16,8 @@
  * cambio, y el popup siempre da el último dato recibido de verdad.
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { Marker, Polyline, Popup, Tooltip } from 'react-leaflet';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Marker, Polyline, Popup, Tooltip, useMap } from 'react-leaflet';
 
 import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
@@ -48,6 +48,20 @@ const TRANSICION_MS = 4000;
 /** Por debajo de esta distancia no se recalcula el rumbo: con ~100 m de
  *  precisión, dos fixes casi iguales darían un giro aleatorio. */
 const RUMBO_MIN_M = 12;
+
+/** Primary y backup van en el mismo camión, así que sus marcadores se
+ *  tapan. Se separan cuando quedan a menos de esta distancia EN PANTALLA.
+ *
+ *  La separación se mide en píxeles y no en metros: con el mapa alejado
+ *  18 m son medio píxel y no hace falta separar, pero al acercar esos
+ *  mismos metros se vuelven cientos de píxeles y el ajuste desplazaría
+ *  el marcador media manzana. En píxeles el icono se ve igual de
+ *  separado en todos los niveles de zoom. */
+const SOLAPE_PX = 34;
+
+/** Cuánto se aparta cada marcador de su posición medida, en píxeles. Es
+ *  un ajuste de dibujo: el popup sigue dando la posición real. */
+const SEPARACION_PX = 17;
 
 interface Unidad {
   nodeId: string;
@@ -109,10 +123,28 @@ function posicionActual(u: Unidad, ahora: number): [number, number] {
   ];
 }
 
-export default function LiveMapLayers() {
+export default function LiveMapLayers({
+  onTelemetria,
+}: {
+  /** Ultimo mensaje por nodo, para que el panel lateral muestre la
+   *  velocidad en vivo sin abrir un segundo socket. */
+  onTelemetria?: (t: TelemetryBroadcast) => void;
+} = {}) {
   const [unidades, setUnidades] = useState<Record<string, Unidad>>({});
   const [eventos, setEventos] = useState<EventoEnMapa[]>([]);
+  // El bucle lee las unidades por ref: si dependiera del estado habria
+  // que recrearlo con cada mensaje.
+  const unidadesRef = useRef<Record<string, Unidad>>({});
+  // El mapa hace falta para separar los marcadores en pixeles: la
+  // conversion depende del zoom, que cambia cuando el usuario amplia.
+  const map = useMap();
+  unidadesRef.current = unidades;
+  /** Nodo que cada unidad usa como fuente, por codigo de unidad. Lo
+   *  emite el backend al hacer failover. */
+  const [fuentePorUnidad, setFuentePorUnidad] = useState<Record<string, string | null>>({});
   const [ahora, setAhora] = useState(() => Date.now());
+  const ahoraRef = useRef(ahora);
+  ahoraRef.current = ahora;
 
   // Un solo bucle de animación para todas las unidades. Si el visitante
   // pide menos movimiento no se anima: el marcador salta a cada
@@ -130,7 +162,15 @@ export default function LiveMapLayers() {
     let vivo = true;
     const paso = () => {
       if (!vivo) return;
-      setAhora(Date.now());
+      // Solo redibuja mientras alguna unidad este a mitad de su
+      // transicion. Antes corria a 60 fps siempre, aunque todo
+      // estuviera quieto, y en cada cuadro se reconstruian los iconos
+      // de Leaflet: eso era lo que trababa la interfaz.
+      const t = Date.now();
+      const animando = Object.values(unidadesRef.current).some(
+        (u: Unidad) => t - u.desde < TRANSICION_MS,
+      );
+      if (animando) setAhora(t);
       raf = requestAnimationFrame(paso);
     };
     raf = requestAnimationFrame(paso);
@@ -220,9 +260,24 @@ export default function LiveMapLayers() {
     };
   }, []);
 
+  // Al cambiar el zoom hay que recolocar: la separacion se calcula en
+  // pixeles y su equivalente en grados depende del nivel. El bucle de
+  // animacion ya redibuja cada cuadro, pero sin animacion
+  // (prefers-reduced-motion) hace falta este aviso.
+  useEffect(() => {
+    const recolocar = () => setAhora(Date.now());
+    map.on('zoomend', recolocar);
+    return () => {
+      map.off('zoomend', recolocar);
+    };
+  }, [map]);
+
   useSocketEvent(
     'telemetry',
     useCallback((t: TelemetryBroadcast) => {
+      // El panel lateral quiere toda la telemetria, tenga GPS o no.
+      onTelemetria?.(t);
+
       const gps = t.gps;
       // Sin GPS no hay nada que ubicar. Es lo normal bajo techo.
       if (!gps) return;
@@ -258,6 +313,13 @@ export default function LiveMapLayers() {
           },
         };
       });
+    }, [onTelemetria]),
+  );
+
+  useSocketEvent(
+    'unit:active-node',
+    useCallback((p: { unitId: string; activeNodeId: string | null }) => {
+      setFuentePorUnidad((prev) => ({ ...prev, [p.unitId]: p.activeNodeId }));
     }, []),
   );
 
@@ -294,6 +356,20 @@ export default function LiveMapLayers() {
   );
 
   const lista = Object.values(unidades);
+
+  // Los rastros se recalculan solo cuando llega telemetria, no en cada
+  // cuadro de animacion: son hasta 120 puntos por unidad y redibujarlos
+  // 60 veces por segundo era gran parte del trabajo desperdiciado.
+  const rastros = useMemo(
+    () =>
+      lista.map((u) => ({
+        nodeId: u.nodeId,
+        puntos: u.rastro,
+        callada: ahoraRef.current - u.recibidoEn > SIN_DATOS_MS,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [unidades],
+  );
   const eventosVigentes = eventos.filter((e) => ahora - e.ts < EVENTO_VIGENCIA_MS);
 
   return (
@@ -323,31 +399,51 @@ export default function LiveMapLayers() {
         </Marker>
       ))}
 
+      {/* Rastros aparte de los marcadores: solo cambian al llegar una
+          posicion nueva, asi que no se redibujan con la animacion. */}
+      {rastros.map((r) =>
+        r.puntos.length > 1 ? (
+          <div key={`rastro-${r.nodeId}`}>
+            <Polyline
+              positions={r.puntos}
+              pathOptions={{ color: '#49c79c', weight: 8, opacity: r.callada ? 0.06 : 0.13 }}
+            />
+            <Polyline
+              positions={r.puntos}
+              pathOptions={{
+                color: '#49c79c',
+                weight: 2,
+                opacity: r.callada ? 0.25 : 0.7,
+                dashArray: '4 7',
+              }}
+            />
+          </div>
+        ) : null,
+      )}
+
       {lista.map((u) => {
-        const pos = posicionActual(u, ahora);
+        const medida = posicionActual(u, ahora);
+        // Si hay otro nodo de la misma unidad casi encima, se separan:
+        // el primario arriba, el respaldo abajo. La comparacion va en
+        // pixeles, asi que el ajuste se mantiene igual a cualquier zoom.
+        const hermano = lista.find((o) => o.nodeId !== u.nodeId && o.unitId === u.unitId);
+        let pos: [number, number] = medida;
+
+        if (hermano) {
+          const p = map.latLngToLayerPoint(medida);
+          const q = map.latLngToLayerPoint(posicionActual(hermano, ahora));
+          if (p.distanceTo(q) < SOLAPE_PX) {
+            const desplazado = map.layerPointToLatLng([
+              p.x,
+              p.y + (u.role === 'primary' ? -SEPARACION_PX : SEPARACION_PX),
+            ]);
+            pos = [desplazado.lat, desplazado.lng];
+          }
+        }
         const callada = ahora - u.recibidoEn > SIN_DATOS_MS;
 
         return (
           <div key={u.nodeId}>
-            {u.rastro.length > 1 ? (
-              <>
-                {/* Dos trazos: uno ancho y tenue como estela, otro fino
-                    encima, para que el rastro se lea sobre el mapa. */}
-                <Polyline
-                  positions={u.rastro}
-                  pathOptions={{ color: '#49c79c', weight: 8, opacity: callada ? 0.06 : 0.13 }}
-                />
-                <Polyline
-                  positions={u.rastro}
-                  pathOptions={{
-                    color: '#49c79c',
-                    weight: 2,
-                    opacity: callada ? 0.25 : 0.7,
-                    dashArray: '4 7',
-                  }}
-                />
-              </>
-            ) : null}
 
             <Marker
               position={pos}
@@ -356,6 +452,13 @@ export default function LiveMapLayers() {
                 callada,
                 alerta: u.alerta,
                 etiqueta: u.unitId,
+                role: u.role,
+                // Sin aviso de failover todavia, el primario es la
+                // fuente: es lo que hace el backend al dar de alta.
+                esFuente:
+                  fuentePorUnidad[u.unitId] !== undefined
+                    ? fuentePorUnidad[u.unitId] === u.nodeId
+                    : u.role === 'primary',
               })}
               zIndexOffset={500}
             >
