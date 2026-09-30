@@ -21,31 +21,39 @@ import type {
   IssuerRole,
   NodeMode,
   NodeRole,
-} from '../contract/contract';
+} from "../contract/contract";
 
 /** Eventos que genera el backend, no el dispositivo: no viajan por MQTT
  *  y por eso no están en EventKind, pero se guardan en la misma tabla. */
-export type BackendEventKind = 'source_failover' | 'sensor_disagreement' | 'weather_risk' | 'signal_lost';
+export type BackendEventKind =
+  "source_failover" | "sensor_disagreement" | "weather_risk" | "signal_lost";
 
 /** Categoría de carga que declara el cliente por unidad — no es un dato
  *  de sensor, se fija desde este dashboard (rol control_center).
  *  'sin_carga' es un estado explícito ("va vacía"), distinto de null
  *  (todavía no se declaró nada). */
-export type CargoCategory = 'agricola' | 'construccion' | 'quimico' | 'sin_carga';
+export type CargoCategory =
+  "agricola" | "construccion" | "quimico" | "sin_carga";
 
 /** Rol de autorización del backend/dashboard — distinto de `IssuerRole`
  *  del contrato MQTT (2 valores, quién puede emitir comandos a un nodo).
  *  `cliente` nunca emite comandos, así que no pertenece a ese tipo; se
  *  define aparte aquí, igual que en el backend
  *  (`src/domain/ports/UserRepository.ts`). */
-export type UserRole = 'admin' | 'control_center' | 'operator' | 'cliente' | 'technician' | 'auditor';
+export type UserRole =
+  | "admin"
+  | "control_center"
+  | "operator"
+  | "cliente"
+  | "technician"
+  | "auditor";
 
 /** Todo lo que puede aparecer en la vista de Eventos. */
 export type AnyEventKind = EventKind | BackendEventKind;
 
 /** Estados por los que pasa un comando. `sent` lo escribe el backend al
  *  publicar; el resto llega por ack del nodo. */
-export type CommandStatus = 'sent' | AckStatus;
+export type CommandStatus = "sent" | AckStatus;
 
 export interface Unit {
   id: string;
@@ -206,13 +214,13 @@ export interface WeatherReading {
   precipMm: number;
 }
 
-export type WeatherVariable = 'tempC' | 'humidityPct' | 'precipMm';
+export type WeatherVariable = "tempC" | "humidityPct" | "precipMm";
 
 /** Condición declarativa (no una función): el mismo umbral que evalúa el
  *  backend se puede mostrar tal cual — "bajo qué valor y qué norma". */
 export interface Condition {
   variable: WeatherVariable;
-  op: '>=' | '<=' | '>' | '<';
+  op: ">=" | "<=" | ">" | "<";
   value: number;
 }
 
@@ -297,7 +305,7 @@ export interface EventBroadcast {
 export interface CommandUpdate {
   cmdId: string;
   nodeId: string;
-  status: Exclude<CommandStatus, 'sent'>;
+  status: Exclude<CommandStatus, "sent">;
   reason: string | null;
   /** epoch ms */
   occurredAt: number;
@@ -306,13 +314,13 @@ export interface CommandUpdate {
 export interface ServerToClientEvents {
   telemetry: (payload: TelemetryBroadcast) => void;
   event: (payload: EventBroadcast) => void;
-  'command:update': (payload: CommandUpdate) => void;
+  "command:update": (payload: CommandUpdate) => void;
   /** La unidad cambio de fuente activa (failover o recuperacion). Los
    *  ids son codigos del contrato, no UUIDs de la base. */
-  'unit:active-node': (payload: {
+  "unit:active-node": (payload: {
     unitId: string;
     activeNodeId: string | null;
-    reason: 'failover' | 'recovered' | 'no_nodes_online';
+    reason: "failover" | "recovered" | "no_nodes_online";
   }) => void;
 }
 
@@ -354,7 +362,30 @@ export interface EventWindowSample {
 }
 
 export interface EventWindow {
-  event: { id: string; kind: string; ts: string; value: number | null; threshold: number | null };
+  event: {
+    id: string;
+    kind: string;
+    ts: string;
+    value: number | null;
+    threshold: number | null;
+  };
   windowSeconds: number;
   samples: EventWindowSample[];
+}
+
+export interface HistoryNode {
+  id: string;
+  nodeCode: string;
+  label: string | null;
+  role: NodeRole;
+  active: boolean;
+  unitCode: string;
+  unitLabel: string | null;
+}
+export interface NodeHistoryPage {
+  items: TelemetryPoint[];
+  hasMore: boolean;
+  nextCursor: string | null;
+  snapshot: string;
+  limit: number;
 }

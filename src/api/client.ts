@@ -7,6 +7,8 @@
  */
 
 import type {
+  HistoryNode,
+  NodeHistoryPage,
   CargoCategory,
   Command,
   CommandLogEntry,
@@ -138,6 +140,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  listHistoryNodes: () => request<HistoryNode[]>("/node-history/nodes"),
+  nodeHistory: (params: {
+    nodeId: string;
+    from: string;
+    to: string;
+    limit: number;
+    cursor?: string;
+  }) => {
+    const q = new URLSearchParams({
+      nodeId: params.nodeId,
+      from: params.from,
+      to: params.to,
+      limit: String(params.limit),
+    });
+    if (params.cursor) q.set("cursor", params.cursor);
+    return request<NodeHistoryPage>(`/node-history?${q}`);
+  },
   managementMyNotifications: () =>
     request<any[]>("/management/my-notifications"),
   managementApply: (id: string, node_id: string) =>

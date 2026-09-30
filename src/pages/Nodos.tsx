@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 /* CRUD de nodos — solo control_center. El secreto es lo único que
  * autentica a un celular como un nodo real (contrato v1.3.0): sin él,
  * cualquiera podía declararse dueño de cualquier nodeId con solo
@@ -244,6 +245,12 @@ export default function Nodos() {
                       )}
                     </td>
                     <td>
+                      <Link
+                        className="btn"
+                        to={`/historial-nodos?nodo=${n.id}`}
+                      >
+                        Historial
+                      </Link>{" "}
                       {n.active ? (
                         <>
                           <button

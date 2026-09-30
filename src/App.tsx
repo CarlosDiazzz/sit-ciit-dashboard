@@ -16,6 +16,7 @@ import Login from "./pages/Login";
 import Avisos from "./pages/Avisos";
 import Gestion from "./pages/Gestion";
 import Auditoria from "./pages/Auditoria";
+import HistorialNodos from "./pages/HistorialNodos";
 import Nodos from "./pages/Nodos";
 
 const PreviewLoadingError = import.meta.env.DEV
@@ -71,6 +72,7 @@ export default function App() {
               {/* Usuarios ya se autolimita a control_center adentro. */}
               <Route path="/usuarios" element={<GestionUsuarios />} />
               <Route path="/nodos" element={<Nodos />} />
+              <Route path="/historial-nodos" element={<HistorialNodos />} />
               <Route path="/gestion" element={<Gestion />} />
               <Route path="/gestion/:resource" element={<Gestion />} />
               <Route path="/auditoria" element={<Auditoria />} />

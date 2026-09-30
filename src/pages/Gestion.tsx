@@ -556,7 +556,17 @@ function GestionModule({ resource }: { resource: string }) {
                   ))}
                   <td>{row.active ? "Activo" : "Archivado"}</td>
                   <td>
-                    {resource === "nodes" && <strong>{row.node_code}</strong>}
+                    {resource === "nodes" && (
+                      <>
+                        <strong>{row.node_code}</strong>{" "}
+                        <Link
+                          className="btn"
+                          to={`/historial-nodos?nodo=${row.id}`}
+                        >
+                          Historial
+                        </Link>
+                      </>
+                    )}
                     <div className="management-actions">
                       <button className="btn" onClick={() => void inspect(row)}>
                         Detalle

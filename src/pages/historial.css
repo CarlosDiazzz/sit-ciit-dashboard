@@ -1,0 +1,28 @@
+.history-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  margin: 20px 0;
+}
+.history-summary span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.history-chart {
+  height: 320px;
+  min-width: 0;
+}
+.history-table {
+  min-width: 1600px;
+  font-variant-numeric: tabular-nums;
+}
+.history-table .tag {
+  display: block;
+  margin-top: 4px;
+}
+@media (max-width: 600px) {
+  .history-chart {
+    height: 260px;
+  }
+}

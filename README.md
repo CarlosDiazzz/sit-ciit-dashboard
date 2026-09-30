@@ -34,3 +34,14 @@ siguientes (ver `CLAUDE.md`).
 `src/contract/contract.ts` es una copia sincronizada desde
 `sit-ciit-infra/contracts/contract.ts`. No editar aquí directamente — ver
 `sit-ciit-infra/scripts/sync-contract.sh`.
+
+## Historial por nodo
+
+La vista **Historial de nodos** (`/historial-nodos`) consulta lecturas persistidas
+por dispositivo, incluyendo nodos archivados. Filtra por fechas locales (hasta
+31 días por consulta), muestra gráficas por variable, tabla paginada y descarga
+CSV de la página visible. Las horas de captura y recepción se muestran por
+separado; valores ausentes se conservan como tales. También se accede desde el
+botón Historial de cada nodo. El backend exige los permisos de unidad vigentes.
+
+Prueba específica de interfaz: `npm run test:ui -- tests/browser/history.spec.ts`.

@@ -139,6 +139,16 @@ export default function Layout() {
       : ["admin", "control_center"].includes(user?.role ?? "")
         ? [...NAV, managementNav, USUARIOS_NAV, NODOS_NAV]
         : [...NAV, managementNav];
+  if (user?.role !== "cliente")
+    nav.push({
+      to: "/historial-nodos",
+      label: "Historial de nodos",
+      deity: "Consulta",
+      domain: "Lecturas guardadas por dispositivo",
+      icon: ClipboardList,
+      theme: "control",
+      end: false,
+    });
   nav.push({
     to: "/avisos",
     label: "Mis avisos",
@@ -160,7 +170,10 @@ export default function Layout() {
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
-            <img src={mode === 'light' ? '/LogoClaro.png' : '/zenda-logo-dark.png'} alt="" />
+            <img
+              src={mode === "light" ? "/LogoClaro.png" : "/zenda-logo-dark.png"}
+              alt=""
+            />
           </span>
           <span className="brand-name">
             Zenda
@@ -186,9 +199,7 @@ export default function Layout() {
               </span>
               <span className="nav-copy">
                 <strong>{item.label}</strong>
-                <small>
-                  {item.domain}
-                </small>
+                <small>{item.domain}</small>
               </span>
             </NavLink>
           ))}
