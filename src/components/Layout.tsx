@@ -2,56 +2,113 @@
  * con estado de conexión y sesión, y el área de contenido.
  */
 
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Activity, ClipboardList, Map as MapIcon, Radio, ShieldAlert, Smartphone, Users, Wifi } from 'lucide-react';
-import { useConnectionStatus } from '../api/socket';
-import { useSession } from '../auth/context';
-import { useColorMode } from '../hooks/useColorMode';
-import { userRoleLabel } from '../lib/labels';
-import AztecOrnament from './AztecOrnament';
-import './layout.css';
-import './decision.css';
-import './theme.css';
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import {
+  Activity,
+  ClipboardList,
+  Map as MapIcon,
+  Radio,
+  ShieldAlert,
+  Smartphone,
+  Users,
+  Wifi,
+} from "lucide-react";
+import { useConnectionStatus } from "../api/socket";
+import { useSession } from "../auth/context";
+import { useColorMode } from "../hooks/useColorMode";
+import { userRoleLabel } from "../lib/labels";
+import AztecOrnament from "./AztecOrnament";
+import "./layout.css";
+import "./decision.css";
+import "./theme.css";
 
 const NAV = [
-  { to: '/', label: 'Ruta', deity: 'Quetzalcóatl', domain: 'Ubicación, recorrido y ETA', icon: MapIcon, theme: 'quetzal', end: true },
-  { to: '/conectividad', label: 'Conectividad', deity: 'Tláloc', domain: 'Nodos y disponibilidad', icon: Wifi, theme: 'tlaloc', end: false },
-  { to: '/unidad', label: 'Estado general', deity: 'Tonatiuh', domain: 'Unidad y telemetría', icon: Activity, theme: 'tonatiuh', end: false },
-  { to: '/eventos', label: 'Movimiento y eventos', deity: 'Ehécatl', domain: 'Impactos y estabilidad', icon: ShieldAlert, theme: 'ehecatl', end: false },
-  { to: '/bitacora', label: 'Auditoría', deity: 'Tezcatlipoca', domain: 'Historial de intervenciones', icon: ClipboardList, theme: 'tezcatlipoca', end: false },
-  { to: '/comandos', label: 'Comandos', deity: 'Control operativo', domain: 'Seguimiento de órdenes', icon: Radio, theme: 'control', end: false },
+  {
+    to: "/",
+    label: "Ruta",
+    deity: "Quetzalcóatl",
+    domain: "Ubicación, recorrido y ETA",
+    icon: MapIcon,
+    theme: "quetzal",
+    end: true,
+  },
+  {
+    to: "/conectividad",
+    label: "Conectividad",
+    deity: "Tláloc",
+    domain: "Nodos y disponibilidad",
+    icon: Wifi,
+    theme: "tlaloc",
+    end: false,
+  },
+  {
+    to: "/unidad",
+    label: "Estado general",
+    deity: "Tonatiuh",
+    domain: "Unidad y telemetría",
+    icon: Activity,
+    theme: "tonatiuh",
+    end: false,
+  },
+  {
+    to: "/eventos",
+    label: "Movimiento y eventos",
+    deity: "Ehécatl",
+    domain: "Impactos y estabilidad",
+    icon: ShieldAlert,
+    theme: "ehecatl",
+    end: false,
+  },
+  {
+    to: "/bitacora",
+    label: "Auditoría",
+    deity: "Tezcatlipoca",
+    domain: "Historial de intervenciones",
+    icon: ClipboardList,
+    theme: "tezcatlipoca",
+    end: false,
+  },
+  {
+    to: "/comandos",
+    label: "Comandos",
+    deity: "Control operativo",
+    domain: "Seguimiento de órdenes",
+    icon: Radio,
+    theme: "control",
+    end: false,
+  },
 ] as const;
 
 // Solo visible para control_center: son cuentas de otras personas, no
 // algo que un operador o cliente deba ni siquiera ver en el nav.
 const USUARIOS_NAV = {
-  to: '/usuarios',
-  label: 'Usuarios',
-  deity: 'Acceso',
-  domain: 'Cuentas del centro de control',
+  to: "/usuarios",
+  label: "Usuarios",
+  deity: "Acceso",
+  domain: "Cuentas del centro de control",
   icon: Users,
-  theme: 'control',
+  theme: "control",
   end: false,
 } as const;
 
 const NODOS_NAV = {
-  to: '/nodos',
-  label: 'Nodos',
-  deity: 'Acceso',
-  domain: 'Identidad y secretos de campo',
+  to: "/nodos",
+  label: "Nodos",
+  deity: "Acceso",
+  domain: "Identidad y secretos de campo",
   icon: Smartphone,
-  theme: 'control',
+  theme: "control",
   end: false,
 } as const;
 
 function ConnectionIndicator() {
   const status = useConnectionStatus();
   const label =
-    status === 'online'
-      ? 'Canal en vivo conectado'
-      : status === 'connecting'
-        ? 'Conectando…'
-        : 'Sin conexión';
+    status === "online"
+      ? "Canal en vivo conectado"
+      : status === "connecting"
+        ? "Conectando…"
+        : "Sin conexión";
 
   return (
     <span className={`conn conn-${status}`} title={`WebSocket: ${status}`}>
@@ -67,11 +124,36 @@ export default function Layout() {
   const location = useLocation();
   // cliente no tiene nada que hacer aquí (RequireAuth ya le bloquea las
   // rutas): mostrarle links que van a rebotar solo confunde.
+  const managementNav = {
+    to: "/gestion",
+    label: user?.role === "cliente" ? "Mis envíos" : "Gestión logística",
+    deity: "Operación",
+    domain: "Recursos, envíos y viajes",
+    icon: ClipboardList,
+    theme: "control",
+    end: false,
+  };
   const nav =
-    user?.role === 'cliente' ? [] : user?.role === 'control_center' ? [...NAV, USUARIOS_NAV, NODOS_NAV] : NAV;
-  const current = nav.find((item) =>
-    item.end ? location.pathname === item.to : location.pathname.startsWith(item.to),
-  ) ?? NAV[0];
+    user?.role === "cliente" || user?.role === "technician"
+      ? [managementNav]
+      : ["admin", "control_center"].includes(user?.role ?? "")
+        ? [...NAV, managementNav, USUARIOS_NAV, NODOS_NAV]
+        : [...NAV, managementNav];
+  nav.push({
+    to: "/avisos",
+    label: "Mis avisos",
+    deity: "Alertas",
+    domain: "Incidentes de tu operación",
+    icon: ShieldAlert,
+    theme: "control",
+    end: false,
+  });
+  const current =
+    nav.find((item) =>
+      item.end
+        ? location.pathname === item.to
+        : location.pathname.startsWith(item.to),
+    ) ?? NAV[0];
 
   return (
     <div className="shell" data-theme={current.theme} data-color-mode={mode}>
@@ -94,20 +176,28 @@ export default function Layout() {
               key={item.to}
               to={item.to}
               end={item.end}
-              className={({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`}
+              className={({ isActive }) =>
+                `nav-link${isActive ? " is-active" : ""}`
+              }
               data-nav-theme={item.theme}
             >
-              <span className="nav-glyph" aria-hidden="true"><item.icon size={20} strokeWidth={2} /></span>
+              <span className="nav-glyph" aria-hidden="true">
+                <item.icon size={18} strokeWidth={1.8} />
+              </span>
               <span className="nav-copy">
                 <strong>{item.label}</strong>
-                <small>{item.domain}</small>
+                <small>
+                  {item.deity} · {item.domain}
+                </small>
               </span>
             </NavLink>
           ))}
         </nav>
 
         <footer className="sidebar-foot">
-          <span className="mini-glyph" aria-hidden="true">◆</span>
+          <span className="mini-glyph" aria-hidden="true">
+            ◆
+          </span>
           Telemetría ferroviaria
         </footer>
       </aside>
@@ -130,13 +220,21 @@ export default function Layout() {
                 type="button"
                 className="theme-toggle"
                 onClick={toggle}
-                aria-label={mode === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
-                title={mode === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
+                aria-label={
+                  mode === "light"
+                    ? "Activar modo oscuro"
+                    : "Activar modo claro"
+                }
+                title={
+                  mode === "light"
+                    ? "Activar modo oscuro"
+                    : "Activar modo claro"
+                }
               >
                 <span className="theme-toggle-icon" aria-hidden="true">
-                  {mode === 'light' ? '☾' : '☀'}
+                  {mode === "light" ? "☾" : "☀"}
                 </span>
-                <span>{mode === 'light' ? 'Oscuro' : 'Claro'}</span>
+                <span>{mode === "light" ? "Oscuro" : "Claro"}</span>
               </button>
               {user ? (
                 <>

@@ -5,29 +5,20 @@
  * de todos modos va a rechazar cada petición).
  */
 
-import { Navigate, Outlet } from 'react-router-dom';
-import { useSession } from '../auth/context';
-import { userRoleLabel } from '../lib/labels';
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useSession } from "../auth/context";
 
 export default function RequireAuth() {
   const { user } = useSession();
+  const { pathname } = useLocation();
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (user.role === 'cliente') {
-    return (
-      <div className="page-head">
-        <div>
-          <h1>Acceso restringido</h1>
-          <p>
-            Tu cuenta es de {userRoleLabel('cliente')}. Este centro de control es para
-            personal del corredor (centro de control y operadores) — tu vista de
-            seguimiento vive en otro portal.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+  if (
+    user.role === "cliente" &&
+    !pathname.startsWith("/gestion") &&
+    pathname !== "/avisos"
+  )
+    return <Navigate to="/gestion" replace />;
   return <Outlet />;
 }

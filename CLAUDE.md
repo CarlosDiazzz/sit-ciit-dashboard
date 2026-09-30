@@ -45,6 +45,18 @@ Ver tabla completa en `sit-ciit-infra/docs/demo-script.md`. Resumen:
 - **Login**: oculta acciones no permitidas según el rol
   (`control_center` vs. `operator`).
 
+## Gráficas en vivo
+
+`src/pages/Unidad.tsx` se conecta a Socket.IO (`VITE_SOCKET_URL`, evento
+`telemetry`) y grafica con Recharts. Usa la paleta categórica validada del
+skill de dataviz (azul/naranja/aqua para x/y/z; la magnitud no es una
+serie categórica más, se pinta en tinta neutra por ser una derivada de
+las otras tres). El componente detecta `prefers-color-scheme` y cambia de
+paleta — es dark-mode-aware por sí solo aunque el resto del dashboard
+todavía no tiene un sistema de theming. Si se agrega uno más adelante,
+mover esos colores a variables compartidas en vez de duplicarlos por
+página.
+
 ## Comandos útiles
 
 ```bash

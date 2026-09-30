@@ -155,7 +155,7 @@ export default function Unidad() {
   const { mode } = useColorMode();
   const colors = chartPalette(mode === 'dark');
   const { user } = useSession();
-  const canEditCargoCategory = user?.role === 'control_center';
+  const canEditCargoCategory = ['admin','control_center'].includes(user?.role??'');
 
   const [points, setPoints] = useState<ChartPoint[]>([]);
   const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});

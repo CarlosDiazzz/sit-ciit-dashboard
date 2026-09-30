@@ -53,6 +53,9 @@ export function cargoCategoryLabel(category: CargoCategory): string {
 }
 
 const USER_ROLE_LABEL: Record<UserRole, string> = {
+  admin: 'Administrador',
+  technician: 'Técnico',
+  auditor: 'Auditor',
   control_center: 'Centro de control',
   operator: 'Operador',
   cliente: 'Cliente',

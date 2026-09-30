@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:ui": "playwright test"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
@@ -20,6 +21,7 @@
     "socket.io-client": "^4.8.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",

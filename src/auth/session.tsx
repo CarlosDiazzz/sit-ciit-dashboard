@@ -8,15 +8,15 @@
  * componente proveedor.
  */
 
-import { useCallback, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
-import { setToken } from '../api/client';
-import { closeSocket } from '../api/socket';
-import type { AuthUser } from '../api/types';
-import { isActionAllowedForRole, type CmdAction } from '../contract/contract';
-import { SessionContext } from './context';
+import { useCallback, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import { setToken } from "../api/client";
+import { closeSocket } from "../api/socket";
+import type { AuthUser } from "../api/types";
+import { isActionAllowedForRole, type CmdAction } from "../contract/contract";
+import { SessionContext } from "./context";
 
-const USER_KEY = 'sitciit.user';
+const USER_KEY = "sitciit.user";
 
 function readStoredUser(): AuthUser | null {
   try {
@@ -32,6 +32,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(readStoredUser);
 
   const signIn = useCallback((nextUser: AuthUser, token: string) => {
+    closeSocket();
     setToken(token);
     try {
       localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
@@ -56,10 +57,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const can = useCallback(
     (action: CmdAction) => {
-      if (!user || user.role === 'cliente') return false;
+      if (!user || !["admin", "control_center", "operator"].includes(user.role))
+        return false;
       // Descartado 'cliente' arriba: user.role solo puede ser
       // control_center|operator aquí, que es lo que pide IssuerRole.
-      return isActionAllowedForRole(action, user.role);
+      return isActionAllowedForRole(
+        action,
+        user.role === "admin"
+          ? "control_center"
+          : (user.role as "control_center" | "operator"),
+      );
     },
     [user],
   );

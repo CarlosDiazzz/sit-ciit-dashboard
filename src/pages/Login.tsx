@@ -30,7 +30,7 @@ export default function Login() {
     try {
       const { token, user: authUser } = await api.login(email, password);
       signIn(authUser, token);
-      navigate('/');
+      navigate(['cliente','technician'].includes(authUser.role)?'/gestion':'/');
     } catch (err) {
       setError(
         err instanceof ApiError ? err.userMessage : 'No se pudo iniciar sesión.',
@@ -41,7 +41,7 @@ export default function Login() {
   }
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={["cliente", "technician"].includes(user.role) ? "/gestion" : "/"} replace />;
   }
 
   return (
@@ -57,6 +57,9 @@ export default function Login() {
       </button>
       <form className="login-card" onSubmit={onSubmit}>
         <h1>Iniciar sesión</h1>
+        <p className="login-hint">
+          Usa la cuenta que te asignó el administrador.
+        </p>
 
         <label className="field">
           <span>Correo</span>
