@@ -6,24 +6,30 @@
 
 .unit-marker {
   position: relative;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 54px;
 }
 
 /* La rotación va en el hijo y no en el contenedor: así el halo y la
    etiqueta no giran con la locomotora. */
 .unit-marker__icon {
-  width: 26px;
-  height: 26px;
-  transform-origin: 50% 50%;
+  width: 22px;
+  height: 54px;
+  /* El giro es en torno a la locomotora, no al centro del convoy: los
+     vagones barren detrás como en una vía real, en vez de orbitar. */
+  transform-origin: 50% 11px;
   transition: transform 700ms cubic-bezier(0.33, 1, 0.68, 1);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.55));
+  /* Doble sombra: una corta y densa que despega la locomotora de la
+     tesela, y otra larga y difusa que la asienta sobre el terreno. Con
+     una sola, o flota o se ensucia el contorno. */
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.7))
+          drop-shadow(0 4px 7px rgba(0, 0, 0, 0.4));
 }
 
 /* Nombre de la unidad bajo el icono, legible sobre cualquier tesela. */
 .unit-marker__label {
   position: absolute;
-  top: 27px;
+  top: 46px;
   left: 50%;
   transform: translateX(-50%);
   padding: 1px 6px;
@@ -42,7 +48,12 @@
 .unit-marker--alert::before {
   content: '';
   position: absolute;
-  inset: -7px;
+  /* Rodea la locomotora, que es donde va el nodo, no el convoy entero:
+     un halo que abarcara los vagones taparía media vía. */
+  top: -6px;
+  left: -6px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: 2px solid var(--halo, #f39a48);
   opacity: 0.75;
@@ -117,7 +128,8 @@
 /* El respaldo se dibuja algo más chico: presente, sin competir con el
    nodo que está reportando. */
 .unit-marker--backup .unit-marker__icon {
-  transform-origin: 50% 50%;
+  /* Sin redefinir transform-origin: hereda el de la locomotora. Si se
+     recentra, el convoy del respaldo orbita en vez de barrer detrás. */
   scale: 0.82;
 }
 
@@ -136,8 +148,8 @@
 /* Punto que marca cuál de los dos es la fuente activa de la unidad. */
 .unit-marker__source {
   position: absolute;
-  top: -3px;
-  right: -3px;
+  top: -2px;
+  right: -1px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
