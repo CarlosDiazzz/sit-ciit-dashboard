@@ -229,6 +229,16 @@
 }
 .aztec-feathers { opacity: 0.7; }
 .aztec-carving { stroke: var(--ornament-surface); }
+.aztec-serpent {
+  height: 86px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%);
+}
+
+.shell[data-theme='quetzal'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(72%) sepia(24%) saturate(1045%) hue-rotate(107deg) brightness(93%) contrast(88%); }
+.shell[data-theme='tonatiuh'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(68%) sepia(81%) saturate(1299%) hue-rotate(328deg) brightness(101%) contrast(91%); }
+.shell[data-theme='tezcatlipoca'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(57%) sepia(22%) saturate(1134%) hue-rotate(163deg) brightness(87%) contrast(87%); }
+.shell[data-theme='ehecatl'] .aztec-serpent { filter: brightness(0) saturate(100%) invert(50%) sepia(34%) saturate(1397%) hue-rotate(313deg) brightness(92%) contrast(92%); }
 
 .topbar-content {
   display: flex;
