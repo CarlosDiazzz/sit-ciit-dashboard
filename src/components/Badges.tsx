@@ -6,7 +6,8 @@
  */
 
 import type { EventSeverity } from '../contract/contract';
-import type { CommandStatus } from '../api/types';
+import type { CargoCategory, CommandStatus } from '../api/types';
+import { cargoCategoryLabel } from '../lib/labels';
 import './badges.css';
 
 const SEVERITY_LABEL: Record<EventSeverity, string> = {
@@ -43,6 +44,12 @@ export function MovementBadge({ moving }: { moving: boolean }) {
       {moving ? 'En movimiento' : 'Quieto'}
     </span>
   );
+}
+
+/** Chip informativo, no de severidad: la categoría de carga no es un
+ *  estado que "empeora", es un dato declarado. */
+export function CargoCategoryBadge({ category }: { category: CargoCategory }) {
+  return <span className="badge badge-neutral">{cargoCategoryLabel(category)}</span>;
 }
 
 const STATUS_LABEL: Record<CommandStatus, string> = {

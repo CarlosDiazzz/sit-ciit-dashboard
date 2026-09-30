@@ -6,7 +6,6 @@
  */
 
 import { useCallback, useState } from 'react';
-
 import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
@@ -44,6 +43,9 @@ export default function Eventos() {
         receivedAt: new Date().toISOString(),
         acknowledgedAt: null,
         acknowledgedBy: null,
+        // El socket no manda el detalle estructurado (solo lo tiene la
+        // fila guardada); llega al recargar desde /events.
+        details: null,
       };
       setEnVivo((prev) => [fila, ...prev].slice(0, 100));
     }, []),
