@@ -15,9 +15,20 @@ import NodeStatusPanel from '../components/NodeStatusPanel';
 import TrackDefectLayer from '../components/TrackDefectLayer';
 import TrackDefectSummary from '../components/TrackDefectSummary';
 import SimulationLayer from '../components/SimulationLayer';
-import type { TelemetryBroadcast, TrackDefect, TrackDefectsResponse } from '../api/types';
+import type {
+  CellTower,
+  TelemetryBroadcast,
+  TrackDefect,
+  TrackDefectsResponse,
+} from '../api/types';
 import { MEDIAS_AGUAS_JUNCTION, parseMainRailRoute, parseRailConnections, type MapCoordinate, type RailConnection } from '../lib/mapData';
+import { muestrearRuta } from '../lib/routeProjection';
 import './mapa.css';
+
+// Cada cuánto se muestrea la ruta real para pedir antenas reales cerca:
+// más fino no ayuda (el backend cachea 24h y las celdas de OpenCelliD
+// ya cubren ~1.8 km cada una), más grueso deja huecos en el corredor.
+const PASO_MUESTREO_TORRES_M = 3000;
 
 // Centro aproximado del corredor Salina Cruz–Coatzacoalcos, para que el
 // mapa abra encuadrado antes de tener el trazado real.
@@ -58,6 +69,7 @@ export default function Mapa() {
   const [railRoute, setRailRoute] = useState<MapCoordinate[]>([]);
   const [railConnections, setRailConnections] = useState<RailConnection[]>([]);
   const [mapDataError, setMapDataError] = useState<string | null>(null);
+  const [torres, setTorres] = useState<CellTower[]>([]);
   // Defectos de via confirmados por repeticion. Se cargan una vez: no
   // cambian con cada mensaje, solo cuando pasa otro tren por el punto.
   const defectos = useApi<TrackDefectsResponse>(() => api.trackDefects());
@@ -109,6 +121,27 @@ export default function Mapa() {
     return () => { cancelled = true; };
   }, []);
 
+  // Antenas reales cerca de la ruta, una vez que se conoce su geometría
+  // real — el backend no la conoce, solo consulta OpenCelliD cerca de
+  // los puntos que se le mandan (ver GET /coverage/towers).
+  useEffect(() => {
+    if (railRoute.length < 2) return;
+    let cancelled = false;
+    const puntos = muestrearRuta(railRoute, PASO_MUESTREO_TORRES_M);
+
+    void api
+      .listCellTowers(puntos)
+      .then((data) => {
+        if (!cancelled) setTorres(data);
+      })
+      .catch(() => {
+        // Sin antenas no se puede dar ETA, pero la posición estimada
+        // (Parte 2) sigue funcionando sola — no bloquea el resto del mapa.
+      });
+
+    return () => { cancelled = true; };
+  }, [railRoute]);
+
   return (
     <>
       <div className="page-head">
@@ -144,7 +177,7 @@ export default function Mapa() {
               mostrarIndicios={verIndicios}
             />
 
-            <LiveMapLayers onTelemetria={recibirTelemetria} />
+            <LiveMapLayers onTelemetria={recibirTelemetria} railRoute={railRoute} torres={torres} />
 
             <FitMapToData route={railRoute} connections={railConnections} />
             {railConnections.map((connection) => (
