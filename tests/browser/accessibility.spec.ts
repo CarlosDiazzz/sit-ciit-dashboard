@@ -1,0 +1,56 @@
+import { test, expect } from '@playwright/test';
+
+test('accessibility preferences, English navigation and account controls', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
+  await page.getByLabel('Idioma', { exact: false }).selectOption('en');
+  await expect(page.getByRole('dialog', { name: 'Accessibility' })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Large text', exact: false }).check();
+  await page.getByRole('checkbox', { name: 'High contrast', exact: false }).check();
+  await page.getByRole('checkbox', { name: 'Reduce motion', exact: false }).check();
+  await expect(page.locator('.workspace-dialog-head')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await expect(page.getByRole('heading', { name: 'Accessibility', exact: true })).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await page.screenshot({ path: '/tmp/zentra-accessibility-english.png', fullPage: true });
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('html')).toHaveCSS('font-size', '17.5px');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Accessibility', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-high-contrast', 'true');
+  await page.getByLabel('Email', { exact: true }).fill('admin@browser.invalid');
+  await page.getByLabel('Password', { exact: true }).fill('browser-test-password');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Route', exact: true })).toBeVisible();
+  await expect(page.locator('.sidebar')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await expect(page.locator('.sidebar-foot').getByRole('button', { name: 'Accessibility' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cambiar a español' }).click();
+  await expect(page.getByRole('heading', { name: 'Ruta', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await expect(page.getByRole('heading', { name: 'Route', exact: true })).toBeVisible();
+  for (const [route, heading] of [['/conectividad', 'Connectivity'], ['/unidad', 'Node monitoring'], ['/eventos', 'Events'], ['/auditoria', 'Administrative audit'], ['/comandos', 'Commands'], ['/bitacora', 'Logbook'], ['/nodos', 'Nodes'], ['/historial-nodos', 'Node history'], ['/avisos', 'My notifications'], ['/gestion', 'Logistics management']]) {
+    await page.goto(route);
+    await expect(page.getByRole('heading', { name: heading, exact: true }).first()).toBeVisible();
+  }
+  await page.goto('/gestion/companies');
+  await page.getByRole('button', { name: 'New record', exact: true }).click();
+  await expect(page.getByLabel('Code / reference', { exact: false })).toBeVisible();
+  await expect(page.getByLabel('Name', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Accessibility', exact: true }).click();
+  await page.getByRole('button', { name: 'Reset preferences' }).click();
+  await expect(page.getByRole('dialog', { name: 'Accesibilidad' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Cerrar sesión' }).hover();
+  await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toHaveCSS('background-color', 'rgb(185, 28, 28)');
+  await expect(page.locator('.sidebar-greca')).toHaveCSS('animation-name', 'none');
+  await page.screenshot({ path: '/tmp/zentra-accessibility-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Accesibilidad' })).toBeVisible();
+  await page.screenshot({ path: '/tmp/zentra-accessibility-mobile.png', fullPage: true });
+  expect(errors).toEqual([]);
+});

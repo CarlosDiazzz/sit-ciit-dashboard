@@ -105,16 +105,16 @@ h3 {
  * el peso y el color más que el tamaño. */
 h1 {
   font-family: var(--display);
-  font-size: 30px;
+  font-size: 2.142857rem;
   line-height: 1.1;
   letter-spacing: -0.7px;
 }
 h2 {
-  font-size: 15px;
+  font-size: 1.071429rem;
   letter-spacing: 0.01em;
 }
 h3 {
-  font-size: 13px;
+  font-size: 0.928571rem;
 }
 
 p {

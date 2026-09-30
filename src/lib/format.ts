@@ -1,7 +1,8 @@
+import { locale } from '../accessibility/i18n';
 /* Formato de fechas y magnitudes, en un solo lugar para que todas las
  * vistas muestren lo mismo de la misma forma. */
 
-const DATE_TIME = new Intl.DateTimeFormat('es-MX', {
+const DATE_TIME = () => new Intl.DateTimeFormat(locale(), {
   day: '2-digit',
   month: '2-digit',
   hour: '2-digit',
@@ -10,7 +11,7 @@ const DATE_TIME = new Intl.DateTimeFormat('es-MX', {
   hour12: false,
 });
 
-const TIME = new Intl.DateTimeFormat('es-MX', {
+const TIME = () => new Intl.DateTimeFormat(locale(), {
   hour: '2-digit',
   minute: '2-digit',
   second: '2-digit',
@@ -20,13 +21,13 @@ const TIME = new Intl.DateTimeFormat('es-MX', {
 export function formatDateTime(iso: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '—' : DATE_TIME.format(d);
+  return Number.isNaN(d.getTime()) ? '—' : DATE_TIME().format(d);
 }
 
 export function formatTime(iso: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '—' : TIME.format(d);
+  return Number.isNaN(d.getTime()) ? '—' : TIME().format(d);
 }
 
 /** "hace 3 s" / "hace 5 min". Para el último heartbeat, donde importa la

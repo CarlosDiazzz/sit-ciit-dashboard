@@ -1,3 +1,4 @@
+import { t as translate, locale } from '../accessibility/i18n';
 import { useEffect, useState } from "react";
 import { latLngBounds } from "leaflet";
 import {
@@ -76,48 +77,41 @@ export default function NodeConnectivityMap({
   const restored =
     data?.items.filter((e) => e.kind === "signal_recovered").length ?? 0;
   return (
-    <section className="chart-card" aria-label={`Conectividad de ${nodeCode}`}>
+    <section className="chart-card" aria-label={translate(`Conectividad de ${nodeCode}`)}>
       <div className="card-head">
-        <h2>Pérdidas y recuperaciones de señal</h2>
+        <h2>{translate("Pérdidas y recuperaciones de señal")}</h2>
         <label className="field">
-          <span>Periodo de conectividad</span>
+          <span>{translate("Periodo de conectividad")}</span>
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
           >
-            <option value={1}>Últimas 24 horas</option>
-            <option value={7}>Últimos 7 días</option>
-            <option value={30}>Últimos 30 días</option>
+            <option value={1}>{translate("Últimas 24 horas")}</option>
+            <option value={7}>{translate("Últimos 7 días")}</option>
+            <option value={30}>{translate("Últimos 30 días")}</option>
           </select>
         </label>
       </div>
-      <p>
-        Interrupciones de comunicación detectadas por el servidor. La pérdida
-        muestra la última posición GPS conocida; la recuperación muestra la
-        primera captura GPS posterior, si llegó en los siguientes 5 minutos.
-      </p>
-      <p className="chart-meta">Las recuperaciones se registran desde la activación de esta función; los eventos anteriores pueden mostrar solo la pérdida.</p>
-      {error && <p role="alert">{error}</p>}
-      {!data && !error && <p>Cargando conectividad…</p>}
+      <p>{translate("Interrupciones de comunicación detectadas por el servidor. La pérdida muestra la última posición GPS conocida; la recuperación muestra la primera captura GPS posterior, si llegó en los siguientes 5 minutos.")}</p>
+      <p className="chart-meta">{translate("Las recuperaciones se registran desde la activación de esta función; los eventos anteriores pueden mostrar solo la pérdida.")}</p>
+      {translate(error && <p role="alert">{translate(error)}</p>)}
+      {!data && !error && <p>{translate("Cargando conectividad…")}</p>}
       {data && (
         <>
           <div className="connectivity-legend">
-            <span>🔴 Pérdidas: {lost}</span>
-            <span>🟢 Recuperaciones: {restored}</span>
-            <span>Sin ubicación GPS: {data.items.length - located.length}</span>
+            <span>{translate("🔴 Pérdidas: ")}{lost}</span>
+            <span>{translate("🟢 Recuperaciones: ")}{restored}</span>
+            <span>{translate("Sin ubicación GPS: ")}{data.items.length - located.length}</span>
           </div>
           {data.hasMore && (
-            <p>
-              Se muestran los 200 eventos más recientes. Selecciona un periodo
-              más corto para revisar los anteriores.
-            </p>
+            <p>{translate("Se muestran los 200 eventos más recientes. Selecciona un periodo más corto para revisar los anteriores.")}</p>
           )}
           {located.length ? (
             <MapContainer
               center={[located[0]!.gpsLat!, located[0]!.gpsLon!]}
               zoom={13}
               className="connectivity-map"
-              aria-label="Mapa de conectividad"
+              aria-label={translate("Mapa de conectividad")}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -136,26 +130,25 @@ export default function NodeConnectivityMap({
                 >
                   <Popup>
                     <strong>
-                      {e.kind === "signal_lost"
+                      {translate(e.kind === "signal_lost"
                         ? "Señal perdida"
-                        : "Señal recuperada"}{" "}
-                      · {nodeCode}
+                        : "Señal recuperada")}{" "}
+                      · {translate(nodeCode)}
                     </strong>
+                    <br />{translate("Detección: ")}{translate(new Date(e.ts).toLocaleString(locale()))}
                     <br />
-                    Detección: {new Date(e.ts).toLocaleString("es-MX")}
-                    <br />
-                    {e.positionTs
-                      ? `Captura GPS: ${new Date(e.positionTs).toLocaleString("es-MX")}`
-                      : "Última posición conocida; fecha de captura no disponible."}
+                    {translate(e.positionTs
+                      ? `Captura GPS: ${new Date(e.positionTs).toLocaleString(locale())}`
+                      : "Última posición conocida; fecha de captura no disponible.")}
                   </Popup>
                 </CircleMarker>
               ))}
             </MapContainer>
           ) : (
             <p className="chart-hint">
-              {data.items.length
+              {translate(data.items.length
                 ? "Los eventos registrados no tienen ubicación GPS disponible."
-                : "Sin interrupciones registradas en este periodo."}
+                : "Sin interrupciones registradas en este periodo.")}
             </p>
           )}
         </>

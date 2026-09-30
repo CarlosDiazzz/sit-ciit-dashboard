@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Capa de simulación del corredor.
  *
  * Dibuja las unidades simuladas y sus alertas con los mismos iconos que
@@ -119,15 +120,15 @@ export default function SimulationLayer({
           icon={iconoEvento(a.severity, a.severity === 'critical')}
         >
           <Tooltip direction="top" offset={[0, -10]}>
-            {eventKindLabel(a.kind)} · {a.value.toFixed(2)} {eventValueUnit(a.kind)}
+            {translate(eventKindLabel(a.kind))} · {translate(a.value.toFixed(2))} {translate(eventValueUnit(a.kind))}
           </Tooltip>
           <Popup>
-            <strong>{eventKindLabel(a.kind)}</strong>
+            <strong>{translate(eventKindLabel(a.kind))}</strong>
             <br />
-            {a.value.toFixed(2)} {eventValueUnit(a.kind)} (umbral{' '}
-            {a.threshold.toFixed(2)})
+            {a.value.toFixed(2)} {translate(eventValueUnit(a.kind))} (
+            {translate('umbral')} {a.threshold.toFixed(2)})
             <br />
-            {a.nodeId} · {formatTime(new Date(a.ts).toISOString())}
+            {translate(a.nodeId)} · {translate(formatTime(new Date(a.ts).toISOString()))}
           </Popup>
         </Marker>
       ))}
@@ -174,21 +175,21 @@ function FichaUnidad({ tren }: { tren: TrenSimulado }) {
     <div>
       <strong>{tren.etiqueta}</strong>
       <br />
-      {tren.speedKmh.toFixed(0)} km/h · {Math.round(tren.avance * 100)} % del corredor
+      {tren.speedKmh.toFixed(0)} {translate('km/h')} · {Math.round(tren.avance * 100)}{translate(' % del corredor')}
       <br />
       <br />
 
       {/* Qué nodo manda ahora. Cuando el primario se queda sin pila, la
           unidad pasa al respaldo y aquí se ve el cambio. */}
-      <strong>Fuente: {activo.nodeId}</strong>
+      <strong>{translate('Fuente')}: {activo.nodeId}</strong>
       <br />
-      {activo.role === 'primary' ? 'Nodo primario' : 'Nodo de respaldo'} ·{' '}
+      {translate(activo.role === 'primary' ? 'Nodo primario' : 'Nodo de respaldo')} ·{' '}
       {activo.samplingMs} ms
       <br />
       {tren.nodos.map((n) => (
         <span key={n.nodeId}>
-          {n.nodeId}: {n.online ? `${n.batteryPct.toFixed(0)} %` : 'apagado'}
-          {n.pendingOutbox > 0 ? ` · ${n.pendingOutbox} en cola` : ''}
+          {n.nodeId}: {n.online ? `${n.batteryPct.toFixed(0)} %` : translate('apagado')}
+          {n.pendingOutbox > 0 ? ` · ${n.pendingOutbox} ${translate('en cola')}` : ''}
           <br />
         </span>
       ))}
@@ -196,7 +197,7 @@ function FichaUnidad({ tren }: { tren: TrenSimulado }) {
       {tren.sinCobertura ? (
         <>
           <br />
-          <em>Sin cobertura: sigue midiendo, encola y enviará al recuperarla.</em>
+          <em>{translate('Sin cobertura: sigue midiendo, encola y enviará al recuperarla.')}</em>
           <br />
         </>
       ) : null}
@@ -206,13 +207,13 @@ function FichaUnidad({ tren }: { tren: TrenSimulado }) {
           que el nodo deriva los eventos. */}
       {accel ? (
         <>
-          Accel (g): {accel.x.toFixed(2)} / {accel.y.toFixed(2)} / {accel.z.toFixed(2)}
+          {translate('Accel (g)')}: {accel.x.toFixed(2)} / {accel.y.toFixed(2)} / {accel.z.toFixed(2)}
           <br />
         </>
       ) : null}
       {gyro ? (
         <>
-          Giro (rad/s): {gyro.x.toFixed(2)} / {gyro.y.toFixed(2)} / {gyro.z.toFixed(2)}
+          {translate('Giro (rad/s)')}: {gyro.x.toFixed(2)} / {gyro.y.toFixed(2)} / {gyro.z.toFixed(2)}
           <br />
         </>
       ) : null}
@@ -223,7 +224,7 @@ function FichaUnidad({ tren }: { tren: TrenSimulado }) {
         </>
       ) : null}
       <br />
-      <em>Unidad simulada</em>
+      <em>{translate('Unidad simulada')}</em>
     </div>
   );
 }

@@ -13,17 +13,17 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.928571rem;
 }
 
-.table thead th { padding:14px 18px; font-size:10px; letter-spacing:.75px; background:var(--surface-2); }
+.table thead th { padding:14px 18px; font-size: 0.714286rem; letter-spacing:.75px; background:var(--surface-2); }
 .table tbody td { padding:14px 18px; line-height:1.5; }
 .table tbody tr { transition:background 120ms ease; }
 .table tbody tr:nth-child(even) { background:color-mix(in srgb,var(--surface-2) 30%,transparent); }
 .table tbody tr:hover { background:var(--accent-bg); }
 .table tbody tr:focus-within { background:var(--accent-bg); }
 .table td:first-child { color:var(--text-strong); font-weight:500; }
-.table td .btn { display:inline-flex; align-items:center; gap:6px; min-height:32px; font-size:11px; padding:6px 9px; }
+.table td .btn { display:inline-flex; align-items:center; gap:6px; min-height:32px; font-size: 0.785714rem; padding:6px 9px; }
 .table td select { font:inherit; padding:6px 8px; border:1px solid var(--border-strong); border-radius:6px; background:var(--surface); color:var(--text); }
 .table td small { color:var(--text-dim); }
 .table details summary { cursor:pointer; color:var(--accent); }
@@ -34,7 +34,7 @@
   z-index: 1;
   padding: var(--s2) var(--s3);
   text-align: left;
-  font-size: 11px;
+  font-size: 0.785714rem;
   font-weight: 600;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -72,7 +72,7 @@
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 0.785714rem;
 }
 
 /* Rejilla de tarjetas para las vistas que no son tabla. */
@@ -111,7 +111,7 @@
   grid-template-columns: auto 1fr;
   gap: var(--s1) var(--s3);
   margin: 0;
-  font-size: 13px;
+  font-size: 0.928571rem;
 }
 
 .card dt {
@@ -136,7 +136,7 @@
    respaldo de esta, no otra instruccion. */
 .dss-evidence-line {
   margin: var(--s1) 0 0;
-  font-size: 12px;
+  font-size: 0.857143rem;
   line-height: 1.5;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;

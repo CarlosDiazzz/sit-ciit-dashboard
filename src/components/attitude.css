@@ -21,7 +21,7 @@
   justify-content: center;
   min-height: 180px;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 0.928571rem;
 }
 
 .attitude__head {
@@ -33,11 +33,11 @@
 
 .attitude__head h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 .attitude__node {
-  font-size: 11px;
+  font-size: 0.785714rem;
   color: var(--text-dim);
 }
 
@@ -73,7 +73,7 @@
 
 .attitude__tick-label {
   fill: rgba(245, 240, 228, 0.85);
-  font-size: 9px;
+  font-size: 0.642857rem;
   font-family: var(--mono, ui-monospace, monospace);
   text-anchor: middle;
 }
@@ -126,7 +126,7 @@
 }
 
 .attitude__values dt {
-  font-size: 9.5px;
+  font-size: 0.678571rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -135,7 +135,7 @@
 
 .attitude__values dd {
   margin: 0;
-  font-size: 15px;
+  font-size: 1.071429rem;
   font-weight: 600;
   color: var(--text-strong);
   font-variant-numeric: tabular-nums;
@@ -155,6 +155,6 @@
   border-radius: var(--radius-sm);
   background: var(--critical-bg);
   color: var(--critical);
-  font-size: 11.5px;
+  font-size: 0.821429rem;
   line-height: 1.45;
 }

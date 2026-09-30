@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Estados de carga, error y vacío.
  *
  * Son componentes de primera clase, no un detalle: mientras el backend no
@@ -13,8 +14,8 @@ import StatusTrain from './StatusTrain';
 export function Loading({ label = 'Cargando…' }: { label?: string }) {
   return (
     <div className="state state-loading" role="status" aria-live="polite" aria-busy="true">
-      <span className="state-eyebrow">SINCRONIZANDO INFORMACIÓN</span><StatusTrain />
-      <p className="state-title">{label}</p><p className="state-text">Estamos consultando los datos de la operación.</p><span className="state-progress" aria-hidden="true" />
+      <span className="state-eyebrow">{translate("SINCRONIZANDO INFORMACIÓN")}</span><StatusTrain />
+      <p className="state-title">{translate(label)}</p><p className="state-text">{translate("Estamos consultando los datos de la operación.")}</p><span className="state-progress" aria-hidden="true" />
     </div>
   );
 }
@@ -27,14 +28,12 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="state state-error" role="alert"><span className="state-eyebrow">INFORMACIÓN NO DISPONIBLE</span>
-      <p className="state-title">No se pudieron cargar los datos</p>
-      <p className="state-text">{error.kind === 'network' ? 'No pudimos conectar con el servidor. Comprueba tu conexión y vuelve a intentarlo.' : error.userMessage}</p><p className="state-guidance">No es posible evaluar el estado de la operación con esta consulta.</p>
-      {error.status ? <p className="state-detail mono">HTTP {error.status}</p> : null}
+    <div className="state state-error" role="alert"><span className="state-eyebrow">{translate("INFORMACIÓN NO DISPONIBLE")}</span>
+      <p className="state-title">{translate("No se pudieron cargar los datos")}</p>
+      <p className="state-text">{translate(error.kind === 'network' ? 'No pudimos conectar con el servidor. Comprueba tu conexión y vuelve a intentarlo.' : error.userMessage)}</p><p className="state-guidance">{translate("No es posible evaluar el estado de la operación con esta consulta.")}</p>
+      {error.status ? <p className="state-detail mono">{translate("HTTP ")}{error.status}</p> : null}
       {onRetry ? (
-        <button type="button" className="btn state-retry" onClick={onRetry}>
-          Reintentar
-        </button>
+        <button type="button" className="btn state-retry" onClick={onRetry}>{translate("Reintentar")}</button>
       ) : null}
     </div>
   );
@@ -49,8 +48,8 @@ export function EmptyState({
 }) {
   return (
     <div className="state">
-      <p className="state-title">{title}</p>
-      {hint ? <p className="state-text">{hint}</p> : null}
+      <p className="state-title">{translate(title)}</p>
+      {hint ? <p className="state-text">{translate(hint)}</p> : null}
     </div>
   );
 }
@@ -69,7 +68,7 @@ export function AsyncBoundary<T>({
   if (state.loading) return <Loading />;
   if (state.error) return <ErrorState error={state.error} onRetry={state.reload} />;
   if (state.data === null || (Array.isArray(state.data) && state.data.length === 0)) {
-    return <EmptyState title={empty.title} hint={empty.hint} />;
+    return <EmptyState title={translate(empty.title)} hint={empty.hint} />;
   }
-  return <>{children(state.data)}</>;
+  return <>{translate(children(state.data))}</>;
 }

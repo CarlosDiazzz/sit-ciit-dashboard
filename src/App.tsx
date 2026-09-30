@@ -1,3 +1,4 @@
+import { usePreferences } from './accessibility/preferences';
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
@@ -31,6 +32,7 @@ function GestionUsuarios() {
 }
 
 export default function App() {
+  usePreferences();
   return (
     <SessionProvider>
       <BrowserRouter>
