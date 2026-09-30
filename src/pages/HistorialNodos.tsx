@@ -90,7 +90,7 @@ function exportPage(rows: TelemetryPoint[], node: string) {
     return `"${text.replaceAll('"', '""')}"`;
   };
   const body = [
-    headers,
+    headers.map(translate),
     ...rows.map((r) => [
       r.nodeCode,
       r.ts,

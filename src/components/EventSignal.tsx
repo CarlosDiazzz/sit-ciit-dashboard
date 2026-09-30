@@ -116,7 +116,7 @@ export default function EventSignal({ eventId }: { eventId: string }) {
                 border: `1px solid ${colors.grid}`,
                 fontSize: 12,
               }}
-              labelFormatter={(v) => `${(Number(v) / 1000).toFixed(2)} s del evento`}
+              labelFormatter={(v) => translate(`${(Number(v) / 1000).toFixed(2)} s del evento`)}
             />
 
             {/* El instante de la alerta: sin esta marca no se sabe qué
@@ -128,7 +128,7 @@ export default function EventSignal({ eventId }: { eventId: string }) {
                 stroke={colors.seriesY}
                 strokeDasharray="4 4"
                 label={{
-                  value: 'umbral',
+                  value: translate('umbral'),
                   position: 'insideTopRight',
                   fill: colors.muted,
                   fontSize: 10,
