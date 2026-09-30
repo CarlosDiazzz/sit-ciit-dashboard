@@ -5,6 +5,7 @@ import { api, ApiError } from "../api/client";
 import { useApi, type AsyncState } from "../api/useApi";
 import { useSession } from "../auth/context";
 import Dialog from '../components/Dialog';
+import PageBreadcrumbs from '../components/PageBreadcrumbs';
 import { Pagination } from '../components/Pagination';
 import { managementGroups, managementUi, normalizeSearch, type ManagementResource } from '../lib/managementUi';
 import "./tables.css";
@@ -315,6 +316,7 @@ function GestionModule({ resource }: { resource: string }) {
               hasta la entrega.
             </p>
           </div>
+          <PageBreadcrumbs current="Gestión logística" />
           <div className="management-hero-mark" aria-hidden="true"><LayoutGrid size={48} /></div>
         </div>
         <div className="management-overview"><span><strong>{definitions.data?.length ?? 0}</strong> módulos disponibles</span><span><ShieldCheck size={16} /> Acceso según tu rol</span><span>Buscar cualquier pestaña <kbd>Ctrl K</kbd></span></div>
@@ -370,6 +372,7 @@ function GestionModule({ resource }: { resource: string }) {
           <h1>{selected.label}</h1>
           <p>{meta.description}</p>
         </div></div>
+        <PageBreadcrumbs current={selected.label} />
         {selected.canCreate && (
           <button className="btn btn-primary" onClick={() => start(null)}>
             <Plus size={17} /> Nuevo registro

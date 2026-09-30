@@ -41,6 +41,8 @@
 }
 
 .shell[data-color-mode='light'] {
+  --accent-bg: rgba(var(--accent-rgb), 0.09);
+  --accent-border: rgba(var(--accent-rgb), 0.34);
   --bg: #f4f1e9;
   --surface: #ffffff;
   --surface-2: #f7f5ef;
@@ -71,7 +73,8 @@
 .shell[data-color-mode='light'][data-theme='ehecatl'] { --accent: #8f433e; --accent-rgb: 143, 67, 62; --accent-soft: #f0dfdd; }
 .shell[data-color-mode='light'][data-theme='tezcatlipoca'] { --accent: #345d78; --accent-rgb: 52, 93, 120; --accent-soft: #dfe8ed; }
 .shell[data-color-mode='light'][data-theme='comandos'] { --accent: #7045a1; --accent-rgb: 112, 69, 161; --accent-soft: #e9def3; }
-.shell[data-color-mode='light'][data-theme='control'] { --accent: #4e5e57; --accent-rgb: 78, 94, 87; --accent-soft: #e4e8e5; }
+.shell[data-color-mode='light'][data-theme='control'] { --accent: #000000; --accent-rgb: 0, 0, 0; --accent-soft: #e4e8e5; }
+.shell[data-color-mode='light'][data-theme='control'] .aztec-serpent { filter: brightness(0); }
 
 .shell[data-color-mode='light'] .sidebar {
   --text: #34443e;
@@ -89,7 +92,7 @@
 }
 
 .shell[data-color-mode='light'] [data-nav-theme='control'] {
-  --nav-color: #4e5e57;
+  --nav-color: #000000;
 }
 
 .shell[data-color-mode='light'] [data-nav-theme='comandos'] {
@@ -146,17 +149,21 @@
 }
 
 .shell[data-color-mode='light'] .page-head {
-  padding: 0 0 15px;
-  border-bottom: 1px solid var(--border);
+  border-color: var(--accent-border);
+  border-left-color: var(--accent);
+  background: linear-gradient(110deg, rgba(var(--accent-rgb), 0.10), transparent 72%), #ffffff;
 }
 
 .shell[data-color-mode='light'] .page-head h1 {
-  color: #163b31;
+  color: var(--accent);
   font-family: 'Clarendon', 'Rockwell', 'Roboto Slab', var(--display);
   font-size: 36px;
   font-weight: 600;
   letter-spacing: 0;
 }
+
+.shell[data-color-mode='light'] .history-page-head { background: #ffffff; }
+.shell[data-color-mode='light'] .page-breadcrumbs { background: transparent; }
 
 .shell[data-color-mode='light'] .dss-kicker {
   color: #755d2d;

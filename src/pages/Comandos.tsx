@@ -10,6 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 import { PagedRows } from '../components/Pagination';
 
 import { ApiError, api } from '../api/client';
+import PageBreadcrumbs from '../components/PageBreadcrumbs';
 import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
 import type { Command, CommandUpdate, Unit } from '../api/types';
@@ -110,6 +111,7 @@ export default function Comandos() {
               : 'Inicia sesión para emitir comandos.'}
           </p>
         </div>
+        <PageBreadcrumbs current="Comandos" />
       </div>
 
       {user ? (

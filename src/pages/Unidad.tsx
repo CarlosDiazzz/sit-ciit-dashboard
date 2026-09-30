@@ -22,6 +22,7 @@ import {
 import { api } from "../api/client";
 import { useSocketEvent } from "../api/socket";
 import { useApi } from "../api/useApi";
+import PageBreadcrumbs from "../components/PageBreadcrumbs";
 import type {
   RiskRule,
   TelemetryBroadcast,
@@ -363,6 +364,7 @@ export default function Unidad() {
           <h1>Monitoreo de nodo</h1>
           <p>Gráficas, recomendaciones y conectividad del nodo seleccionado.</p>
         </div>
+        <PageBreadcrumbs current="Monitoreo de nodo" />
       </div>
       <div className="focused-selector">
         <label className="field">

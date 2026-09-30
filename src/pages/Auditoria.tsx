@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { UserRound } from 'lucide-react';
 import { Pagination, PagedRows } from '../components/Pagination';
+import PageBreadcrumbs from '../components/PageBreadcrumbs';
 import { api } from "../api/client";
 import { useApi } from "../api/useApi";
 import "./gestion.css";
@@ -24,6 +25,7 @@ export default function Auditoria() {
             edición.
           </p>
         </div>
+        <PageBreadcrumbs current="Auditoría administrativa" />
       </div>
       <label className="field">
         Filtrar por módulo

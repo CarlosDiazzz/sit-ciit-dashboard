@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import PageBreadcrumbs from '../components/PageBreadcrumbs';
 import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
 import type { EventBroadcast, EventRecord, EventVerdict } from '../api/types';
@@ -158,6 +159,7 @@ export default function Eventos() {
           <h1>Eventos</h1>
           <p>Detecciones de los nodos y eventos generados por el backend.</p>
         </div>
+        <PageBreadcrumbs current="Eventos" />
       </div>
 
       <AsyncBoundary

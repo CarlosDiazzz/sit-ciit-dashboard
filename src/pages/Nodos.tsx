@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
  */
 
 import { useState } from "react";
+import PageBreadcrumbs from "../components/PageBreadcrumbs";
 
 import { ApiError, api } from "../api/client";
 import { useApi } from "../api/useApi";
@@ -42,6 +43,7 @@ export default function Nodos() {
             <h1>Nodos</h1>
             <p>Esta sección es solo para el centro de control.</p>
           </div>
+          <PageBreadcrumbs current="Nodos" />
         </div>
       </>
     );
@@ -133,6 +135,7 @@ export default function Nodos() {
             nada.
           </p>
         </div>
+        <PageBreadcrumbs current="Nodos" />
       </div>
 
       {revelado ? (

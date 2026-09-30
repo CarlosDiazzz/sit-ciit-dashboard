@@ -4,12 +4,13 @@ import DecisionBrief from '../components/DecisionBrief';
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { latLngBounds } from 'leaflet';
+import { latLngBounds, point } from 'leaflet';
 import { CircleMarker, MapContainer, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
 import { api } from '../api/client';
 import { useApi } from '../api/useApi';
 import type { Unit } from '../api/types';
 import { ErrorState, Loading } from '../components/States';
+import PageBreadcrumbs from '../components/PageBreadcrumbs';
 import LiveMapLayers from '../components/LiveMapLayers';
 import NodeStatusPanel from '../components/NodeStatusPanel';
 import TrackDefectLayer from '../components/TrackDefectLayer';
@@ -45,7 +46,15 @@ function FitMapToData({ route, connections }: { route: MapCoordinate[]; connecti
       ...PUNTOS_CLAVE.map((point) => point.position),
     ];
     if (positions.length > 0) {
-      map.fitBounds(latLngBounds(positions), { padding: [28, 28], maxZoom: 10 });
+      const bounds = latLngBounds(positions);
+      // Permite alejarse hasta el encuadre completo del corredor.
+      const updateMinZoom = () => {
+        map.setMinZoom(Math.min(10, map.getBoundsZoom(bounds, false, point(56, 56))));
+      };
+      updateMinZoom();
+      map.fitBounds(bounds, { padding: [28, 28], maxZoom: 10 });
+      map.on('resize', updateMinZoom);
+      return () => { map.off('resize', updateMinZoom); };
     }
   }, [map, route, connections]);
 
@@ -110,6 +119,7 @@ export default function Mapa() {
           <span className="dss-kicker">QUETZALCÓATL / CORREDOR INTEROCEÁNICO</span><h1>Ruta</h1>
           <p>Corredor Salina Cruz–Coatzacoalcos (Línea Z).</p>
         </div>
+        <PageBreadcrumbs current="Ruta" />
       </div>
 
       <DecisionBrief title="Supervisa la cobertura antes de interpretar la ruta" evidence="El mapa reúne el trazado ferroviario y las últimas posiciones GPS recibidas. Verifica la hora y la fuente activa antes de interpretar una ubicación." action="Revisa el estado de la unidad y su último reporte antes de decidir sobre el recorrido." to="/unidad" linkLabel="Revisar unidades" />

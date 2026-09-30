@@ -193,7 +193,7 @@ export default function HistorialNodos() {
   }
   return (
     <>
-      <div className="page-head">
+      <div className="page-head history-page-head">
         <div>
           <h1>Historial de nodos</h1>
           <p>

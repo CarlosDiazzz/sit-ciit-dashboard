@@ -9,6 +9,7 @@ import { PagedRows } from '../components/Pagination';
  */
 
 import { api } from '../api/client';
+import PageBreadcrumbs from '../components/PageBreadcrumbs';
 import { useApi } from '../api/useApi';
 import type { CommandLogEntry } from '../api/types';
 import { AsyncBoundary } from '../components/States';
@@ -35,6 +36,7 @@ export default function Bitacora() {
           <h1>Bitácora</h1>
           <p>Registro de auditoría: quién mandó qué, a qué nodo y cuándo.</p>
         </div>
+        <PageBreadcrumbs current="Bitácora" />
       </div>
 
       <DecisionBrief title="Reconstruye la secuencia de la intervención" evidence="Cada entrada representa una transición de estado. Compara los tiempos y motivos del mismo comando para comprender qué ocurrió." action="Revisa el seguimiento del comando para distinguir una solicitud enviada de una ejecución confirmada." to="/comandos" linkLabel="Revisar comandos" />

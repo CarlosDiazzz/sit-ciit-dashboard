@@ -1,4 +1,5 @@
 import { api } from "../api/client";
+import PageBreadcrumbs from "../components/PageBreadcrumbs";
 import { useApi } from "../api/useApi";
 import "./gestion.css";
 export default function Avisos() {
@@ -18,6 +19,7 @@ export default function Avisos() {
           <h1>Mis avisos</h1>
           <p>Notificaciones de incidentes dentro de tu ámbito de acceso.</p>
         </div>
+        <PageBreadcrumbs current="Mis avisos" />
         <button className="btn" onClick={notices.reload}>
           Actualizar
         </button>

@@ -2,6 +2,7 @@
  * con estado de conexión y sesión, y el área de contenido.
  */
 
+import { useEffect, useRef } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -15,8 +16,6 @@ import {
   Sun,
   Users,
   Wifi,
-  ChevronRight,
-  Home,
   UserRound,
 } from "lucide-react";
 import { useConnectionStatus } from "../api/socket";
@@ -142,8 +141,22 @@ export default function Layout() {
   const { user, signOut } = useSession();
   const { mode, toggle } = useColorMode();
   const location = useLocation();
+  const topbarRef = useRef<HTMLElement>(null);
+  const previousPath = useRef(location.pathname);
+
+  useEffect(() => {
+    if (previousPath.current === location.pathname) return;
+    previousPath.current = location.pathname;
+    const topbar = topbarRef.current;
+    if (!topbar) return;
+    topbar.classList.remove("topbar-shine");
+    // Reinicia el barrido incluso si se cambia de sección rápidamente.
+    void topbar.offsetWidth;
+    topbar.classList.add("topbar-shine");
+    const timer = window.setTimeout(() => topbar.classList.remove("topbar-shine"), 450);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname]);
   const resources = useApi<ManagementResource[]>(() => api.managementResources(), [user?.id]);
-  const resource = resources.data?.find(r => location.pathname === `/gestion/${r.key}`);
   // cliente no tiene nada que hacer aquí (RequireAuth ya le bloquea las
   // rutas): mostrarle links que van a rebotar solo confunde.
   const managementNav = {
@@ -203,12 +216,15 @@ export default function Layout() {
             />
           </span>
           <span className="brand-name">
-            Zenda
-            <small>Centro de monitoreo</small>
+            Zentra
+            <small>Control</small>
           </span>
         </div>
 
-        <p className="sidebar-kicker">Corredor Interoceánico · Línea Z</p>
+        <p className="sidebar-kicker">
+          <span className="sidebar-corridor">Corredor Interoceánico · Línea Z</span>
+          <span className="sidebar-greca" aria-hidden="true" />
+        </p>
 
         <nav className="nav" aria-label="Navegación principal">
           {nav.map((item) => (
@@ -241,7 +257,7 @@ export default function Layout() {
       </aside>
 
       <div className="main">
-        <header className="topbar">
+        <header className="topbar" ref={topbarRef}>
           <AztecOrnament kind="feathers" />
           <div className="topbar-content">
             <div className="topbar-context">
@@ -305,11 +321,7 @@ export default function Layout() {
         </header>
 
         <main className="content">
-          <nav className="breadcrumbs" aria-label="Migajas de pan">
-            <Link to={['cliente', 'technician'].includes(user?.role ?? '') ? '/gestion' : '/'}><Home size={14} /> Inicio</Link>
-            <ChevronRight size={13} aria-hidden="true" />
-            {location.pathname.startsWith('/gestion/') ? <><Link to="/gestion">Gestión logística</Link><ChevronRight size={13} aria-hidden="true" /><span aria-current="page">{resource?.label ?? 'Módulo'}</span></> : <span aria-current="page">{current.label}</span>}
-          </nav>
+          {location.pathname === "/historial-nodos" && <nav className="breadcrumbs" aria-label="Migajas de pan"><Link to="/"><span aria-hidden="true">⌂</span> Inicio</Link><span aria-hidden="true">›</span><span aria-current="page">Historial de nodos</span></nav>}
           <Outlet context={{ resources }} />
         </main>
       </div>

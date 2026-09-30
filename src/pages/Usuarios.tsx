@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { UserRound } from 'lucide-react';
+import PageBreadcrumbs from '../components/PageBreadcrumbs';
 import { PagedRows } from '../components/Pagination';
 
 import { ApiError, api } from '../api/client';
@@ -38,6 +39,7 @@ export default function Usuarios() {
             <h1>Usuarios</h1>
             <p>Esta sección es solo para el centro de control.</p>
           </div>
+          <PageBreadcrumbs current="Usuarios" />
         </div>
       </>
     );
@@ -87,6 +89,7 @@ export default function Usuarios() {
           <h1>Usuarios</h1>
           <p>Altas, roles y bajas de quien accede al centro de control.</p>
         </div>
+        <PageBreadcrumbs current="Usuarios" />
       </div>
 
       <form className="user-form" onSubmit={crear}>
