@@ -2,7 +2,7 @@
  * con estado de conexión y sesión, y el área de contenido.
  */
 
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Activity,
   ClipboardList,
@@ -15,12 +15,19 @@ import {
   Sun,
   Users,
   Wifi,
+  ChevronRight,
+  Home,
+  UserRound,
 } from "lucide-react";
 import { useConnectionStatus } from "../api/socket";
 import { useSession } from "../auth/context";
 import { useColorMode } from "../hooks/useColorMode";
 import { userRoleLabel } from "../lib/labels";
 import AztecOrnament from "./AztecOrnament";
+import NavigationSearch from './NavigationSearch';
+import { useApi } from '../api/useApi';
+import { api } from '../api/client';
+import { managementUi, type ManagementResource } from '../lib/managementUi';
 import "./layout.css";
 import "./decision.css";
 import "./theme.css";
@@ -85,7 +92,7 @@ const NAV = [
 // Solo visible para control_center: son cuentas de otras personas, no
 // algo que un operador o cliente deba ni siquiera ver en el nav.
 const USUARIOS_NAV = {
-  to: "/usuarios",
+  to: "/gestion/users",
   label: "Usuarios",
   deity: "Acceso",
   domain: "Cuentas del centro de control",
@@ -106,7 +113,7 @@ const NODOS_NAV = {
 
 const AUDITORIA_NAV = {
   to: "/auditoria",
-  label: "Historial de nodos",
+  label: "Auditoría administrativa",
   deity: "Seguimiento",
   domain: "Cambios y responsables",
   icon: ClipboardList,
@@ -135,6 +142,8 @@ export default function Layout() {
   const { user, signOut } = useSession();
   const { mode, toggle } = useColorMode();
   const location = useLocation();
+  const resources = useApi<ManagementResource[]>(() => api.managementResources(), [user?.id]);
+  const resource = resources.data?.find(r => location.pathname === `/gestion/${r.key}`);
   // cliente no tiene nada que hacer aquí (RequireAuth ya le bloquea las
   // rutas): mostrarle links que van a rebotar solo confunde.
   const managementNav = {
@@ -161,12 +170,17 @@ export default function Layout() {
     theme: "tezcatlipoca",
     end: false,
   });
+  if (user?.role === 'auditor') nav.push(AUDITORIA_NAV);
   const current =
-    nav.find((item) =>
+    [...nav].sort((a, b) => b.to.length - a.to.length).find((item) =>
       item.end
         ? location.pathname === item.to
         : location.pathname.startsWith(item.to),
     ) ?? NAV[0];
+  const entries = [
+    ...nav.filter(n => n.to !== '/gestion/users').map(n => ({ to: n.to, label: n.label, description: n.domain, group: 'Secciones', icon: n.icon })),
+    ...(resources.data ?? []).map(r => ({ to: `/gestion/${r.key}`, label: r.label, description: managementUi(r.key).description, group: `Logística · ${managementUi(r.key).group}`, icon: managementUi(r.key).icon })),
+  ];
 
   return (
     <div className="shell" data-theme={current.theme} data-color-mode={mode}>
@@ -190,7 +204,7 @@ export default function Layout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `nav-link${isActive ? " is-active" : ""}`
+                `nav-link${isActive && (item.to !== '/gestion' || location.pathname !== '/gestion/users') ? " is-active" : ""}`
               }
               data-nav-theme={item.theme}
             >
@@ -229,8 +243,10 @@ export default function Layout() {
             </div>
 
             <div className="topbar-right">
+              <NavigationSearch entries={entries} loading={resources.loading} error={resources.error?.userMessage} retry={resources.reload} />
               {user ? (
                 <>
+                  <span className="person-avatar" aria-hidden="true"><UserRound size={18} /></span>
                   <span className="user">
                     {user.email}
                     <small>{userRoleLabel(user.role)}</small>
@@ -278,7 +294,12 @@ export default function Layout() {
         </header>
 
         <main className="content">
-          <Outlet />
+          <nav className="breadcrumbs" aria-label="Migajas de pan">
+            <Link to={['cliente', 'technician'].includes(user?.role ?? '') ? '/gestion' : '/'}><Home size={14} /> Inicio</Link>
+            <ChevronRight size={13} aria-hidden="true" />
+            {location.pathname.startsWith('/gestion/') ? <><Link to="/gestion">Gestión logística</Link><ChevronRight size={13} aria-hidden="true" /><span aria-current="page">{resource?.label ?? 'Módulo'}</span></> : <span aria-current="page">{current.label}</span>}
+          </nav>
+          <Outlet context={{ resources }} />
         </main>
       </div>
     </div>
