@@ -45,3 +45,12 @@ separado; valores ausentes se conservan como tales. También se accede desde el
 botón Historial de cada nodo. El backend exige los permisos de unidad vigentes.
 
 Prueba específica de interfaz: `npm run test:ui -- tests/browser/history.spec.ts`.
+
+### Monitoreo por nodo
+
+`/unidad` muestra una sola fuente: selector con búsqueda por nodo/unidad, estado,
+últimas 60 muestras de las últimas 24 horas y actualizaciones en vivo. Incluye
+recomendaciones, riesgos climáticos de su unidad y mapa de pérdidas/recuperaciones
+en periodos de 1, 7 o 30 días. Requiere la migración backend
+`0012_signal_recovered.sql`. Las recuperaciones anteriores a esta versión no
+están registradas. Los puntos sin GPS se cuentan, sin inventar posiciones.

@@ -139,7 +139,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 }
 
+export interface ConnectivityEvent {
+  id: string; kind: 'signal_lost' | 'signal_recovered'; ts: string;
+  gpsLat: number | null; gpsLon: number | null; positionTs: string | null;
+}
 export const api = {
+  nodeConnectivity: (nodeId: string, from: string, to: string) =>
+    request<{items: ConnectivityEvent[]; hasMore: boolean}>(`/node-history/connectivity?${new URLSearchParams({nodeId,from,to,limit:'200'})}`),
   listHistoryNodes: () => request<HistoryNode[]>("/node-history/nodes"),
   nodeHistory: (params: {
     nodeId: string;

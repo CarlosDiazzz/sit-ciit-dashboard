@@ -15,6 +15,7 @@ const EVENT_LABEL: Record<AnyEventKind, string> = {
   source_failover: 'Cambio de fuente',
   sensor_disagreement: 'Discrepancia de sensores',
   weather_risk: 'Riesgo climático',
+  signal_recovered: 'Señal recuperada',
   signal_lost: 'Señal perdida',
   // Dinámica de marcha (contrato v1.2.0): miden las fuerzas del
   // movimiento del tren, que son las que dañan la carga.

@@ -20,5 +20,6 @@ export const eventGuidance: Record<AnyEventKind, string> = {
   source_failover: 'Revisa la conectividad del nodo principal y verifica las lecturas de la fuente de respaldo.',
   sensor_disagreement: 'Compara ambos nodos y comprueba su instalación antes de confiar en una sola lectura.',
   weather_risk: 'Contrasta el clima reportado, la ubicación y la regla de riesgo aplicable antes de definir medidas para la carga.',
+  signal_recovered: 'Verifica la recepción de nuevas muestras y la sincronización de la cola pendiente.',
   signal_lost: 'Verifica con el operador la última posición registrada y confirma si el nodo sigue en tránsito o requiere revisión.',
 };

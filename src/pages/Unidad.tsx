@@ -1,12 +1,12 @@
-import DecisionBrief from '../components/DecisionBrief';
-/* Vista Unidad: estado de los nodos, aceleración y velocidad en vivo.
+import DecisionBrief from "../components/DecisionBrief";
+/* Vista Unidad: monitoreo del nodo seleccionado y su conectividad.
  *
  * La telemetría llega por Socket.IO: el backend reemite cada mensaje que
  * guarda con éxito. La velocidad sale únicamente de `gps.speedMs` (la
  * calcula el GPS del celular) — no se deriva ni se estima aquí.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -16,27 +16,32 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from "recharts";
 
-import { api } from '../api/client';
-import { useSocketEvent } from '../api/socket';
-import { useApi } from '../api/useApi';
-import type { RiskRule, TelemetryBroadcast, TelemetryPoint, Unit } from '../api/types';
-import { useSession } from '../auth/context';
-import { ConnectionBadge, MovementBadge } from '../components/Badges';
-import NodeComparison from '../components/NodeComparison';
-import SpeedGauge from '../components/SpeedGauge';
-import AttitudeIndicator from '../components/AttitudeIndicator';
-import { actitudDesde } from '../lib/actitud';
-import { AsyncBoundary } from '../components/States';
-import WeatherRiskPanel from '../components/WeatherRiskPanel';
-import { chartPalette } from '../lib/chartColors';
-import { formatAgo, formatNumber } from '../lib/format';
-import { useColorMode } from '../hooks/useColorMode';
-import './tables.css';
-import './unidad.css';
+import { api } from "../api/client";
+import { useSocketEvent } from "../api/socket";
+import { useApi } from "../api/useApi";
+import type {
+  RiskRule,
+  TelemetryBroadcast,
+  TelemetryPoint,
+  Unit,
+} from "../api/types";
+import { useSession } from "../auth/context";
+import { ConnectionBadge, MovementBadge } from "../components/Badges";
+import NodeConnectivityMap from "../components/NodeConnectivityMap";
+import SpeedGauge from "../components/SpeedGauge";
+import AttitudeIndicator from "../components/AttitudeIndicator";
+import { actitudDesde } from "../lib/actitud";
+import { ErrorState, Loading } from "../components/States";
+import WeatherRiskPanel from "../components/WeatherRiskPanel";
+import { chartPalette } from "../lib/chartColors";
+import { formatAgo, formatNumber } from "../lib/format";
+import { useColorMode } from "../hooks/useColorMode";
+import "./tables.css";
+import "./unidad.css";
 
-const ROLE_LABEL = { primary: 'Primario', backup: 'Respaldo' } as const;
+const ROLE_LABEL = { primary: "Primario", backup: "Respaldo" } as const;
 
 /** Puntos visibles en las gráficas. A ~1 Hz son alrededor de un minuto
  *  de historia, suficiente para ver un impacto sin saturar el render. */
@@ -58,7 +63,7 @@ function marcarHuecos(puntos: ChartPoint[]): ChartPoint[] {
     if (anterior && p.ts - anterior.ts > HUECO_MS) {
       salida.push({
         ts: anterior.ts + 1,
-        time: '',
+        time: "",
         x: null,
         y: null,
         z: null,
@@ -86,10 +91,11 @@ interface ChartPoint {
   rotacion: number | null;
 }
 
-/** Convierte una fila real de /telemetry a la misma forma que llega por
- *  socket, para poder rellenar lastByNode con historia sin duplicar la
- *  lógica que ya la consume (NodeComparison, el picker de nodo, etc). */
-function toBroadcast(unitCode: string, row: TelemetryPoint): TelemetryBroadcast {
+/** Convierte una muestra guardada al mismo formato de la telemetría en vivo. */
+function toBroadcast(
+  unitCode: string,
+  row: TelemetryPoint,
+): TelemetryBroadcast {
   return {
     nodeId: row.nodeCode,
     unitId: unitCode,
@@ -113,7 +119,12 @@ function toBroadcast(unitCode: string, row: TelemetryPoint): TelemetryBroadcast 
     pressureHpa: row.pressureHpa ?? undefined,
     gps:
       row.gpsLat != null && row.gpsLon != null
-        ? { lat: row.gpsLat, lon: row.gpsLon, speedMs: row.gpsSpeedMs ?? undefined, accuracyM: row.gpsAccuracyM ?? undefined }
+        ? {
+            lat: row.gpsLat,
+            lon: row.gpsLon,
+            speedMs: row.gpsSpeedMs ?? undefined,
+            accuracyM: row.gpsAccuracyM ?? undefined,
+          }
         : undefined,
   };
 }
@@ -122,7 +133,7 @@ function toChartPoint(row: TelemetryPoint): ChartPoint {
   const { accelX, accelY, accelZ, gyroX, gyroY, gyroZ } = row;
   return {
     ts: new Date(row.ts).getTime(),
-    time: new Date(row.ts).toLocaleTimeString('es-MX', { hour12: false }),
+    time: new Date(row.ts).toLocaleTimeString("es-MX", { hour12: false }),
     x: accelX,
     y: accelY,
     z: accelZ,
@@ -136,12 +147,6 @@ function toChartPoint(row: TelemetryPoint): ChartPoint {
         ? Math.sqrt(gyroX ** 2 + gyroY ** 2 + gyroZ ** 2)
         : null,
   };
-}
-
-/** true si el texto matchea el código o la etiqueta de la unidad —
- *  usado por el buscador de la lista de abajo. */
-function unidadCoincide(u: Unit, texto: string): boolean {
-  return u.unitCode.toLowerCase().includes(texto) || (u.label?.toLowerCase().includes(texto) ?? false);
 }
 
 // Indicador instantáneo de movimiento a partir del acelerómetro (no una
@@ -159,16 +164,19 @@ export default function Unidad() {
   // Tabla de referencia de umbrales: es la misma para todas las unidades.
   const riskRulesState = useApi<RiskRule[]>(() => api.listRiskRules());
   const { mode } = useColorMode();
-  const colors = chartPalette(mode === 'dark');
+  const colors = chartPalette(mode === "dark");
   const { user } = useSession();
-  const canEditCargoCategory = ['admin','control_center'].includes(user?.role??'');
+  const canEditCargoCategory = ["admin", "control_center"].includes(
+    user?.role ?? "",
+  );
 
-  // Filtro de la lista de abajo: sin esto crece sin límite con toda
-  // unidad y todo nodo que exista, sin ninguna forma de acotarla.
-  const [filtro, setFiltro] = useState('');
+  // Búsqueda en el selector, sin desplegar tarjetas de otros nodos.
+  const [filtro, setFiltro] = useState("");
 
   const [points, setPoints] = useState<ChartPoint[]>([]);
-  const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});
+  const [lastByNode, setLastByNode] = useState<
+    Record<string, TelemetryBroadcast>
+  >({});
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isMoving, setIsMoving] = useState(false);
   // Reloj compartido: hace que los "hace N s" de las tarjetas avancen
@@ -181,35 +189,14 @@ export default function Unidad() {
   // leer la selección vigente sin volver a suscribirse en cada cambio.
   const selectedRef = useRef<string | null>(null);
 
-  const selectNode = useCallback(
-    (nodeId: string) => {
-      selectedRef.current = nodeId;
-      setSelectedNodeId(nodeId);
-      setPoints([]);
-      movementEmaRef.current = 0;
-      isMovingRef.current = false;
-      setIsMoving(false);
-
-      // Rellenar con historia real del nodo elegido: sin esto, la
-      // gráfica se quedaba vacía al cambiar de nodo hasta que llegara
-      // algo nuevo por socket específicamente para ese nodo.
-      const unidad = state.data?.find((u) => u.nodes.some((n) => n.nodeCode === nodeId));
-      if (!unidad) return;
-      void (async () => {
-        try {
-          const rows = await api.listTelemetry(unidad.unitCode);
-          if (selectedRef.current !== nodeId) return; // se cambió de nuevo mientras cargaba
-          const propias = rows.filter((r) => r.nodeCode === nodeId);
-          if (propias.length === 0) return;
-          setPoints(marcarHuecos(propias.slice(0, MAX_POINTS).reverse().map(toChartPoint)));
-        } catch {
-          // Sin historia para este nodo no debe romper la selección —
-          // se sigue esperando datos en vivo.
-        }
-      })();
-    },
-    [state.data],
-  );
+  const selectNode = useCallback((nodeId: string) => {
+    selectedRef.current = nodeId;
+    setSelectedNodeId(nodeId);
+    setPoints([]);
+    movementEmaRef.current = 0;
+    isMovingRef.current = false;
+    setIsMoving(false);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setAhora(Date.now()), 1000);
@@ -217,18 +204,14 @@ export default function Unidad() {
   }, []);
 
   const onTelemetry = useCallback((evt: TelemetryBroadcast) => {
-    setLastByNode((prev) => ({ ...prev, [evt.nodeId]: evt }));
-
-    // Sin selección previa se sigue el primer nodo que reporte, para que
-    // las gráficas no queden en blanco esperando un clic.
-    if (!selectedRef.current) {
-      selectedRef.current = evt.nodeId;
-      setSelectedNodeId(evt.nodeId);
-    }
     if (evt.nodeId !== selectedRef.current) return;
+    setLastByNode((prev) => {
+      const old = prev[evt.nodeId];
+      return old && old.ts > evt.ts ? prev : { ...prev, [evt.nodeId]: evt };
+    });
 
     const speedKmh = evt.gps?.speedMs != null ? evt.gps.speedMs * 3.6 : null;
-    if (!evt.accel && speedKmh == null) return;
+    if (!evt.accel && !evt.gyro && speedKmh == null) return;
 
     const a = evt.accel;
     const g = evt.gyro;
@@ -247,104 +230,110 @@ export default function Unidad() {
     }
 
     setPoints((prev) => {
-      const ultimo = prev[prev.length - 1];
-      // Si el nodo estuvo callado (modo avion, tunel), se corta la
-      // linea en vez de unir los extremos.
-      const corte: ChartPoint[] =
-        ultimo && evt.ts - ultimo.ts > HUECO_MS
-          ? [
-              {
-                ts: ultimo.ts + 1,
-                time: '',
-                x: null,
-                y: null,
-                z: null,
-                magnitude: null,
-                speedKmh: null,
-                rotacion: null,
-              },
-            ]
-          : [];
-
-      return [
-        ...prev,
-        ...corte,
-        {
-          ts: evt.ts,
-          time: new Date(evt.ts).toLocaleTimeString('es-MX', { hour12: false }),
-          x: a?.x ?? null,
-          y: a?.y ?? null,
-          z: a?.z ?? null,
-          magnitude: a ? Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) : null,
-          speedKmh,
-          rotacion: g ? Math.sqrt(g.x * g.x + g.y * g.y + g.z * g.z) : null,
-        },
-      ].slice(-MAX_POINTS);
+      const point: ChartPoint = {
+        ts: evt.ts,
+        time: new Date(evt.ts).toLocaleTimeString("es-MX", { hour12: false }),
+        x: a?.x ?? null,
+        y: a?.y ?? null,
+        z: a?.z ?? null,
+        magnitude: a ? Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) : null,
+        speedKmh,
+        rotacion: g ? Math.sqrt(g.x * g.x + g.y * g.y + g.z * g.z) : null,
+      };
+      const byTs = new Map(prev.filter((p) => p.time).map((p) => [p.ts, p]));
+      byTs.set(point.ts, point);
+      return marcarHuecos(
+        [...byTs.values()].sort((a, b) => a.ts - b.ts).slice(-MAX_POINTS),
+      );
     });
   }, []);
 
-  useSocketEvent('telemetry', onTelemetry);
+  useSocketEvent("telemetry", onTelemetry);
 
-  // Historia real al abrir la pantalla: antes solo se pintaba lo que
-  // llegara por socket desde este momento — si el nodo no estaba
-  // publicando justo en ese instante, el picker y las gráficas se veían
-  // vacíos aunque hubiera telemetría reciente guardada en la base.
-  const backfilledRef = useRef(false);
+  const catalog = useMemo(
+    () =>
+      (state.data ?? []).flatMap((unit) =>
+        unit.nodes.map((node) => ({ unit, node })),
+      ),
+    [state.data],
+  );
+  const selected = catalog.find(
+    (item) => item.node.nodeCode === selectedNodeId,
+  );
+  const filtered = catalog.filter(({ unit, node }) =>
+    `${node.nodeCode} ${unit.unitCode} ${unit.label ?? ""}`
+      .toLowerCase()
+      .includes(filtro.trim().toLowerCase()),
+  );
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   useEffect(() => {
-    if (backfilledRef.current) return;
-    const unidades = state.data;
-    if (!unidades || unidades.length === 0) return;
-    backfilledRef.current = true;
-
-    void (async () => {
-      const porNodo: Record<string, TelemetryBroadcast> = {};
-      let masReciente: { rows: TelemetryPoint[] } | null = null;
-
-      for (const unidad of unidades) {
-        let rows: TelemetryPoint[];
-        try {
-          rows = await api.listTelemetry(unidad.unitCode);
-        } catch {
-          // Sin historia para esta unidad no debe impedir ver las demás.
-          continue;
-        }
-        if (rows.length === 0) continue;
-
-        // rows viene ordenado más reciente primero; una pasada basta
-        // para quedarse con la última fila real de cada nodo.
-        for (const row of rows) {
-          if (!porNodo[row.nodeCode]) {
-            porNodo[row.nodeCode] = toBroadcast(unidad.unitCode, row);
-          }
-        }
-
-        if (!masReciente || new Date(rows[0]!.ts).getTime() > new Date(masReciente.rows[0]!.ts).getTime()) {
-          masReciente = { rows };
-        }
-      }
-
-      if (Object.keys(porNodo).length > 0) {
-        // ...prev al final: si ya llegó algo real por socket mientras
-        // se cargaba la historia, esa lectura en vivo gana.
-        setLastByNode((prev) => ({ ...porNodo, ...prev }));
-      }
-
-      if (masReciente && !selectedRef.current) {
-        const nodeCode = masReciente.rows[0]!.nodeCode;
-        selectedRef.current = nodeCode;
-        setSelectedNodeId(nodeCode);
-        setPoints(
-          masReciente.rows
-            .filter((r) => r.nodeCode === nodeCode)
-            .slice(0, MAX_POINTS)
-            .reverse()
-            .map(toChartPoint),
-        );
-      }
-    })();
-  }, [state.data]);
-
-  const reportando = useMemo(() => Object.values(lastByNode), [lastByNode]);
+    if (!selectedNodeId && catalog.length)
+      selectNode(catalog[0]!.node.nodeCode);
+  }, [catalog, selectedNodeId, selectNode]);
+  const selectedUuid = selected?.node.id;
+  const selectedCode = selected?.node.nodeCode;
+  const selectedUnitCode = selected?.unit.unitCode;
+  useEffect(() => {
+    if (!selectedUuid || !selectedCode || !selectedUnitCode) return;
+    let cancelled = false;
+    setHistoryError(null);
+    setHistoryLoading(true);
+    const to = new Date();
+    void api
+      .nodeHistory({
+        nodeId: selectedUuid,
+        from: new Date(to.getTime() - 86400000).toISOString(),
+        to: to.toISOString(),
+        limit: MAX_POINTS,
+      })
+      .then((page) => {
+        if (cancelled) return;
+        const rows = page.items.filter((row) => row.nodeCode === selectedCode);
+        const latest = rows[0];
+        if (latest)
+          setLastByNode((prev) => {
+            const old = prev[latest.nodeCode];
+            const value = toBroadcast(selectedUnitCode, latest);
+            return {
+              ...prev,
+              [latest.nodeCode]: old && old.ts > value.ts ? old : value,
+            };
+          });
+        setPoints((prev) => {
+          const byTs = new Map(
+            rows.map((row) => {
+              const point = toChartPoint(row);
+              return [point.ts, point] as const;
+            }),
+          );
+          prev
+            .filter((point) => point.time)
+            .forEach((point) => byTs.set(point.ts, point));
+          return marcarHuecos(
+            [...byTs.values()].sort((a, b) => a.ts - b.ts).slice(-MAX_POINTS),
+          );
+        });
+      })
+      .catch((error) => {
+        if (!cancelled)
+          setHistoryError(
+            error instanceof Error
+              ? error.message
+              : "No se pudo cargar la telemetría.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedUuid, selectedCode, selectedUnitCode]);
+  useEffect(() => {
+    const timer = setInterval(state.reload, 15000);
+    return () => clearInterval(timer);
+  }, [state.reload]);
   const ultimo = points.at(-1);
 
   const ejeComun = {
@@ -364,54 +353,153 @@ export default function Unidad() {
     <>
       <div className="page-head">
         <div>
-          <span className="dss-kicker">TONATIUH / UNIDADES</span><h1>Estado general</h1>
-          <p>Nodos por unidad, aceleración y velocidad en vivo.</p>
+          <span className="dss-kicker">TONATIUH / MONITOREO</span>
+          <h1>Monitoreo de nodo</h1>
+          <p>Gráficas, recomendaciones y conectividad del nodo seleccionado.</p>
         </div>
-
-        {reportando.length > 0 ? (
-          <label className="node-picker">
-            Nodo:{' '}
-            <select
-              value={selectedNodeId ?? ''}
-              onChange={(e) => selectNode(e.target.value)}
-            >
-              {reportando.map((n) => (
-                <option key={n.nodeId} value={n.nodeId}>
-                  {n.nodeId} ({ROLE_LABEL[n.role]})
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
       </div>
+      <div className="focused-selector">
+        <label className="field">
+          <span>Buscar nodo o unidad</span>
+          <input
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            placeholder="Código de nodo o unidad…"
+          />
+        </label>
+        <label className="field">
+          <span>Nodo seleccionado</span>
+          <select
+            value={selectedNodeId ?? ""}
+            onChange={(e) => selectNode(e.target.value)}
+          >
+            {!selectedNodeId && <option value="">Seleccionar nodo</option>}
+            {selected &&
+              !filtered.some((item) => item.node.id === selected.node.id) && (
+                <option value={selected.node.nodeCode}>
+                  {selected.node.nodeCode} ·{" "}
+                  {selected.unit.label ?? selected.unit.unitCode}
+                </option>
+              )}
+            {filtered.map(({ unit, node }) => (
+              <option key={node.id} value={node.nodeCode}>
+                {node.nodeCode} · {unit.label ?? unit.unitCode} ·{" "}
+                {ROLE_LABEL[node.role]}
+              </option>
+            ))}
+          </select>
+        </label>
+        {filtro && !filtered.length && (
+          <p>Sin coincidencias para «{filtro}».</p>
+        )}
+      </div>
+      {state.loading && !state.data && <Loading label="Cargando nodos…" />}
+      {state.error && <ErrorState error={state.error} onRetry={state.reload} />}
+      {!state.loading && !state.error && !catalog.length && (
+        <p>No hay nodos registrados.</p>
+      )}
+      {selected && (
+        <section className="chart-card focused-summary">
+          <div className="card-head">
+            <h2>{selected.node.nodeCode}</h2>
+            <ConnectionBadge online={selected.node.isOnline} />
+          </div>
+          <dl>
+            <div>
+              <dt>Unidad</dt>
+              <dd>{selected.unit.label ?? selected.unit.unitCode}</dd>
+            </div>
+            <div>
+              <dt>Función</dt>
+              <dd>
+                {ROLE_LABEL[selected.node.role]}
+                {selected.unit.activeNodeId === selected.node.id
+                  ? " · fuente activa"
+                  : ""}
+              </dd>
+            </div>
+            <div>
+              <dt>Último heartbeat</dt>
+              <dd>{formatAgo(selected.node.lastHeartbeatAt)}</dd>
+            </div>
+            <div>
+              <dt>Batería</dt>
+              <dd>
+                {selected.node.batteryPct == null
+                  ? "—"
+                  : `${formatNumber(selected.node.batteryPct, 0)} %`}
+              </dd>
+            </div>
+            <div>
+              <dt>Cola pendiente</dt>
+              <dd>{selected.node.pendingOutbox ?? "—"}</dd>
+            </div>
+            <div>
+              <dt>Última muestra</dt>
+              <dd>
+                {selectedNodeId && lastByNode[selectedNodeId]
+                  ? formatAgo(
+                      new Date(
+                        lastByNode[selectedNodeId].receivedAt,
+                      ).toISOString(),
+                    )
+                  : "Sin lecturas"}
+              </dd>
+            </div>
+          </dl>
+          {selectedNodeId &&
+            lastByNode[selectedNodeId] &&
+            ahora - lastByNode[selectedNodeId].receivedAt > 15000 && (
+              <p role="status">
+                La última lectura está retenida; no confirma el movimiento
+                actual.
+              </p>
+            )}
+        </section>
+      )}
 
       <DecisionBrief
-        title={selectedNodeId ? `Fuente observada: ${selectedNodeId}` : 'Aún no hay una fuente para evaluar'}
-        evidence={selectedNodeId && lastByNode[selectedNodeId]
-          ? `Última recepción: ${formatAgo(new Date(lastByNode[selectedNodeId].receivedAt).toISOString())}. Las gráficas conservan hasta 60 muestras recibidas en esta sesión; una lectura retenida no garantiza el estado actual.`
-          : 'Esperando telemetría. Sin lecturas no se puede determinar el movimiento ni el estado de la carga.'}
-        action="Compara los nodos principal y de respaldo. Si observas un cambio brusco, consulta los eventos y verifica el contexto con el operador."
+        title={
+          selectedNodeId
+            ? `Fuente observada: ${selectedNodeId}`
+            : "Aún no hay una fuente para evaluar"
+        }
+        evidence={
+          selectedNodeId && lastByNode[selectedNodeId]
+            ? `Última recepción: ${formatAgo(new Date(lastByNode[selectedNodeId].receivedAt).toISOString())}. Las gráficas conservan hasta 60 muestras recibidas en esta sesión; una lectura retenida no garantiza el estado actual.`
+            : "Esperando telemetría. Sin lecturas no se puede determinar el movimiento ni el estado de la carga."
+        }
+        action={
+          selected?.node.isOnline
+            ? "Revisa las gráficas y los riesgos de la carga. Ante un cambio brusco, consulta las incidencias y confirma con el operador."
+            : "Verifica la conexión del nodo y su cola pendiente. Consulta el mapa para revisar las interrupciones registradas."
+        }
         to="/eventos"
         linkLabel="Revisar incidencias"
       />
-      <NodeComparison
-        lastByNode={lastByNode}
-        ahora={ahora}
-        selectedNodeId={selectedNodeId}
-        onSelect={selectNode}
-      />
+      {selected && (
+        <NodeConnectivityMap
+          key={selected.node.id}
+          nodeId={selected.node.id}
+          nodeCode={selected.node.nodeCode}
+        />
+      )}
+      {historyError && <p role="alert">{historyError}</p>}
 
       {points.length === 0 ? (
         <section className="chart-card">
           <p className="chart-hint">
-            Esperando telemetría del corredor. Las gráficas se dibujan solas
-            en cuanto un nodo empiece a publicar.
+            {historyLoading
+              ? "Cargando las últimas muestras…"
+              : "Sin muestras del nodo seleccionado en las últimas 24 horas. Esperando telemetría en vivo."}
           </p>
         </section>
       ) : (
         <div className="live-grid">
           <AttitudeIndicator
-            actitud={actitudDesde(selectedNodeId ? lastByNode[selectedNodeId] : undefined)}
+            actitud={actitudDesde(
+              selectedNodeId ? lastByNode[selectedNodeId] : undefined,
+            )}
             nodeCode={selectedNodeId}
           />
 
@@ -422,15 +510,38 @@ export default function Unidad() {
             </div>
             <div className="chart-frame">
               <ResponsiveContainer>
-                <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <LineChart
+                  data={points}
+                  margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+                >
                   <CartesianGrid stroke={colors.grid} vertical={false} />
                   <XAxis dataKey="time" minTickGap={40} {...ejeComun} />
-                  <YAxis domain={['auto', 'auto']} {...ejeComun} />
+                  <YAxis domain={["auto", "auto"]} {...ejeComun} />
                   <Tooltip {...tooltipComun} />
-                  <Legend wrapperStyle={{ fontSize: 12, color: colors.textSecondary }} />
-                  <Line type="monotone" dataKey="x" stroke={colors.seriesX} dot={false} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="y" stroke={colors.seriesY} dot={false} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="z" stroke={colors.seriesZ} dot={false} isAnimationActive={false} />
+                  <Legend
+                    wrapperStyle={{ fontSize: 12, color: colors.textSecondary }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="x"
+                    stroke={colors.seriesX}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="y"
+                    stroke={colors.seriesY}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="z"
+                    stroke={colors.seriesZ}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
                   {/* |a| es la derivada de las tres series, no una cuarta
                       categoría: tinta neutra y trazo punteado. */}
                   <Line
@@ -450,7 +561,14 @@ export default function Unidad() {
           <section className="chart-card">
             <div className="card-head">
               <h2>Velocidad</h2>
-              <MovementBadge moving={isMoving} />
+              {selected?.node.isOnline &&
+              selectedNodeId &&
+              lastByNode[selectedNodeId]?.accel &&
+              ahora - lastByNode[selectedNodeId].receivedAt <= 15000 ? (
+                <MovementBadge moving={isMoving} />
+              ) : (
+                <span className="chart-meta">Movimiento sin confirmar</span>
+              )}
             </div>
 
             <SpeedGauge
@@ -460,13 +578,15 @@ export default function Unidad() {
 
             <div className="chart-frame chart-frame-sm">
               <ResponsiveContainer>
-                <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <LineChart
+                  data={points}
+                  margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+                >
                   <CartesianGrid stroke={colors.grid} vertical={false} />
                   <XAxis dataKey="time" minTickGap={40} {...ejeComun} />
-                  <YAxis domain={[0, 'auto']} {...ejeComun} />
+                  <YAxis domain={[0, "auto"]} {...ejeComun} />
                   <Tooltip {...tooltipComun} />
-                  {/* connectNulls: el GPS llega más lento que el
-                      acelerómetro, así que hay puntos sin velocidad. */}
+                  {/* Sin unir huecos de GPS o periodos sin recepción. */}
                   <Line
                     type="monotone"
                     dataKey="speedKmh"
@@ -474,7 +594,6 @@ export default function Unidad() {
                     stroke={colors.seriesSpeed}
                     dot={false}
                     isAnimationActive={false}
-                    connectNulls
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -488,10 +607,13 @@ export default function Unidad() {
             </div>
             <div className="chart-frame chart-frame-sm">
               <ResponsiveContainer>
-                <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <LineChart
+                  data={points}
+                  margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+                >
                   <CartesianGrid stroke={colors.grid} vertical={false} />
                   <XAxis dataKey="time" minTickGap={40} {...ejeComun} />
-                  <YAxis domain={[0, 'auto']} {...ejeComun} />
+                  <YAxis domain={[0, "auto"]} {...ejeComun} />
                   <Tooltip {...tooltipComun} />
                   {/* En su propia grafica y no junto a la aceleracion:
                       son magnitudes distintas (rad/s frente a g) y
@@ -503,7 +625,6 @@ export default function Unidad() {
                     stroke={colors.seriesY}
                     dot={false}
                     isAnimationActive={false}
-                    connectNulls
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -512,101 +633,15 @@ export default function Unidad() {
         </div>
       )}
 
-      <label className="field unit-search">
-        <span>Buscar unidad o nodo</span>
-        <input
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          placeholder="unit-01, unit-01-a…"
-          autoCapitalize="none"
+      {selected && (
+        <WeatherRiskPanel
+          key={selected.unit.id}
+          unit={selected.unit}
+          canEditCategory={canEditCargoCategory}
+          allRules={riskRulesState.data ?? []}
+          onCategoryChanged={state.reload}
         />
-      </label>
-
-      <AsyncBoundary
-        state={state}
-        empty={{
-          title: 'No hay unidades registradas',
-          hint: 'Las unidades aparecen cuando un nodo se da de alta contra el backend.',
-        }}
-      >
-        {(unidades) => {
-          const texto = filtro.trim().toLowerCase();
-          const unidadesFiltradas = !texto
-            ? unidades
-            : unidades
-                .filter(
-                  (u) => unidadCoincide(u, texto) || u.nodes.some((n) => n.nodeCode.toLowerCase().includes(texto)),
-                )
-                .map((u) =>
-                  unidadCoincide(u, texto)
-                    ? u
-                    : { ...u, nodes: u.nodes.filter((n) => n.nodeCode.toLowerCase().includes(texto)) },
-                );
-
-          if (texto && unidadesFiltradas.length === 0) {
-            return <p className="chart-hint">Sin coincidencias para «{filtro}».</p>;
-          }
-
-          return (
-          <div className="unit-list">
-            {unidadesFiltradas.map((unidad) => (
-              <section key={unidad.id} className="unit">
-                <div className="card-head">
-                  <h2>{unidad.label ?? unidad.unitCode}</h2>
-                </div>
-
-                <WeatherRiskPanel
-                  unit={unidad}
-                  canEditCategory={canEditCargoCategory}
-                  allRules={riskRulesState.data ?? []}
-                  onCategoryChanged={state.reload}
-                />
-
-                <div className="cards">
-                  {unidad.nodes.map((nodo) => {
-                    const vivo = lastByNode[nodo.nodeCode];
-                    return (
-                      <article key={nodo.id} className="card">
-                        <div className="card-head">
-                          <h3>
-                            {ROLE_LABEL[nodo.role]}
-                            {unidad.activeNodeId === nodo.id ? (
-                              <span className="tag">fuente activa</span>
-                            ) : null}
-                          </h3>
-                          <ConnectionBadge online={nodo.isOnline} />
-                        </div>
-
-                        <dl>
-                          <dt>Nodo</dt>
-                          <dd className="mono">{nodo.nodeCode}</dd>
-
-                          <dt>Último heartbeat</dt>
-                          <dd>{formatAgo(nodo.lastHeartbeatAt)}</dd>
-
-                          <dt>Batería</dt>
-                          <dd>
-                            {nodo.batteryPct === null
-                              ? '—'
-                              : `${formatNumber(nodo.batteryPct, 0)} %`}
-                          </dd>
-
-                          <dt>Cola pendiente</dt>
-                          <dd>{nodo.pendingOutbox ?? '—'}</dd>
-
-                          <dt>Último seq</dt>
-                          <dd>{vivo ? vivo.seq : '—'}</dd>
-                        </dl>
-                      </article>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
-          );
-        }}
-      </AsyncBoundary>
+      )}
     </>
   );
 }
