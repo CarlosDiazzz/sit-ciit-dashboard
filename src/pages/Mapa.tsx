@@ -3,7 +3,7 @@ import DecisionBrief from '../components/DecisionBrief';
  * La lista de unidades conserva su fuente de telemetría independiente.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { latLngBounds } from 'leaflet';
 import { CircleMarker, MapContainer, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
 import { api } from '../api/client';
@@ -58,8 +58,19 @@ export default function Mapa() {
   /** Ultimo mensaje por nodo: da la velocidad en vivo del panel sin
    *  abrir un segundo socket. */
   const [ultimaTelemetria, setUltimaTelemetria] = useState<Record<string, TelemetryBroadcast>>({});
+  // La telemetria llega a 1 Hz por nodo y solo la usa el panel lateral
+  // para la velocidad. Actualizar el estado en cada mensaje redibujaba
+  // TODO el mapa, capas incluidas; en su lugar se acumula en una ref y
+  // se publica al estado cada 2 s, que es ritmo de sobra para un numero
+  // que se lee de reojo.
+  const bufferTelemetria = useRef<Record<string, TelemetryBroadcast>>({});
   const recibirTelemetria = useCallback((t: TelemetryBroadcast) => {
-    setUltimaTelemetria((prev) => ({ ...prev, [t.nodeId]: t }));
+    bufferTelemetria.current = { ...bufferTelemetria.current, [t.nodeId]: t };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setUltimaTelemetria(bufferTelemetria.current), 2000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {

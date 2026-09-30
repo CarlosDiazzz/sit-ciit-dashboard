@@ -42,7 +42,34 @@ const COLOR_ALERTA: Record<EventSeverity, string> = {
   critical: '#d55f5c',
 };
 
-export function iconoUnidad({
+/** Iconos ya construidos, por combinacion de estado.
+ *
+ * Un divIcon lleva su HTML dentro, asi que crearlo en cada cuadro obliga
+ * a Leaflet a remontar el marcador entero. Lo que cambia siempre es la
+ * posicion, que Leaflet mueve sin tocar el icono; el icono en si solo
+ * depende de rumbo, estado y rol, que cambian poco. */
+const cacheUnidad = new Map<string, DivIcon>();
+
+/** El rumbo se redondea a 5 grados: un giro menor no se distingue en un
+ *  icono de 26 px y forzaria reconstruirlo por nada. */
+function claveUnidad(o: IconoUnidadOpts): string {
+  const r = o.rumbo === null ? 'x' : Math.round(o.rumbo / 5) * 5;
+  return `${r}|${o.callada}|${o.alerta ?? '-'}|${o.etiqueta}|${o.role}|${o.esFuente}`;
+}
+
+export function iconoUnidad(opts: IconoUnidadOpts): DivIcon {
+  const clave = claveUnidad(opts);
+  const guardado = cacheUnidad.get(clave);
+  if (guardado) return guardado;
+  const creado = construirIconoUnidad(opts);
+  // Tope defensivo: con muchas unidades y rumbos variados el mapa no
+  // debe crecer sin limite.
+  if (cacheUnidad.size > 400) cacheUnidad.clear();
+  cacheUnidad.set(clave, creado);
+  return creado;
+}
+
+function construirIconoUnidad({
   rumbo,
   callada,
   alerta,
@@ -77,12 +104,20 @@ export function iconoUnidad({
 }
 
 /** Marca de evento: un anillo que late si es crítico. */
+const cacheEvento = new Map<string, DivIcon>();
+
 export function iconoEvento(severidad: EventSeverity, critico: boolean): DivIcon {
+  const clave = `${severidad}|${critico}`;
+  const guardado = cacheEvento.get(clave);
+  if (guardado) return guardado;
+
   const color = COLOR_ALERTA[severidad];
-  return divIcon({
+  const creado = divIcon({
     className: '',
     html: `<span class="event-marker${critico ? ' event-marker--pulse' : ''}" style="--ev:${color}"></span>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
   });
+  cacheEvento.set(clave, creado);
+  return creado;
 }
