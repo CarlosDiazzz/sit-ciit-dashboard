@@ -65,7 +65,7 @@ export default function DefectPreview({
   if (eventos.length === 0) {
     return (
       <p className="dpreview__note">
-        {eventIds.length} detección{eventIds.length === 1 ? '' : 'es'} agrupadas.
+        {eventIds.length} {eventIds.length === 1 ? 'detección agrupada' : 'detecciones agrupadas'}.
       </p>
     );
   }

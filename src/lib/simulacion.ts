@@ -460,6 +460,47 @@ export function avanzarSimulacion(
   };
 }
 
+/** Distancia entre dos puntos en metros, tratando los grados como plano
+ *  — a escala del corredor sobra, igual que en el backend. */
+function distanciaM(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+  const dLat = (b.lat - a.lat) * 111_320;
+  const dLon = (b.lon - a.lon) * 111_320 * Math.cos((a.lat * Math.PI) / 180);
+  return Math.sqrt(dLat * dLat + dLon * dLon);
+}
+
+/** Separación temporal mínima para contar dos detecciones como pasadas
+ *  distintas, igual que `SEPARACION_PASADA_MS` en el backend. Por debajo
+ *  de esto el tren sigue sobre el mismo defecto: un convoy largo genera
+ *  varias detecciones en segundos y son una sola pasada.
+ *
+ *  La simulación corre acelerada (la ruta entera en ~4 min en vez de
+ *  5 h), así que el umbral se escala igual: 10 min reales sobre un
+ *  factor de ~75x son unos 8 s de demo. */
+const SEPARACION_PASADA_MS = 8_000;
+
+/** Cuántas veces se pasó por el punto, no cuántas detecciones hubo.
+ *  Mismo criterio que `contarPasadas` en el backend: se agrupa por
+ *  unidad y se cuenta una pasada nueva solo tras un hueco temporal. */
+function contarPasadas(alertas: { unitId: string; ts: number }[]): number {
+  const porUnidad = new Map<string, number[]>();
+  for (const a of alertas) {
+    const lista = porUnidad.get(a.unitId);
+    if (lista) lista.push(a.ts);
+    else porUnidad.set(a.unitId, [a.ts]);
+  }
+
+  let total = 0;
+  for (const tiempos of porUnidad.values()) {
+    tiempos.sort((x, y) => x - y);
+    let pasadas = 1;
+    for (let i = 1; i < tiempos.length; i += 1) {
+      if (tiempos[i]! - tiempos[i - 1]! > SEPARACION_PASADA_MS) pasadas += 1;
+    }
+    total += pasadas;
+  }
+  return total;
+}
+
 /** Agrupa las alertas simuladas por punto caliente y les asigna nivel
  *  de confianza con el mismo criterio del backend: lo que confirma un
  *  defecto es que lo vean unidades distintas, no cuántas veces se vea. */
@@ -490,16 +531,24 @@ function recalcularDefectos(
           ? 'Dos unidades distintas lo detectaron; falta una tercera para confirmarlo.'
           : 'Una sola detección: puede ser de la vía o del vehículo.';
 
+    // Radio derivado de la dispersión real de las detecciones, como lo
+    // calcula el backend: un radio fijo y pequeño afirmaría una
+    // precisión que un GPS de ±70-120 m no tiene.
+    const radio = suyas.reduce(
+      (max, a) => Math.max(max, distanciaM(p, { lat: a.lat, lon: a.lon })),
+      0,
+    );
+
     return {
       lat: p.lat,
       lon: p.lon,
-      radiusM: 40,
+      radiusM: Math.round(Math.max(30, radio)),
       kind: punto.kind,
       confidence: confianza,
       reason: motivo,
       distinctUnits: unidades,
       distinctNodes: nodos,
-      passes: suyas.length,
+      passes: contarPasadas(suyas),
       detections: suyas.length,
       averageValue: valores.reduce((a, b) => a + b, 0) / valores.length,
       firstSeen: new Date(Math.min(...tiempos)).toISOString(),
