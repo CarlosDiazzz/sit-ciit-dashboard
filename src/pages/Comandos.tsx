@@ -14,7 +14,7 @@ import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
 import type { Command, CommandUpdate, Unit } from '../api/types';
 import { useSession } from '../auth/context';
-import { CommandStatusBadge } from '../components/Badges';
+import { CommandStatusBadge, STATUS_LABEL } from '../components/Badges';
 import { AsyncBoundary } from '../components/States';
 import { formatDateTime } from '../lib/format';
 import { OPERATOR_ALLOWED_ACTIONS, type CmdAction } from '../contract/contract';
@@ -51,7 +51,11 @@ export default function Comandos() {
   const [valor, setValor] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
+  // El ultimo comando que este formulario mando, para poder mostrar su
+  // avance real (no un texto fijo escrito una sola vez al enviar, que se
+  // quedaba diciendo "esperando confirmación" para siempre aunque el ack
+  // ya hubiera llegado y la tabla de abajo ya mostrara "Ejecutado").
+  const [ultimoEnviado, setUltimoEnviado] = useState<{ cmdId: string; targetNodeCode: string } | null>(null);
 
   /** Avances que llegan por socket, superpuestos a la lista cargada:
    *  evita recargar la tabla entera en cada ack. */
@@ -64,6 +68,13 @@ export default function Comandos() {
     }, []),
   );
 
+  const avanceUltimo = ultimoEnviado ? avances[ultimoEnviado.cmdId] : undefined;
+  const aviso = !ultimoEnviado
+    ? null
+    : `Comando enviado a ${ultimoEnviado.targetNodeCode}: ${
+        avanceUltimo ? STATUS_LABEL[avanceUltimo.status] : 'esperando confirmación del nodo…'
+      }${avanceUltimo?.reason ? ` (${avanceUltimo.reason})` : ''}`;
+
   const permitidas = ACCIONES.filter((a) => can(a.action));
   const param = PARAM_POR_ACCION[accion];
   const nodos = (unidades.data ?? []).flatMap((u) => u.nodes);
@@ -71,7 +82,7 @@ export default function Comandos() {
   async function emitir(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setAviso(null);
+    setUltimoEnviado(null);
     setEnviando(true);
     try {
       const params: Record<string, unknown> = {};
@@ -87,7 +98,7 @@ export default function Comandos() {
         params: Object.keys(params).length > 0 ? params : undefined,
       });
 
-      setAviso(`Comando enviado a ${cmd.targetNodeCode}. Esperando confirmación del nodo.`);
+      setUltimoEnviado({ cmdId: cmd.cmdId, targetNodeCode: cmd.targetNodeCode });
       setValor('');
       comandos.reload();
     } catch (err) {

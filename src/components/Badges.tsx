@@ -52,7 +52,7 @@ export function CargoCategoryBadge({ category }: { category: CargoCategory }) {
   return <span className="badge badge-neutral">{cargoCategoryLabel(category)}</span>;
 }
 
-const STATUS_LABEL: Record<CommandStatus, string> = {
+export const STATUS_LABEL: Record<CommandStatus, string> = {
   sent: 'Enviado',
   delivered: 'Entregado',
   executed: 'Ejecutado',
