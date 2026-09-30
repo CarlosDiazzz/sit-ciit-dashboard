@@ -189,6 +189,24 @@ export interface TelemetryBroadcast {
 
 /** Los nombres y formas que aún no emite el backend están comentados: se
  *  agregan cuando existan, para no tipar contra algo inventado. */
+/** Evento recien detectado, emitido al guardarlo.
+ *
+ * Igual que la telemetria, conserva la forma del mensaje MQTT y no la de
+ * la fila: nodeId/unitId son los codigos del contrato y ts es epoch ms.
+ * La fuente de verdad es
+ * sit-ciit-backend/src/domain/ports/TelemetryBroadcaster.ts. */
+export interface EventBroadcast {
+  unitId: string;
+  nodeId: string;
+  kind: AnyEventKind;
+  severity: EventSeverity;
+  value?: number;
+  threshold?: number;
+  gps?: { lat: number; lon: number };
+  /** epoch ms, reloj del dispositivo. */
+  ts: number;
+}
+
 /** Avance de un comando, emitido al aplicar un ack del nodo. */
 export interface CommandUpdate {
   cmdId: string;
@@ -201,6 +219,6 @@ export interface CommandUpdate {
 
 export interface ServerToClientEvents {
   telemetry: (payload: TelemetryBroadcast) => void;
-  // event: (event: EventRecord) => void;              // Fase 2
+  event: (payload: EventBroadcast) => void;
   'command:update': (payload: CommandUpdate) => void;
 }
