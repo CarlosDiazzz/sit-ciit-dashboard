@@ -156,7 +156,7 @@ export default function Unidad() {
     <>
       <div className="page-head">
         <div>
-          <h1>Unidades</h1>
+          <span className="dss-kicker">TONATIUH / UNIDADES</span><h1>Estado general</h1>
           <p>Nodos por unidad, aceleración y velocidad en vivo.</p>
         </div>
 

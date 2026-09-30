@@ -18,7 +18,7 @@ export default function Bitacora() {
     <>
       <div className="page-head">
         <div>
-          <h1>Bitácora</h1>
+          <span className="dss-kicker">TEZCATLIPOCA / TRAZABILIDAD</span><h1>Auditoría</h1>
           <p>Registro de auditoría: cada cambio de estado de cada comando.</p>
         </div>
       </div>

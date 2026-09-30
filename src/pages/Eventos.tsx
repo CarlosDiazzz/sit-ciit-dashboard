@@ -61,9 +61,8 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
 export default function Eventos() {
   const state = useApi<EventRecord[]>(() => api.listEvents({ limit: 100 }));
   return <>
-    <div className="page-head"><div><span className="dss-kicker">TEZCATLIPOCA / SEGURIDAD OPERATIVA</span><h1>Movimiento y seguridad</h1><p>Revisa movimientos bruscos, posibles volcaduras y eventos que requieren verificación.</p></div><button type="button" className="btn" onClick={state.reload} disabled={state.loading}>{state.loading ? 'Consultando…' : 'Actualizar consulta ↻'}</button></div>
+    <div className="page-head"><div><span className="dss-kicker">EHÉCATL / MOVIMIENTO Y EVENTOS</span><h1>Movimiento y seguridad</h1><p>Revisa movimientos bruscos, posibles volcaduras y eventos que requieren verificación.</p></div><button type="button" className="btn" onClick={state.reload} disabled={state.loading}>{state.loading ? 'Consultando…' : 'Actualizar consulta ↻'}</button></div>
     <div className="dss-context"><span>Hasta 100 eventos · Consulta manual</span><span>La conexión en vivo no garantiza la actualización de esta lista</span></div>
     <AsyncBoundary state={state} empty={{ title: 'Sin eventos en esta consulta', hint: 'La ausencia de registros no confirma que la carga esté en condiciones seguras. Revisa también la telemetría.' }}>{events => <EventWorkspace events={events} />}</AsyncBoundary>
   </>;
 }
-

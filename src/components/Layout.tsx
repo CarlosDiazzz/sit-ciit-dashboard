@@ -9,15 +9,13 @@ import './layout.css';
 import './decision.css';
 
 const NAV = [
-  { to: '/', label: 'Mapa', deity: 'Quetzalcóatl', domain: 'Ruta', glyph: 'Q', theme: 'quetzal', end: true },
-  { to: '/unidad', label: 'Unidad', deity: 'Tonatiuh', domain: 'Estado general', glyph: 'T', theme: 'tonatiuh', end: false },
-  { to: '/eventos', label: 'Eventos', deity: 'Tezcatlipoca', domain: 'Seguridad', glyph: 'Tz', theme: 'tezcatlipoca', end: false },
-  { to: '/comandos', label: 'Comandos', deity: 'Ehécatl', domain: 'Movimiento', glyph: 'E', theme: 'ehecatl', end: false },
-  { to: '/bitacora', label: 'Bitácora', deity: 'Tezcatlipoca', domain: 'Incidencias', glyph: 'Tz', theme: 'tezcatlipoca', end: false },
+  { to: '/', label: 'Ruta', deity: 'Quetzalcóatl', domain: 'Ubicación, recorrido y ETA', glyph: 'Q', theme: 'quetzal', end: true },
+  { to: '/conectividad', label: 'Conectividad', deity: 'Tláloc', domain: 'Nodos y disponibilidad', glyph: 'Tl', theme: 'tlaloc', end: false },
+  { to: '/unidad', label: 'Estado general', deity: 'Tonatiuh', domain: 'Unidad y telemetría', glyph: 'T', theme: 'tonatiuh', end: false },
+  { to: '/eventos', label: 'Movimiento y eventos', deity: 'Ehécatl', domain: 'Impactos y estabilidad', glyph: 'E', theme: 'ehecatl', end: false },
+  { to: '/bitacora', label: 'Auditoría', deity: 'Tezcatlipoca', domain: 'Historial de intervenciones', glyph: 'Tz', theme: 'tezcatlipoca', end: false },
+  { to: '/comandos', label: 'Comandos', deity: 'Control operativo', domain: 'Seguimiento de órdenes', glyph: 'C', theme: 'control', end: false },
 ] as const;
-
-const TLALOC = { deity: 'Tláloc', domain: 'Ambiente', glyph: 'Tl' };
-
 const ROLE_LABEL: Record<string, string> = {
   control_center: 'Centro de control',
   operator: 'Operador',
@@ -79,14 +77,6 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-
-        <div className="coming-soon" aria-label="Módulo ambiente próximamente">
-          <span className="nav-glyph" aria-hidden="true">{TLALOC.glyph}</span>
-          <span className="nav-copy">
-            <strong>{TLALOC.domain}</strong>
-            <small>{TLALOC.deity} · Próximamente</small>
-          </span>
-        </div>
 
         <footer className="sidebar-foot">
           <span className="mini-glyph" aria-hidden="true">◆</span>

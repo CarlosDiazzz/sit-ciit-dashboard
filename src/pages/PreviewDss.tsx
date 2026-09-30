@@ -32,9 +32,8 @@ export default function PreviewDss() {
   const [events, setEvents] = useState(sampleEvents);
   return <>
     <section className="preview-banner" role="note"><div><strong>VISTA PREVIA · DATOS FICTICIOS</strong><p>Escenarios ilustrativos para evaluar el diseño. No representan unidades reales ni deben usarse para tomar decisiones operativas.</p></div><Link to="/eventos">Salir de la vista previa →</Link></section>
-    <div className="page-head"><div><span className="dss-kicker">TEZCATLIPOCA / SEGURIDAD OPERATIVA</span><h1>Movimiento y seguridad</h1><p>Revisa movimientos bruscos, posibles volcaduras y eventos que requieren verificación.</p></div><button className="btn" onClick={() => setEvents(sampleEvents())}>Reiniciar ejemplos ↻</button></div>
+    <div className="page-head"><div><span className="dss-kicker">EHÉCATL / MOVIMIENTO Y EVENTOS</span><h1>Movimiento y seguridad</h1><p>Revisa movimientos bruscos, posibles volcaduras y eventos que requieren verificación.</p></div><button className="btn" onClick={() => setEvents(sampleEvents())}>Reiniciar ejemplos ↻</button></div>
     <div className="dss-context"><span>8 eventos ficticios · 4 unidades de demostración</span><span>Los enlaces de telemetría y comandos salen a las vistas reales</span></div>
     <EventWorkspace events={events} />
   </>;
 }
-

@@ -27,7 +27,7 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="state state-error" role="alert"><span className="state-eyebrow">INFORMACIÓN NO DISPONIBLE</span><StatusTrain />
+    <div className="state state-error" role="alert"><span className="state-eyebrow">INFORMACIÓN NO DISPONIBLE</span>
       <p className="state-title">No se pudieron cargar los datos</p>
       <p className="state-text">{error.kind === 'network' ? 'No pudimos conectar con el servidor. Comprueba tu conexión y vuelve a intentarlo.' : error.userMessage}</p><p className="state-guidance">No es posible evaluar el estado de la operación con esta consulta.</p>
       {error.status ? <p className="state-detail mono">HTTP {error.status}</p> : null}
