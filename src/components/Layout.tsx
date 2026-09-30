@@ -6,10 +6,13 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Activity,
   ClipboardList,
+  DoorOpen,
   Map as MapIcon,
+  Moon,
   Radio,
   ShieldAlert,
   Smartphone,
+  Sun,
   Users,
   Wifi,
 } from "lucide-react";
@@ -216,40 +219,48 @@ export default function Layout() {
             </div>
 
             <div className="topbar-right">
-              <button
-                type="button"
-                className="theme-toggle"
-                onClick={toggle}
-                aria-label={
-                  mode === "light"
-                    ? "Activar modo oscuro"
-                    : "Activar modo claro"
-                }
-                title={
-                  mode === "light"
-                    ? "Activar modo oscuro"
-                    : "Activar modo claro"
-                }
-              >
-                <span className="theme-toggle-icon" aria-hidden="true">
-                  {mode === "light" ? "☾" : "☀"}
-                </span>
-                <span>{mode === "light" ? "Oscuro" : "Claro"}</span>
-              </button>
               {user ? (
                 <>
                   <span className="user">
                     {user.email}
                     <small>{userRoleLabel(user.role)}</small>
                   </span>
-                  <button type="button" className="btn" onClick={signOut}>
-                    Salir
-                  </button>
+                  <div className="account-actions">
+                    <button
+                      type="button"
+                      className="icon-action"
+                      onClick={toggle}
+                      aria-label={mode === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                      title={mode === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                    >
+                      {mode === "light" ? <Moon size={18} /> : <Sun size={18} />}
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-action"
+                      onClick={signOut}
+                      aria-label="Cerrar sesión"
+                      title="Cerrar sesión"
+                    >
+                      <DoorOpen size={18} />
+                    </button>
+                  </div>
                 </>
               ) : (
-                <NavLink to="/login" className="btn btn-primary">
-                  Iniciar sesión
-                </NavLink>
+                <>
+                  <button
+                    type="button"
+                    className="icon-action"
+                    onClick={toggle}
+                    aria-label={mode === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                    title={mode === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+                  >
+                    {mode === "light" ? <Moon size={18} /> : <Sun size={18} />}
+                  </button>
+                  <NavLink to="/login" className="btn btn-primary">
+                    Iniciar sesión
+                  </NavLink>
+                </>
               )}
             </div>
           </div>
