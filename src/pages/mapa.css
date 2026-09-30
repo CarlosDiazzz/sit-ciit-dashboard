@@ -95,3 +95,44 @@
     height: 50svh;
   }
 }
+
+/* Aviso mientras la simulacion corre. Va sobre el mapa y no en el panel
+   lateral porque tiene que verse aunque se mire solo el mapa: un jurado
+   no debe poder confundir una unidad SIM con telemetria medida. */
+.sim-banner {
+  position: absolute;
+  top: var(--s3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  margin: 0;
+  padding: var(--s2) var(--s4);
+  border: 1px solid var(--warning);
+  border-radius: 999px;
+  background: rgba(11, 14, 13, 0.88);
+  color: var(--warning);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.sim-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .sim-banner {
+    white-space: normal;
+    max-width: 90%;
+    text-align: center;
+  }
+}

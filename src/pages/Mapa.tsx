@@ -14,7 +14,8 @@ import LiveMapLayers from '../components/LiveMapLayers';
 import NodeStatusPanel from '../components/NodeStatusPanel';
 import TrackDefectLayer from '../components/TrackDefectLayer';
 import TrackDefectSummary from '../components/TrackDefectSummary';
-import type { TelemetryBroadcast, TrackDefectsResponse } from '../api/types';
+import SimulationLayer from '../components/SimulationLayer';
+import type { TelemetryBroadcast, TrackDefect, TrackDefectsResponse } from '../api/types';
 import { MEDIAS_AGUAS_JUNCTION, parseMainRailRoute, parseRailConnections, type MapCoordinate, type RailConnection } from '../lib/mapData';
 import './mapa.css';
 
@@ -61,6 +62,11 @@ export default function Mapa() {
   // cambian con cada mensaje, solo cuando pasa otro tren por el punto.
   const defectos = useApi<TrackDefectsResponse>(() => api.trackDefects());
   const [verIndicios, setVerIndicios] = useState(false);
+  // Simulación del corredor para la demo: varios trenes y alertas a lo
+  // largo de la Línea Z, que no se pueden mostrar con dos celulares en
+  // una sala. Apagada por defecto y avisada en pantalla mientras corre.
+  const [simulando, setSimulando] = useState(false);
+  const [defectosSim, setDefectosSim] = useState<TrackDefect[]>([]);
   /** Ultimo mensaje por nodo: da la velocidad en vivo del panel sin
    *  abrir un segundo socket. */
   const [ultimaTelemetria, setUltimaTelemetria] = useState<Record<string, TelemetryBroadcast>>({});
@@ -115,6 +121,11 @@ export default function Mapa() {
       <DecisionBrief title="Supervisa la cobertura antes de interpretar la ruta" evidence="El mapa reúne el trazado ferroviario y las últimas posiciones GPS recibidas. Verifica la hora y la fuente activa antes de interpretar una ubicación." action="Revisa el estado de la unidad y su último reporte antes de decidir sobre el recorrido." to="/unidad" linkLabel="Revisar unidades" />
       <div className="map-layout">
         <div className="map-frame">
+          {simulando ? (
+            <p className="sim-banner" role="status">
+              Simulación activa · las unidades SIM y sus alertas no son mediciones reales
+            </p>
+          ) : null}
           <MapContainer center={CENTRO} zoom={8} className="map">
             <TileLayer
               // Teselas de OpenStreetMap: la atribución es obligatoria
@@ -122,8 +133,14 @@ export default function Mapa() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <SimulationLayer
+              ruta={railRoute}
+              activa={simulando}
+              onDefectos={setDefectosSim}
+            />
+
             <TrackDefectLayer
-              defects={defectos.data?.defects ?? []}
+              defects={simulando ? defectosSim : (defectos.data?.defects ?? [])}
               mostrarIndicios={verIndicios}
             />
 
@@ -177,10 +194,22 @@ export default function Mapa() {
           ) : (
             <>
               <TrackDefectSummary
-                estado={defectos}
+                estado={
+                  simulando
+                    ? { data: { windowDays: 0, analyzed: defectosSim.length, defects: defectosSim }, loading: false, error: null }
+                    : defectos
+                }
                 verIndicios={verIndicios}
                 onVerIndicios={setVerIndicios}
               />
+              <label className="sim-toggle">
+                <input
+                  type="checkbox"
+                  checked={simulando}
+                  onChange={(e) => setSimulando(e.target.checked)}
+                />
+                Simular corredor en vivo
+              </label>
               <NodeStatusPanel units={state.data} ultimaTelemetria={ultimaTelemetria} />
             </>
           )}
