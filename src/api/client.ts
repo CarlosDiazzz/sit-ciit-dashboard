@@ -87,7 +87,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
+        // Solo si hay body: Fastify rechaza con 400 ("body no puede
+        // estar vacío") una petición sin body que de todos modos declara
+        // Content-Type: application/json — pasaba en regenerate-secret,
+        // ack de eventos y los DELETE, que no mandan body.
+        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...init?.headers,
       },
