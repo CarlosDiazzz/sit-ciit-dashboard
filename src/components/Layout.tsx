@@ -5,6 +5,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useConnectionStatus } from '../api/socket';
 import { useSession } from '../auth/context';
+import AztecOrnament from './AztecOrnament';
 import './layout.css';
 
 const NAV = [
@@ -95,32 +96,36 @@ export default function Layout() {
 
       <div className="main">
         <header className="topbar">
-          <div className="topbar-context">
-            <ConnectionIndicator />
-            <span className="context-divider" aria-hidden="true" />
-            <span className="section-context">
-              <strong>{current.deity}</strong>
-              <small>{current.domain}</small>
-            </span>
-          </div>
+          <AztecOrnament kind="feathers" />
+          <div className="topbar-content">
+            <div className="topbar-context">
+              <ConnectionIndicator />
+              <span className="context-divider" aria-hidden="true" />
+              <span className="section-context">
+                <strong>{current.deity}</strong>
+                <small>{current.domain}</small>
+              </span>
+            </div>
 
-          <div className="topbar-right">
-            {user ? (
-              <>
-                <span className="user">
-                  {user.email}
-                  <small>{ROLE_LABEL[user.role] ?? user.role}</small>
-                </span>
-                <button type="button" className="btn" onClick={signOut}>
-                  Salir
-                </button>
-              </>
-            ) : (
-              <NavLink to="/login" className="btn btn-primary">
-                Iniciar sesión
-              </NavLink>
-            )}
+            <div className="topbar-right">
+              {user ? (
+                <>
+                  <span className="user">
+                    {user.email}
+                    <small>{ROLE_LABEL[user.role] ?? user.role}</small>
+                  </span>
+                  <button type="button" className="btn" onClick={signOut}>
+                    Salir
+                  </button>
+                </>
+              ) : (
+                <NavLink to="/login" className="btn btn-primary">
+                  Iniciar sesión
+                </NavLink>
+              )}
+            </div>
           </div>
+          <AztecOrnament kind="serpent" />
         </header>
 
         <main className="content">
