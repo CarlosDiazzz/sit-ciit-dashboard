@@ -26,6 +26,8 @@ import { useSession } from '../auth/context';
 import { ConnectionBadge, MovementBadge } from '../components/Badges';
 import NodeComparison from '../components/NodeComparison';
 import SpeedGauge from '../components/SpeedGauge';
+import AttitudeIndicator from '../components/AttitudeIndicator';
+import { actitudDesde } from '../lib/actitud';
 import { AsyncBoundary } from '../components/States';
 import WeatherRiskPanel from '../components/WeatherRiskPanel';
 import { chartPalette } from '../lib/chartColors';
@@ -48,6 +50,10 @@ interface ChartPoint {
   z: number | null;
   magnitude: number | null;
   speedKmh: number | null;
+  /** Magnitud de la velocidad angular en rad/s. Va en su propia grafica:
+   *  mezclarla con la aceleracion en un mismo eje seria engañoso, son
+   *  magnitudes distintas. */
+  rotacion: number | null;
 }
 
 /** Convierte una fila real de /telemetry a la misma forma que llega por
@@ -83,7 +89,7 @@ function toBroadcast(unitCode: string, row: TelemetryPoint): TelemetryBroadcast 
 }
 
 function toChartPoint(row: TelemetryPoint): ChartPoint {
-  const { accelX, accelY, accelZ } = row;
+  const { accelX, accelY, accelZ, gyroX, gyroY, gyroZ } = row;
   return {
     ts: new Date(row.ts).getTime(),
     time: new Date(row.ts).toLocaleTimeString('es-MX', { hour12: false }),
@@ -95,6 +101,10 @@ function toChartPoint(row: TelemetryPoint): ChartPoint {
         ? Math.sqrt(accelX ** 2 + accelY ** 2 + accelZ ** 2)
         : null,
     speedKmh: row.gpsSpeedMs != null ? row.gpsSpeedMs * 3.6 : null,
+    rotacion:
+      gyroX != null && gyroY != null && gyroZ != null
+        ? Math.sqrt(gyroX ** 2 + gyroY ** 2 + gyroZ ** 2)
+        : null,
   };
 }
 
@@ -181,6 +191,7 @@ export default function Unidad() {
     if (!evt.accel && speedKmh == null) return;
 
     const a = evt.accel;
+    const g = evt.gyro;
 
     if (a) {
       const magnitude = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
@@ -206,6 +217,7 @@ export default function Unidad() {
           z: a?.z ?? null,
           magnitude: a ? Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) : null,
           speedKmh,
+          rotacion: g ? Math.sqrt(g.x * g.x + g.y * g.y + g.z * g.z) : null,
         },
       ].slice(-MAX_POINTS),
     );
@@ -338,6 +350,11 @@ export default function Unidad() {
         </section>
       ) : (
         <div className="live-grid">
+          <AttitudeIndicator
+            actitud={actitudDesde(selectedNodeId ? lastByNode[selectedNodeId] : undefined)}
+            nodeCode={selectedNodeId}
+          />
+
           <section className="chart-card">
             <div className="card-head">
               <h2>Aceleración</h2>
@@ -396,6 +413,35 @@ export default function Unidad() {
                     dataKey="speedKmh"
                     name="km/h"
                     stroke={colors.seriesSpeed}
+                    dot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+
+          <section className="chart-card">
+            <div className="card-head">
+              <h2>Rotación</h2>
+              <span className="chart-meta">giroscopio · rad/s</span>
+            </div>
+            <div className="chart-frame chart-frame-sm">
+              <ResponsiveContainer>
+                <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGrid stroke={colors.grid} vertical={false} />
+                  <XAxis dataKey="time" minTickGap={40} {...ejeComun} />
+                  <YAxis domain={[0, 'auto']} {...ejeComun} />
+                  <Tooltip {...tooltipComun} />
+                  {/* En su propia grafica y no junto a la aceleracion:
+                      son magnitudes distintas (rad/s frente a g) y
+                      compartir eje daria una comparacion falsa. */}
+                  <Line
+                    type="monotone"
+                    dataKey="rotacion"
+                    name="rad/s"
+                    stroke={colors.seriesY}
                     dot={false}
                     isAnimationActive={false}
                     connectNulls
