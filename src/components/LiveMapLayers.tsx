@@ -123,7 +123,13 @@ function posicionActual(u: Unidad, ahora: number): [number, number] {
   ];
 }
 
-export default function LiveMapLayers() {
+export default function LiveMapLayers({
+  onTelemetria,
+}: {
+  /** Ultimo mensaje por nodo, para que el panel lateral muestre la
+   *  velocidad en vivo sin abrir un segundo socket. */
+  onTelemetria?: (t: TelemetryBroadcast) => void;
+} = {}) {
   const [unidades, setUnidades] = useState<Record<string, Unidad>>({});
   const [eventos, setEventos] = useState<EventoEnMapa[]>([]);
   // El mapa hace falta para separar los marcadores en pixeles: la
@@ -255,6 +261,9 @@ export default function LiveMapLayers() {
   useSocketEvent(
     'telemetry',
     useCallback((t: TelemetryBroadcast) => {
+      // El panel lateral quiere toda la telemetria, tenga GPS o no.
+      onTelemetria?.(t);
+
       const gps = t.gps;
       // Sin GPS no hay nada que ubicar. Es lo normal bajo techo.
       if (!gps) return;
@@ -290,7 +299,7 @@ export default function LiveMapLayers() {
           },
         };
       });
-    }, []),
+    }, [onTelemetria]),
   );
 
   useSocketEvent(
