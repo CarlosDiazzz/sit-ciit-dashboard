@@ -34,7 +34,7 @@ import { formatNumber } from '../lib/format';
 import { CargoCategoryBadge, SeverityBadge } from './Badges';
 import { ErrorState, Loading } from './States';
 
-const CATEGORIES: CargoCategory[] = ['agricola', 'construccion', 'quimico'];
+const CATEGORIES: CargoCategory[] = ['agricola', 'construccion', 'quimico', 'sin_carga'];
 const HISTORY_HOURS = 24;
 
 interface Props {
@@ -174,7 +174,11 @@ export default function WeatherRiskPanel({ unit, canEditCategory, allRules, onCa
             temperatura dentro de la carga.
           </p>
 
-          {latest.data.activeRules.length === 0 ? (
+          {unit.cargoCategory === 'sin_carga' ? (
+            <p className="chart-hint">
+              Esta unidad va sin carga — no aplican reglas de riesgo climático.
+            </p>
+          ) : latest.data.activeRules.length === 0 ? (
             <p className="chart-hint weather-clear">Sin riesgo detectado en las condiciones actuales.</p>
           ) : (
             <ul className="weather-rules">

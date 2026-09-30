@@ -10,12 +10,18 @@ import type {
   CargoCategory,
   Command,
   CommandLogEntry,
+  CreateNodeRequest,
+  CreateUserRequest,
   EventRecord,
   IssueCommandRequest,
   LoginResponse,
+  ManagedUser,
+  NodeCredentialRecord,
+  NodeSecretResponse,
   RiskRule,
   TelemetryPoint,
   Unit,
+  UpdateUserRequest,
   WeatherLatestResponse,
   WeatherReading,
 } from './types';
@@ -53,22 +59,6 @@ export class ApiError extends Error {
 }
 
 const TOKEN_KEY = 'sitciit.token';
-const USER_KEY = 'sitciit.user';
-
-/** Correo de la sesión, que el backend usa para identificar al emisor de
- *  un comando mientras no exista el login con JWT (Fase 6). */
-function getUserEmail(): string | null {
-  try {
-    const raw = localStorage.getItem(USER_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' && 'email' in parsed
-      ? String((parsed as { email: unknown }).email)
-      : null;
-  } catch {
-    return null;
-  }
-}
 
 export function getToken(): string | null {
   try {
@@ -91,7 +81,6 @@ export function setToken(token: string | null): void {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
-  const email = getUserEmail();
 
   let response: Response;
   try {
@@ -100,10 +89,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        // Puente hasta el JWT de la Fase 6: el backend resuelve el rol
-        // consultando este correo en la tabla users, no confía en el
-        // cliente para declararlo.
-        ...(email ? { 'x-user-email': email } : {}),
         ...init?.headers,
       },
     });
@@ -203,4 +188,31 @@ export const api = {
    *  su umbral declarado y su fuente — dato estático, no depende de una
    *  unidad en particular. */
   listRiskRules: () => request<RiskRule[]>('/risk-rules'),
+
+  /** CRUD de usuarios — el backend exige rol control_center para las
+   *  cuatro; aquí no se repite ese chequeo, solo se refleja en la UI. */
+  listUsers: () => request<ManagedUser[]>('/users'),
+
+  createUser: (body: CreateUserRequest) =>
+    request<ManagedUser>('/users', { method: 'POST', body: JSON.stringify(body) }),
+
+  updateUser: (id: string, body: UpdateUserRequest) =>
+    request<ManagedUser>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+
+  deleteUser: (id: string) => request<void>(`/users/${id}`, { method: 'DELETE' }),
+
+  /** CRUD de nodos — el secreto solo viaja en la respuesta de create/
+   *  regenerateNodeSecret, nunca en listNodes. */
+  listNodes: () => request<NodeCredentialRecord[]>('/nodes'),
+
+  createNode: (body: CreateNodeRequest) =>
+    request<NodeCredentialRecord & NodeSecretResponse>('/nodes', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  regenerateNodeSecret: (id: string) =>
+    request<NodeSecretResponse>(`/nodes/${id}/regenerate-secret`, { method: 'POST' }),
+
+  deleteNode: (id: string) => request<void>(`/nodes/${id}`, { method: 'DELETE' }),
 };
