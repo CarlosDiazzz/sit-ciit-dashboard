@@ -75,3 +75,11 @@
   border-color: var(--warning);
   border-style: dashed;
 }
+
+/* Informativo (ej. categoría de carga): no es severidad ni estado, así
+ * que usa tinta neutra en vez de tomar prestado info/warning/critical. */
+.badge-neutral {
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}

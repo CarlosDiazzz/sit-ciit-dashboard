@@ -4,7 +4,7 @@
  * (un archivo que exporta componentes no debe exportar también funciones).
  */
 
-import type { AnyEventKind } from '../api/types';
+import type { AnyEventKind, CargoCategory, Condition, WeatherVariable } from '../api/types';
 
 const EVENT_LABEL: Record<AnyEventKind, string> = {
   impact: 'Impacto',
@@ -14,8 +14,56 @@ const EVENT_LABEL: Record<AnyEventKind, string> = {
   threshold_exceeded: 'Umbral excedido',
   source_failover: 'Cambio de fuente',
   sensor_disagreement: 'Discrepancia de sensores',
+  weather_risk: 'Riesgo climático',
 };
 
 export function eventKindLabel(kind: AnyEventKind): string {
   return EVENT_LABEL[kind] ?? kind;
+}
+
+const CARGO_CATEGORY_LABEL: Record<CargoCategory, string> = {
+  agricola: 'Agrícola',
+  construccion: 'Construcción',
+  quimico: 'Químicos',
+};
+
+export function cargoCategoryLabel(category: CargoCategory): string {
+  return CARGO_CATEGORY_LABEL[category] ?? category;
+}
+
+const VARIABLE_META: Record<WeatherVariable, { label: string; unit: string }> = {
+  tempC: { label: 'Temperatura', unit: '°C' },
+  humidityPct: { label: 'Humedad relativa', unit: '%' },
+  precipMm: { label: 'Precipitación', unit: 'mm' },
+};
+
+const OP_SYMBOL: Record<Condition['op'], string> = {
+  '>=': '≥',
+  '<=': '≤',
+  '>': '>',
+  '<': '<',
+};
+
+/** Texto humano de las condiciones de una regla — "bajo qué valor" se
+ *  evalúa, no solo el mensaje. Agrupa por variable: si hay un límite
+ *  inferior y uno superior de la misma variable, los junta en un rango. */
+export function formatConditions(conditions: Condition[]): string[] {
+  const byVariable = new Map<WeatherVariable, Condition[]>();
+  for (const c of conditions) {
+    const list = byVariable.get(c.variable);
+    if (list) list.push(c);
+    else byVariable.set(c.variable, [c]);
+  }
+
+  return Array.from(byVariable.entries()).map(([variable, conds]) => {
+    const meta = VARIABLE_META[variable];
+    const lower = conds.find((c) => c.op === '>=' || c.op === '>');
+    const upper = conds.find((c) => c.op === '<=' || c.op === '<');
+
+    if (lower && upper) {
+      return `${meta.label} entre ${lower.value}${meta.unit} y ${upper.value}${meta.unit}`;
+    }
+    const c = conds[0]!;
+    return `${meta.label} ${OP_SYMBOL[c.op]} ${c.value}${meta.unit}`;
+  });
 }

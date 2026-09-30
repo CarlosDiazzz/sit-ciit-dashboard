@@ -2,7 +2,9 @@
  * Implementación completa: Fase 2 (eventos) y Fase 3 (marca de tardíos).
  */
 
+import { useCallback } from 'react';
 import { api } from '../api/client';
+import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
 import type { EventRecord } from '../api/types';
 import { AsyncBoundary } from '../components/States';
@@ -13,6 +15,13 @@ import './tables.css';
 
 export default function Eventos() {
   const state = useApi<EventRecord[]>(() => api.listEvents({ limit: 100 }));
+
+  // El backend reemite cada evento recién guardado (device o generado por
+  // él mismo, ej. weather_risk); se recarga la lista real en vez de
+  // intentar insertar el payload del socket a mano (tiene otra forma, ver
+  // EventBroadcast en api/types.ts).
+  const onEvent = useCallback(() => state.reload(), [state]);
+  useSocketEvent('event', onEvent);
 
   return (
     <>

@@ -25,7 +25,11 @@ import type {
 
 /** Eventos que genera el backend, no el dispositivo: no viajan por MQTT
  *  y por eso no están en EventKind, pero se guardan en la misma tabla. */
-export type BackendEventKind = 'source_failover' | 'sensor_disagreement';
+export type BackendEventKind = 'source_failover' | 'sensor_disagreement' | 'weather_risk';
+
+/** Categoría de carga que declara el cliente por unidad — no es un dato
+ *  de sensor, se fija desde este dashboard (rol control_center). */
+export type CargoCategory = 'agricola' | 'construccion' | 'quimico';
 
 /** Todo lo que puede aparecer en la vista de Eventos. */
 export type AnyEventKind = EventKind | BackendEventKind;
@@ -41,6 +45,8 @@ export interface Unit {
   /** Nodo que la unidad está usando ahora mismo; null si ninguno está
    *  online (ver regla de failover en el backend). */
   activeNodeId: string | null;
+  /** null si el cliente todavía no la declaró. */
+  cargoCategory: CargoCategory | null;
   nodes: Node[];
 }
 
@@ -102,6 +108,9 @@ export interface EventRecord {
   receivedAt: string;
   acknowledgedAt: string | null;
   acknowledgedBy: string | null;
+  /** Detalle estructurado — hoy solo lo llena weather_risk (temperatura,
+   *  humedad, lluvia y qué reglas dispararon, con su fuente citada). */
+  details: Record<string, unknown> | null;
 }
 
 export interface Command {
@@ -140,6 +149,48 @@ export interface AuthUser {
 export interface LoginResponse {
   token: string;
   user: AuthUser;
+}
+
+/** Clima ambiental real (Open-Meteo) en la última posición GPS conocida de
+ *  la unidad — NO la temperatura/humedad dentro del contenedor (el
+ *  celular no puede medir eso). Ver sit-ciit-backend/src/domain/riskThresholds.ts. */
+export interface WeatherReading {
+  ts: string;
+  lat: number;
+  lon: number;
+  tempC: number;
+  humidityPct: number;
+  precipMm: number;
+}
+
+export type WeatherVariable = 'tempC' | 'humidityPct' | 'precipMm';
+
+/** Condición declarativa (no una función): el mismo umbral que evalúa el
+ *  backend se puede mostrar tal cual — "bajo qué valor y qué norma". */
+export interface Condition {
+  variable: WeatherVariable;
+  op: '>=' | '<=' | '>' | '<';
+  value: number;
+}
+
+export interface RiskRule {
+  id: string;
+  category: CargoCategory;
+  severity: EventSeverity;
+  message: string;
+  /** Cita exacta de la norma/guía real que respalda el umbral. */
+  source: string;
+  /** true = no hay cifra oficial confirmada, es criterio del equipo —
+   *  mostrar como tal, no ocultarlo. */
+  isAssumption: boolean;
+  /** Se cumplen todas (AND) para que la regla se considere activa. */
+  conditions: Condition[];
+}
+
+export interface WeatherLatestResponse {
+  cargoCategory: CargoCategory | null;
+  weather: WeatherReading;
+  activeRules: RiskRule[];
 }
 
 /** Cuerpo de POST /commands. El backend valida la autoridad del rol antes
@@ -181,10 +232,26 @@ export interface TelemetryBroadcast {
   gps?: { lat: number; lon: number; speedMs?: number; accuracyM?: number };
 }
 
+/** Reemisión de un evento recién guardado (impacto/puerta/volcadura del
+ *  dispositivo, o weather_risk/failover generados por el backend). Misma
+ *  salvedad que TelemetryBroadcast: unitId/nodeId son códigos, no UUIDs,
+ *  y ts es epoch ms — no la forma de fila de /events. nodeId es null en
+ *  eventos de unidad (weather_risk, source_failover). */
+export interface EventBroadcast {
+  unitId: string;
+  nodeId: string | null;
+  kind: AnyEventKind;
+  severity: EventSeverity;
+  value?: number;
+  threshold?: number;
+  gps?: { lat: number; lon: number };
+  ts: number;
+}
+
 /** Los nombres y formas que aún no emite el backend están comentados: se
  *  agregan cuando existan, para no tipar contra algo inventado. */
 export interface ServerToClientEvents {
   telemetry: (payload: TelemetryBroadcast) => void;
-  // event: (event: EventRecord) => void;              // Fase 2
+  event: (event: EventBroadcast) => void;
   // 'command:update': (command: Command) => void;     // Fase 4
 }
