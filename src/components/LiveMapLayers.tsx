@@ -17,7 +17,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Marker, Polyline, Popup, Tooltip } from 'react-leaflet';
+import { Marker, Polyline, Popup, Tooltip, useMap } from 'react-leaflet';
 
 import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
@@ -50,12 +50,18 @@ const TRANSICION_MS = 4000;
 const RUMBO_MIN_M = 12;
 
 /** Primary y backup van en el mismo camión, así que sus marcadores se
- *  tapan. Por debajo de esta distancia se separan en pantalla. */
-const SOLAPE_M = 25;
+ *  tapan. Se separan cuando quedan a menos de esta distancia EN PANTALLA.
+ *
+ *  La separación se mide en píxeles y no en metros: con el mapa alejado
+ *  18 m son medio píxel y no hace falta separar, pero al acercar esos
+ *  mismos metros se vuelven cientos de píxeles y el ajuste desplazaría
+ *  el marcador media manzana. En píxeles el icono se ve igual de
+ *  separado en todos los niveles de zoom. */
+const SOLAPE_PX = 34;
 
-/** Cuánto se separan, en grados de latitud (~18 m). Es un ajuste de
- *  dibujo: el popup sigue dando la posición medida. */
-const SEPARACION_GRADOS = 0.00016;
+/** Cuánto se aparta cada marcador de su posición medida, en píxeles. Es
+ *  un ajuste de dibujo: el popup sigue dando la posición real. */
+const SEPARACION_PX = 17;
 
 interface Unidad {
   nodeId: string;
@@ -120,6 +126,9 @@ function posicionActual(u: Unidad, ahora: number): [number, number] {
 export default function LiveMapLayers() {
   const [unidades, setUnidades] = useState<Record<string, Unidad>>({});
   const [eventos, setEventos] = useState<EventoEnMapa[]>([]);
+  // El mapa hace falta para separar los marcadores en pixeles: la
+  // conversion depende del zoom, que cambia cuando el usuario amplia.
+  const map = useMap();
   /** Nodo que cada unidad usa como fuente, por codigo de unidad. Lo
    *  emite el backend al hacer failover. */
   const [fuentePorUnidad, setFuentePorUnidad] = useState<Record<string, string | null>>({});
@@ -230,6 +239,18 @@ export default function LiveMapLayers() {
       cancelled = true;
     };
   }, []);
+
+  // Al cambiar el zoom hay que recolocar: la separacion se calcula en
+  // pixeles y su equivalente en grados depende del nivel. El bucle de
+  // animacion ya redibuja cada cuadro, pero sin animacion
+  // (prefers-reduced-motion) hace falta este aviso.
+  useEffect(() => {
+    const recolocar = () => setAhora(Date.now());
+    map.on('zoomend', recolocar);
+    return () => {
+      map.off('zoomend', recolocar);
+    };
+  }, [map]);
 
   useSocketEvent(
     'telemetry',
@@ -344,16 +365,22 @@ export default function LiveMapLayers() {
       {lista.map((u) => {
         const medida = posicionActual(u, ahora);
         // Si hay otro nodo de la misma unidad casi encima, se separan:
-        // el primario arriba, el respaldo abajo.
-        const hermano = lista.find(
-          (o) => o.nodeId !== u.nodeId && o.unitId === u.unitId,
-        );
-        const solapan =
-          hermano !== undefined &&
-          metros(medida, posicionActual(hermano, ahora)) < SOLAPE_M;
-        const pos: [number, number] = solapan
-          ? [medida[0] + (u.role === 'primary' ? SEPARACION_GRADOS : -SEPARACION_GRADOS), medida[1]]
-          : medida;
+        // el primario arriba, el respaldo abajo. La comparacion va en
+        // pixeles, asi que el ajuste se mantiene igual a cualquier zoom.
+        const hermano = lista.find((o) => o.nodeId !== u.nodeId && o.unitId === u.unitId);
+        let pos: [number, number] = medida;
+
+        if (hermano) {
+          const p = map.latLngToLayerPoint(medida);
+          const q = map.latLngToLayerPoint(posicionActual(hermano, ahora));
+          if (p.distanceTo(q) < SOLAPE_PX) {
+            const desplazado = map.layerPointToLatLng([
+              p.x,
+              p.y + (u.role === 'primary' ? -SEPARACION_PX : SEPARACION_PX),
+            ]);
+            pos = [desplazado.lat, desplazado.lng];
+          }
+        }
         const callada = ahora - u.recibidoEn > SIN_DATOS_MS;
 
         return (
