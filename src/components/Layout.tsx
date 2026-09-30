@@ -182,12 +182,12 @@ export default function Layout() {
               data-nav-theme={item.theme}
             >
               <span className="nav-glyph" aria-hidden="true">
-                <item.icon size={18} strokeWidth={1.8} />
+                <item.icon size={20} strokeWidth={2} />
               </span>
               <span className="nav-copy">
                 <strong>{item.label}</strong>
                 <small>
-                  {item.deity} · {item.domain}
+                  {item.domain}
                 </small>
               </span>
             </NavLink>
