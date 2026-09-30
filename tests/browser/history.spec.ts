@@ -76,7 +76,7 @@ test("historial: nodo, fechas, valores ausentes, gráficas, páginas y CSV", asy
     .fill("browser-test-password");
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Salir", exact: true }),
+    page.getByRole("button", { name: "Cerrar sesión", exact: true }),
   ).toBeVisible();
   await page
     .getByRole("link", {

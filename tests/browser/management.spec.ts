@@ -274,7 +274,8 @@ test("gestión completa desde formularios reales, auditoría y portal por empres
   await expect(
     page.getByText("No hay registros para estos filtros."),
   ).toBeVisible();
-  await page.getByLabel("Incluir archivados").check();
+  await page.getByLabel("Incluir archivados").click();
+  await expect(page.getByLabel("Incluir archivados")).toBeChecked();
   await expect(
     page.getByRole("cell", { name: "Archivado", exact: true }),
   ).toBeVisible();
@@ -295,7 +296,7 @@ test("gestión completa desde formularios reales, auditoría y portal por empres
     .fill("customer-password");
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   await expect(page).toHaveURL(/\/gestion$/);
-  await page.getByRole("link", { name: "Envíos Consultar registros" }).click();
+  await page.getByRole("link", { name: /^Envíos .*Consultar registros$/ }).click();
   await expect(
     page.getByRole("cell", { name: "Envío Navegador", exact: true }),
   ).toBeVisible();
