@@ -18,12 +18,12 @@
 
 .signal-head h4 {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 0.892857rem;
   color: var(--text-strong);
 }
 
 .signal-meta {
-  font-size: 11px;
+  font-size: 0.785714rem;
   color: var(--text-dim);
 }
 
@@ -40,7 +40,7 @@
 }
 
 .signal-stats dt {
-  font-size: 9.5px;
+  font-size: 0.678571rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -49,7 +49,7 @@
 
 .signal-stats dd {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.928571rem;
   font-weight: 600;
   color: var(--text-strong);
   font-variant-numeric: tabular-nums;
@@ -58,7 +58,7 @@
 /* Cómo leer la curva: la forma distingue el tipo de anomalía. */
 .signal-hint {
   margin: 0;
-  font-size: 11px;
+  font-size: 0.785714rem;
   line-height: 1.45;
   color: var(--text-dim);
 }
@@ -67,7 +67,7 @@
   margin-top: var(--s3);
   padding-top: var(--s3);
   border-top: 1px solid var(--border);
-  font-size: 11.5px;
+  font-size: 0.821429rem;
   color: var(--text-dim);
 }
 

@@ -1,3 +1,5 @@
+import AccessibilityPanel from '../accessibility/AccessibilityPanel';
+import { t as translate } from '../accessibility/i18n';
 /* Inicio de sesión contra POST /auth/login.
  *
  * El formulario ya llama al backend real: mientras el endpoint no exista
@@ -50,19 +52,17 @@ export default function Login() {
         type="button"
         className="login-mode-toggle"
         onClick={toggle}
-        aria-label={mode === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+        aria-label={translate(mode === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro')}
       >
-        <span aria-hidden="true">{mode === 'dark' ? '☀' : '☾'}</span>
-        {mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+        <span aria-hidden="true">{translate(mode === 'dark' ? '☀' : '☾')}</span>
+        {translate(mode === 'dark' ? 'Modo claro' : 'Modo oscuro')}
       </button>
       <form className="login-card" onSubmit={onSubmit}>
-        <h1>Iniciar sesión</h1>
-        <p className="login-hint">
-          Usa la cuenta que te asignó el administrador.
-        </p>
+        <h1>{translate("Iniciar sesión")}</h1>
+        <p className="login-hint">{translate("Usa la cuenta que te asignó el administrador.")}</p>
 
         <label className="field">
-          <span>Correo</span>
+          <span>{translate("Correo")}</span>
           <input
             type="email"
             value={email}
@@ -73,7 +73,7 @@ export default function Login() {
         </label>
 
         <label className="field">
-          <span>Contraseña</span>
+          <span>{translate("Contraseña")}</span>
           <input
             type="password"
             value={password}
@@ -85,13 +85,14 @@ export default function Login() {
 
         {error ? (
           <p className="login-error" role="alert">
-            {error}
+            {translate(error)}
           </p>
         ) : null}
 
         <button type="submit" className="btn btn-primary" disabled={!canSubmit || enviando}>
-          {enviando ? 'Entrando…' : 'Entrar'}
+          {translate(enviando ? 'Entrando…' : 'Entrar')}
         </button>
+      <AccessibilityPanel compact />
       </form>
     </div>
   );

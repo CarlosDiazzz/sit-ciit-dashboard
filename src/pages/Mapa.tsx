@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 import DecisionBrief from '../components/DecisionBrief';
 /* Mapa de la Línea Z y sus conexiones G y K desde el archivo local Overpass.
  * La lista de unidades conserva su fuente de telemetría independiente.
@@ -24,6 +25,7 @@ import type {
 } from '../api/types';
 import { MEDIAS_AGUAS_JUNCTION, parseMainRailRoute, parseRailConnections, type MapCoordinate, type RailConnection } from '../lib/mapData';
 import { muestrearRuta } from '../lib/routeProjection';
+import { FACTOR_TIEMPO } from '../lib/simulacion';
 import './mapa.css';
 
 // Cada cuánto se muestrea la ruta real para pedir antenas reales cerca:
@@ -88,6 +90,8 @@ export default function Mapa() {
   // una sala. Apagada por defecto y avisada en pantalla mientras corre.
   const [simulando, setSimulando] = useState(false);
   const [defectosSim, setDefectosSim] = useState<TrackDefect[]>([]);
+  /** Hora de operación que representa la demo. */
+  const [relojSim, setRelojSim] = useState('');
   /** Ultimo mensaje por nodo: da la velocidad en vivo del panel sin
    *  abrir un segundo socket. */
   const [ultimaTelemetria, setUltimaTelemetria] = useState<Record<string, TelemetryBroadcast>>({});
@@ -155,18 +159,27 @@ export default function Mapa() {
     <>
       <div className="page-head">
         <div>
-          <span className="dss-kicker">QUETZALCÓATL / CORREDOR INTEROCEÁNICO</span><h1>Ruta</h1>
-          <p>Corredor Salina Cruz–Coatzacoalcos (Línea Z).</p>
+          <span className="dss-kicker">{translate("QUETZALCÓATL / CORREDOR INTEROCEÁNICO")}</span><h1>{translate("Ruta")}</h1>
+          <p>{translate("Corredor Salina Cruz–Coatzacoalcos (Línea Z).")}</p>
         </div>
         <PageBreadcrumbs current="Ruta" />
       </div>
 
-      <DecisionBrief title="Supervisa la cobertura antes de interpretar la ruta" evidence="El mapa reúne el trazado ferroviario y las últimas posiciones GPS recibidas. Verifica la hora y la fuente activa antes de interpretar una ubicación." action="Revisa el estado de la unidad y su último reporte antes de decidir sobre el recorrido." to="/unidad" linkLabel="Revisar unidades" />
+      <DecisionBrief title={translate("Supervisa la cobertura antes de interpretar la ruta")} evidence={translate("El mapa reúne el trazado ferroviario y las últimas posiciones GPS recibidas. Verifica la hora y la fuente activa antes de interpretar una ubicación.")} action={translate("Revisa el estado de la unidad y su último reporte antes de decidir sobre el recorrido.")} to="/unidad" linkLabel={translate("Revisar unidades")} />
       <div className="map-layout">
         <div className="map-frame">
           {simulando ? (
             <p className="sim-banner" role="status">
-              Simulación activa · las unidades SIM y sus alertas no son mediciones reales
+              <span className="sim-banner__dot" aria-hidden="true" />
+              {translate("Simulación activa · las unidades SIM y sus alertas no son mediciones reales")}
+              {/* El reloj acelerado: cinco minutos de pantalla son cinco
+                  horas de operación. Sin decirlo, un tren que cruza
+                  300 km durante la demo no cuadra. */}
+              {relojSim ? (
+                <span className="sim-banner__clock">
+                  {relojSim} <b>×{FACTOR_TIEMPO}</b>
+                </span>
+              ) : null}
             </p>
           ) : null}
           <MapContainer center={CENTRO} zoom={8} className="map">
@@ -177,6 +190,7 @@ export default function Mapa() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <SimulationLayer
+              onReloj={setRelojSim}
               ruta={railRoute}
               activa={simulando}
               onDefectos={setDefectosSim}
@@ -196,12 +210,12 @@ export default function Mapa() {
                 positions={connection.segments}
                 pathOptions={{ color: '#2E7D32', weight: 4 }}
               >
-                <Tooltip sticky>{connection.name === 'Línea G' ? 'Línea G · Centro del país' : 'Línea K · Juchitán / Centroamérica'}</Tooltip>
+                <Tooltip sticky>{translate(connection.name === 'Línea G' ? 'Línea G · Centro del país' : 'Línea K · Juchitán / Centroamérica')}</Tooltip>
               </Polyline>
             ))}
             {railRoute.length > 1 && (
               <Polyline positions={railRoute} pathOptions={{ color: '#2E7D32', weight: 4 }}>
-                <Tooltip sticky>Línea Z · Coatzacoalcos–Salina Cruz</Tooltip>
+                <Tooltip sticky>{translate("Línea Z · Coatzacoalcos–Salina Cruz")}</Tooltip>
               </Polyline>
             )}
             {PUNTOS_CLAVE.map((point) => (
@@ -217,10 +231,10 @@ export default function Mapa() {
                   className: 'industrial-park-marker',
                 }}
               >
-                <Tooltip direction="top" offset={[0, -7]}>{point.name}</Tooltip>
+                <Tooltip direction="top" offset={[0, -7]}>{translate(point.name)}</Tooltip>
                 <Popup>
-                  <span className="industrial-park-popup">Polo de desarrollo</span>
-                  <strong>{point.name}</strong>
+                  <span className="industrial-park-popup">{translate("Polo de desarrollo")}</span>
+                  <strong>{translate(point.name)}</strong>
                 </Popup>
               </CircleMarker>
             ))}
@@ -228,10 +242,10 @@ export default function Mapa() {
         </div>
 
         <aside className="map-side">
-          {mapDataError && <p className="map-hint" role="alert">{mapDataError}</p>}
+          {translate(mapDataError && <p className="map-hint" role="alert">{translate(mapDataError)}</p>)}
 
           {state.loading ? (
-            <Loading label="Cargando nodos…" />
+            <Loading label={translate("Cargando nodos…")} />
           ) : state.error ? (
             <ErrorState error={state.error} onRetry={state.reload} />
           ) : (
@@ -250,9 +264,7 @@ export default function Mapa() {
                   type="checkbox"
                   checked={simulando}
                   onChange={(e) => setSimulando(e.target.checked)}
-                />
-                Simular corredor en vivo
-              </label>
+                />{translate("Simular corredor en vivo")}</label>
               <NodeStatusPanel units={state.data} ultimaTelemetria={ultimaTelemetria} />
             </>
           )}

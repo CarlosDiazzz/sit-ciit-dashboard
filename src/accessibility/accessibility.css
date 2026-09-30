@@ -1,0 +1,46 @@
+.accessibility-trigger { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); color: var(--text-strong); cursor: pointer; font: inherit; }
+.sidebar-foot { flex-wrap: wrap; }
+.sidebar-foot .accessibility-trigger { text-transform: none; letter-spacing: normal; font-size: 0.928571rem; }
+.accessibility-trigger-compact { margin-top: 16px; }
+.accessibility-panel { padding: 0 20px 20px; max-width: 520px; }
+.accessibility-panel > p { color: var(--text-dim); line-height: 1.6; }
+.accessibility-option { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.accessibility-option > span { display: grid; gap: 5px; }
+.accessibility-option small { color: var(--text-dim); line-height: 1.5; }
+.accessibility-option input { width: 24px; height: 24px; flex-shrink: 0; accent-color: var(--accent); }
+.accessibility-option select { min-height: 44px; max-width: 45%; font: inherit; }
+.accessibility-help { font-size: 0.95rem; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.skip-link { position: fixed; top: 8px; left: 8px; z-index: 2000; transform: translateY(-200%); padding: 12px 18px; background: var(--surface); color: var(--text-strong); border: 2px solid var(--accent); }
+.skip-link:focus { transform: translateY(0); }
+html[data-large-text='true'] { font-size: 17.5px; }
+html[data-large-text='true'] .nav-copy small { white-space: normal; }
+html[data-large-text='true'] .nav-link { height: auto; }
+html[data-large-text='true'] .topbar { height: auto; }
+html:root[data-high-contrast='true'], html[data-high-contrast='true'] .shell {
+  --bg: #000; --surface: #000; --surface-2: #101010; --surface-hover: #222;
+  --text: #fff; --text-strong: #fff; --text-dim: #eee; --border: #aaa; --border-strong: #fff;
+  --accent: #ffeb3b; --accent-rgb: 255,235,59; --accent-soft: #ffeb3b; --accent-border: #ffeb3b;
+  --online: #69f090; --offline: #ddd; --warning: #ffdf70; --critical: #ff9292; --info: #8acbff;
+  color-scheme: dark;
+}
+html[data-high-contrast='true'] body,
+html[data-high-contrast='true'] :is(.sidebar, .topbar, .content, .page-head, .card, .chart-card, .dss-panel, .decision-brief, .map-side, .workspace-dialog, .workspace-dialog-head, .login-card, .management-card, .table-wrap, .node-card, .cmd-form) { background: #000 !important; color: #fff !important; border-color: #aaa !important; }
+html[data-high-contrast='true'] :is(input, select, textarea, button, .btn, .nav-link) { color: #fff !important; background-color: #111 !important; border-color: #aaa !important; }
+html[data-high-contrast='true'] :is(a, .nav-link.is-active) { color: #ffeb3b !important; }
+html[data-high-contrast='true'] :is(p, small, label, th, td, h1, h2, h3, strong) { color: inherit; }
+html[data-high-contrast='true'] .nav-link.is-active { border: 2px solid #ffeb3b; }
+html[data-high-contrast='true'] .sidebar::before { display: none; }
+html[data-reduced-motion='true'] *, html[data-reduced-motion='true'] *::before, html[data-reduced-motion='true'] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+@media (max-width: 860px) { .sidebar-foot:has(.accessibility-trigger) { display: flex; } .accessibility-panel { padding-inline: 12px; } }
+
+.shell[data-color-mode] .signout-action:hover, .shell[data-color-mode] .signout-action:focus-visible {
+  color: #fff; background: #b91c1c; border-color: #b91c1c;
+}
+
+@media (min-width: 861px) {
+  .sidebar > .nav { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .sidebar > :is(.brand, .sidebar-kicker, .sidebar-foot) { flex-shrink: 0; }
+}
+.accessibility-panel { font-size: 1rem; text-transform: none; letter-spacing: normal; }

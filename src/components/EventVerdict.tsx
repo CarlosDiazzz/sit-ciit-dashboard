@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Veredicto del operador sobre un evento.
  *
  * El nodo detecta, pero no sabe si acertó: no puede distinguir un bache
@@ -53,13 +54,13 @@ export default function EventVerdict({
   return (
     <div className="verdict">
       <div className="verdict-head">
-        <h4>¿La detección acertó?</h4>
+        <h4>{translate("¿La detección acertó?")}</h4>
         {actual ? (
           <span className={`verdict-tag verdict-tag--${actual}`}>
-            {OPCIONES.find((o) => o.valor === actual)?.etiqueta}
+            {translate(OPCIONES.find((o) => o.valor === actual)?.etiqueta)}
           </span>
         ) : (
-          <span className="verdict-tag verdict-tag--pending">Sin juzgar</span>
+          <span className="verdict-tag verdict-tag--pending">{translate("Sin juzgar")}</span>
         )}
       </div>
 
@@ -71,35 +72,35 @@ export default function EventVerdict({
             className={`verdict-btn${actual === o.valor ? ' is-active' : ''}`}
             onClick={() => registrar(o.valor)}
             disabled={guardando !== null}
-            title={o.ayuda}
+            title={translate(o.ayuda)}
           >
-            {guardando === o.valor ? 'Guardando…' : o.etiqueta}
+            {translate(guardando === o.valor ? 'Guardando…' : o.etiqueta)}
           </button>
         ))}
       </div>
 
       <label className="verdict-note">
-        <span>Qué pasó en realidad (opcional)</span>
+        <span>{translate("Qué pasó en realidad (opcional)")}</span>
         <input
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          placeholder="Maniobra de carga, paso por junta de riel…"
+          placeholder={translate("Maniobra de carga, paso por junta de riel…")}
           maxLength={500}
         />
       </label>
 
       {error ? (
         <p className="verdict-error" role="alert">
-          {error}
+          {translate(error)}
         </p>
       ) : null}
 
       {/* Se dice para qué sirve: un operador que entiende por qué se le
           pide algo lo hace mejor. */}
       <p className="verdict-hint">
-        {actual
+        {translate(actual
           ? 'Puedes corregirlo si te equivocaste.'
-          : 'Tu juicio afina los umbrales de detección para los próximos recorridos.'}
+          : 'Tu juicio afina los umbrales de detección para los próximos recorridos.')}
       </p>
     </div>
   );

@@ -1,3 +1,4 @@
+import { t as translate, locale } from '../accessibility/i18n';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { ArrowRight, Archive, ClipboardList, Download, Eye, FileText, LayoutGrid, Pencil, Plus, RefreshCw, Search, ShieldCheck, UserRound, X } from 'lucide-react';
@@ -193,7 +194,7 @@ function GestionModule({ resource }: { resource: string }) {
   async function archive(row: RecordData) {
     if (
       busy ||
-      !confirm("¿Archivar este registro? Su historial se conservará.")
+      !confirm(translate("¿Archivar este registro? Su historial se conservará."))
     )
       return;
     setBusy(true);
@@ -293,16 +294,14 @@ function GestionModule({ resource }: { resource: string }) {
     (f.type === "reference" && v
       ? "Registro relacionado"
       : f.type === "datetime" && v
-        ? new Date(String(v)).toLocaleString("es-MX")
+        ? new Date(String(v)).toLocaleString(locale())
         : display(v));
-  if (definitions.loading) return <div className="workspace-empty" role="status"><RefreshCw size={28} /><strong>Cargando módulos…</strong></div>;
+  if (definitions.loading) return <div className="workspace-empty" role="status"><RefreshCw size={28} /><strong>{translate("Cargando módulos…")}</strong></div>;
   if (definitions.error)
     return (
       <div role="alert">
-        {definitions.error.userMessage}
-        <button className="btn" onClick={definitions.reload}>
-          Reintentar
-        </button>
+        {translate(definitions.error.userMessage)}
+        <button className="btn" onClick={definitions.reload}>{translate("Reintentar")}</button>
       </div>
     );
   if (!resource)
@@ -310,22 +309,19 @@ function GestionModule({ resource }: { resource: string }) {
       <>
         <div className="page-head management-hero">
           <div>
-            <span className="management-eyebrow">CENTRO DE OPERACIONES</span>
-            <h1>Gestión logística</h1>
-            <p>
-              Administra los recursos y sigue la carga desde la preparación
-              hasta la entrega.
-            </p>
+            <span className="management-eyebrow">{translate("CENTRO DE OPERACIONES")}</span>
+            <h1>{translate("Gestión logística")}</h1>
+            <p>{translate("Administra los recursos y sigue la carga desde la preparación hasta la entrega.")}</p>
           </div>
           <PageBreadcrumbs current="Gestión logística" />
           <div className="management-hero-mark" aria-hidden="true"><LayoutGrid size={48} /></div>
         </div>
-        <div className="management-overview"><span><strong>{definitions.data?.length ?? 0}</strong> módulos disponibles</span><span><ShieldCheck size={16} /> Acceso según tu rol</span><span>Buscar cualquier pestaña <kbd>Ctrl K</kbd></span></div>
-        <label className="module-search"><Search size={18} /><input aria-label="Filtrar módulos" placeholder="Encuentra un módulo de logística…" value={moduleSearch} onChange={e => setModuleSearch(e.target.value)} /></label>
+        <div className="management-overview"><span><strong>{definitions.data?.length ?? 0}</strong>{translate(" módulos disponibles")}</span><span><ShieldCheck size={16} />{translate(" Acceso según tu rol")}</span><span>{translate("Buscar cualquier pestaña ")}<kbd>{translate("Ctrl K")}</kbd></span></div>
+        <label className="module-search"><Search size={18} /><input aria-label={translate("Filtrar módulos")} placeholder={translate("Encuentra un módulo de logística…")} value={moduleSearch} onChange={e => setModuleSearch(e.target.value)} /></label>
         {managementGroups.map(group => {
-          const matches = definitions.data?.filter(r => managementUi(r.key).group === group && normalizeSearch(`${r.label} ${managementUi(r.key).description}`).includes(normalizeSearch(moduleSearch))) ?? [];
+          const matches = definitions.data?.filter(r => managementUi(r.key).group === group && normalizeSearch(`${r.label} ${managementUi(r.key).description} ${translate(r.label)} ${translate(managementUi(r.key).description)}`).includes(normalizeSearch(moduleSearch))) ?? [];
           if (!matches.length) return null;
-          return <section className="management-group" key={group}><h2>{group}<span>{matches.length}</span></h2><div className="management-cards">
+          return <section className="management-group" key={group}><h2>{translate(group)}<span>{matches.length}</span></h2><div className="management-cards">
           {matches.map((r) => { const meta = managementUi(r.key); return (
             <Link
               className="management-card"
@@ -333,27 +329,27 @@ function GestionModule({ resource }: { resource: string }) {
               to={`/gestion/${r.key}`}
             >
               <div className="management-card-top"><span className="module-icon"><meta.icon size={23} /></span><ArrowRight size={18} /></div>
-              <strong>{r.label}</strong>
-              <p>{meta.description}</p>
+              <strong>{translate(r.label)}</strong>
+              <p>{translate(meta.description)}</p>
               <span>
-                {r.canWrite ? "Administrar registros" : "Consultar registros"}
+                {translate(r.canWrite ? "Administrar registros" : "Consultar registros")}
               </span>
             </Link>
           ); })}
         </div></section>; })}
-        {!definitions.data?.some(r => normalizeSearch(`${r.label} ${managementUi(r.key).description}`).includes(normalizeSearch(moduleSearch))) && <div className="workspace-empty"><Search size={28} /><strong>No hay módulos con ese nombre</strong><button className="btn" onClick={() => setModuleSearch('')}>Ver todos los módulos</button></div>}
+        {!definitions.data?.some(r => normalizeSearch(`${r.label} ${managementUi(r.key).description} ${translate(r.label)} ${translate(managementUi(r.key).description)}`).includes(normalizeSearch(moduleSearch))) && <div className="workspace-empty"><Search size={28} /><strong>{translate("No hay módulos con ese nombre")}</strong><button className="btn" onClick={() => setModuleSearch('')}>{translate("Ver todos los módulos")}</button></div>}
           {["admin", "control_center", "auditor"].includes(
             user?.role ?? "",
           ) && (
             <Link className="management-audit-link" to="/auditoria"><ClipboardList size={20} />
-              <strong>Auditoría administrativa</strong>
-              <span>Cambios y responsables</span>
+              <strong>{translate("Auditoría administrativa")}</strong>
+              <span>{translate("Cambios y responsables")}</span>
             </Link>
           )}
       </>
     );
   if (!selected)
-    return <p role="alert">Este módulo no está disponible para tu cuenta.</p>;
+    return <p role="alert">{translate("Este módulo no está disponible para tu cuenta.")}</p>;
   const meta = managementUi(resource);
   const preferred: Record<string, string[]> = {
     users: ['email', 'role', 'company_id', 'phone'],
@@ -367,60 +363,50 @@ function GestionModule({ resource }: { resource: string }) {
   const columns = preferred[resource] ? preferred[resource].flatMap(key => selected.fields.filter(f => f.key === key)) : selected.fields.filter(f => f.type !== 'password' && !f.roles).slice(0, 6);
   return (
     <>
-      <nav className="management-tabs" aria-label="Pestañas de logística"><NavLink to="/gestion" end><LayoutGrid size={15} /> Todos los módulos</NavLink>{definitions.data?.map(r => { const Icon = managementUi(r.key).icon; return <NavLink key={r.key} to={`/gestion/${r.key}`}><Icon size={15} />{r.label}</NavLink>; })}</nav>
+      <nav className="management-tabs" aria-label={translate("Pestañas de logística")}><NavLink to="/gestion" end><LayoutGrid size={15} />{translate(" Todos los módulos")}</NavLink>{definitions.data?.map(r => { const Icon = managementUi(r.key).icon; return <NavLink key={r.key} to={`/gestion/${r.key}`}><Icon size={15} />{translate(r.label)}</NavLink>; })}</nav>
       <div className="page-head">
         <div className="management-title"><span className="module-icon"><meta.icon size={25} /></span><div>
-          <h1>{selected.label}</h1>
-          <p>{meta.description}</p>
+          <h1>{translate(selected.label)}</h1>
+          <p>{translate(meta.description)}</p>
         </div></div>
         <PageBreadcrumbs current={selected.label} />
         {selected.canCreate && (
           <button className="btn btn-primary" onClick={() => start(null)}>
-            <Plus size={17} /> Nuevo registro
-          </button>
+            <Plus size={17} />{translate(" Nuevo registro")}</button>
         )}
       </div>
       {resource === "nodes" && editable && (
         <p>
-          <Link to="/nodos">Registrar dispositivo y generar secreto →</Link>
+          <Link to="/nodos">{translate("Registrar dispositivo y generar secreto →")}</Link>
         </p>
       )}
       {resource === "monitoring-profiles" && (
-        <p className="management-hint">
-          Estos perfiles guardan la configuración deseada. Su aplicación al nodo
-          se confirma mediante comandos y ACK; los límites ambientales internos
-          requieren sensores compatibles.
-        </p>
+        <p className="management-hint">{translate("Estos perfiles guardan la configuración deseada. Su aplicación al nodo se confirma mediante comandos y ACK; los límites ambientales internos requieren sensores compatibles.")}</p>
       )}
       {resource === "notification-rules" && (
-        <p className="management-hint">
-          Los avisos de dashboard quedan disponibles en el sistema. Correo,
-          Telegram y SMS requieren integrar sus adaptadores de envío.
-        </p>
+        <p className="management-hint">{translate("Los avisos de dashboard quedan disponibles en el sistema. Correo, Telegram y SMS requieren integrar sus adaptadores de envío.")}</p>
       )}
-      {error && (
+      {translate(error && (
         <p className="user-error" role="alert">
-          {error}
+          {translate(error)}
         </p>
-      )}
-      {notice && (
+      ))}
+      {translate(notice && (
         <p className="user-aviso" role="status">
-          {notice}
+          {translate(notice)}
         </p>
-      )}
+      ))}
       {editing !== undefined && (
-        <Dialog wide title={`${editing ? 'Editar' : 'Nuevo registro'} · ${selected.label}`} onClose={() => { if (!busy) setEditing(undefined); }}>
-        {error && <p className="user-error" role="alert">{error}</p>}
+        <Dialog wide title={translate(`${editing ? 'Editar' : 'Nuevo registro'} · ${selected.label}`)} onClose={() => { if (!busy) setEditing(undefined); }}>
+        {translate(error && <p className="user-error" role="alert">{translate(error)}</p>)}
         <form className="user-form" onSubmit={save}>
-          <p className="management-form-hint">Los campos con * son obligatorios.{editing && resource === 'users' ? ' Deja la contraseña vacía para conservar la actual.' : ''}</p>
+          <p className="management-form-hint">{translate("Los campos con * son obligatorios.")}{translate(editing && resource === 'users' ? ' Deja la contraseña vacía para conservar la actual.' : '')}</p>
           {references.loading ? (
-            <p>Cargando catálogos…</p>
+            <p>{translate("Cargando catálogos…")}</p>
           ) : references.error ? (
             <p role="alert">
-              {references.error.userMessage}
-              <button type="button" className="btn" onClick={references.reload}>
-                Reintentar
-              </button>
+              {translate(references.error.userMessage)}
+              <button type="button" className="btn" onClick={references.reload}>{translate("Reintentar")}</button>
             </p>
           ) : (
             <div className="management-fields">
@@ -439,12 +425,12 @@ function GestionModule({ resource }: { resource: string }) {
                 return (
                   <label className={`field${f.type === 'boolean' ? ' management-toggle' : ''}${f.type === 'textarea' ? ' management-wide-field' : ''}`} key={f.key}>
                     <span>
-                      {f.label}
-                      {f.required ? " *" : ""}
+                      {translate(f.label)}
+                      {translate(f.required ? " *" : "")}
                     </span>
                     {f.type === "boolean" ? (
                       <input
-                        aria-label={f.label}
+                        aria-label={translate(f.label)}
                         type="checkbox"
                         checked={Boolean(value)}
                         onChange={(e) =>
@@ -453,7 +439,7 @@ function GestionModule({ resource }: { resource: string }) {
                       />
                     ) : f.type === "textarea" ? (
                       <textarea
-                        aria-label={f.label}
+                        aria-label={translate(f.label)}
                         value={String(value)}
                         required={f.required}
                         onChange={(e) =>
@@ -462,29 +448,29 @@ function GestionModule({ resource }: { resource: string }) {
                       />
                     ) : ["select", "reference"].includes(f.type) ? (
                       <select
-                        aria-label={f.label}
+                        aria-label={translate(f.label)}
                         value={String(value)}
                         required={f.required}
                         onChange={(e) =>
                           setForm({ ...form, [f.key]: e.target.value })
                         }
                       >
-                        <option value="">Seleccionar…</option>
+                        <option value="">{translate("Seleccionar…")}</option>
                         {f.type === "reference"
                           ? (references.data?.[f.resource!] ?? []).map((o) => (
                               <option key={o.id} value={o.id}>
-                                {o.label}
+                                {translate(o.label)}
                               </option>
                             ))
                           : f.options?.map((o) => (
                               <option key={o.value} value={o.value}>
-                                {o.label}
+                                {translate(o.label)}
                               </option>
                             ))}
                       </select>
                     ) : (
                       <input
-                        aria-label={f.label}
+                        aria-label={translate(f.label)}
                         type={f.type === "datetime" ? "datetime-local" : f.type}
                         value={String(value)}
                         required={f.required || (f.type === "password" && !editing)}
@@ -516,16 +502,14 @@ function GestionModule({ resource }: { resource: string }) {
               className="btn btn-primary"
               disabled={busy || references.loading || !!references.error}
             >
-              {busy ? "Guardando…" : "Guardar"}
+              {translate(busy ? "Guardando…" : "Guardar")}
             </button>
             <button
               className="btn"
               type="button"
               disabled={busy}
               onClick={() => setEditing(undefined)}
-            >
-              Cancelar
-            </button>
+            >{translate("Cancelar")}</button>
           </div>
         </form>
         </Dialog>
@@ -539,13 +523,13 @@ function GestionModule({ resource }: { resource: string }) {
         }}
       >
         <div className="management-search"><Search size={17} /><input
-          aria-label="Buscar registros"
+          aria-label={translate("Buscar registros")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={resource === 'users' ? 'Buscar por nombre o correo…' : 'Buscar por código o nombre…'}
+          placeholder={translate(resource === 'users' ? 'Buscar por nombre o correo…' : 'Buscar por código o nombre…')}
         /></div>
-        <button className="btn">Buscar</button>
-        {filter && <button className="btn" type="button" onClick={() => { setSearch(''); updateQuery({ q: '', page: 1 }); }}><X size={14} /> Limpiar</button>}
+        <button className="btn">{translate("Buscar")}</button>
+        {translate(filter && <button className="btn" type="button" onClick={() => { setSearch(''); updateQuery({ q: '', page: 1 }); }}><X size={14} />{translate(" Limpiar")}</button>)}
         <label>
           <input
             type="checkbox"
@@ -553,34 +537,29 @@ function GestionModule({ resource }: { resource: string }) {
             onChange={(e) => {
               updateQuery({ archived: e.target.checked, page: 1 });
             }}
-          />{" "}
-          Incluir archivados
-        </label>
+          />{" "}{translate("Incluir archivados")}</label>
         <button className="btn" type="button" disabled={data.loading} onClick={data.reload}>
-          <RefreshCw size={15} /> Actualizar
-        </button>
+          <RefreshCw size={15} />{translate(" Actualizar")}</button>
       </form>
       {data.loading ? (
-        <div className="workspace-empty" role="status"><RefreshCw size={28} /><strong>Cargando registros…</strong></div>
+        <div className="workspace-empty" role="status"><RefreshCw size={28} /><strong>{translate("Cargando registros…")}</strong></div>
       ) : data.error ? (
         <div className="workspace-empty" role="alert">
-          {data.error.userMessage}
-          <button className="btn" onClick={data.reload}>
-            Reintentar
-          </button>
+          {translate(data.error.userMessage)}
+          <button className="btn" onClick={data.reload}>{translate("Reintentar")}</button>
         </div>
       ) : !data.data?.items.length ? (
-        <div className="workspace-empty"><meta.icon size={34} /><strong>No hay registros para estos filtros.</strong><p>{filter ? 'Cambia la búsqueda para encontrar otros registros.' : `Los registros de ${selected.label.toLowerCase()} aparecerán aquí.`}</p>{filter ? <button className="btn" onClick={() => updateQuery({ q: '', page: 1 })}>Limpiar búsqueda</button> : selected.canCreate && <button className="btn btn-primary" onClick={() => start(null)}><Plus size={16} /> Crear primer registro</button>}</div>
+        <div className="workspace-empty"><meta.icon size={34} /><strong>{translate("No hay registros para estos filtros.")}</strong><p>{translate(filter ? 'Cambia la búsqueda para encontrar otros registros.' : `Los registros de ${selected.label.toLowerCase()} aparecerán aquí.`)}</p>{filter ? <button className="btn" onClick={() => updateQuery({ q: '', page: 1 })}>{translate("Limpiar búsqueda")}</button> : selected.canCreate && <button className="btn btn-primary" onClick={() => start(null)}><Plus size={16} />{translate(" Crear primer registro")}</button>}</div>
       ) : (
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
                 {columns.map((f) => (
-                  <th scope="col" key={f.key}>{resource === 'users' && f.key === 'email' ? 'Persona' : f.label}</th>
+                  <th scope="col" key={f.key}>{translate(resource === 'users' && f.key === 'email' ? 'Persona' : f.label)}</th>
                 ))}
-                <th>Vigencia</th>
-                <th>Acciones</th>
+                <th>{translate("Vigencia")}</th>
+                <th>{translate("Acciones")}</th>
               </tr>
             </thead>
             <tbody>
@@ -588,34 +567,30 @@ function GestionModule({ resource }: { resource: string }) {
                 <tr key={row.id}>
                   {columns.map((f) => (
                     <td key={f.key}>
-                      {resource === 'users' && f.key === 'email' ? <div className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={19} /></span><span><strong>{[row.first_name, row.last_name].filter(Boolean).join(' ') || row.email}{row.id === user?.id && <span className="tag">Tú</span>}</strong><small>{row.email}</small></span></div> : ['status', 'severity', 'role'].includes(f.key) ? <span className="record-status" data-status={row[f.key]}>{valueLabel(f, row[f.key])}</span> : row._labels?.[f.key] ?? valueLabel(f, row[f.key])}
+                      {translate(resource === 'users' && f.key === 'email' ? <div className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={19} /></span><span><strong>{translate([row.first_name, row.last_name].filter(Boolean).join(' ') || row.email)}{row.id === user?.id && <span className="tag">{translate("Tú")}</span>}</strong><small>{translate(row.email)}</small></span></div> : ['status', 'severity', 'role'].includes(f.key) ? <span className="record-status" data-status={row[f.key]}>{translate(valueLabel(f, row[f.key]))}</span> : row._labels?.[f.key] ?? valueLabel(f, row[f.key]))}
                     </td>
                   ))}
-                  <td><span className="record-status" data-status={row.active ? 'active' : 'archived'}>{row.active ? "Activo" : "Archivado"}</span></td>
+                  <td><span className="record-status" data-status={row.active ? 'active' : 'archived'}>{translate(row.active ? "Activo" : "Archivado")}</span></td>
                   <td>
                     {resource === "nodes" && (
                       <>
-                        <strong>{row.node_code}</strong>{" "}
+                        <strong>{translate(row.node_code)}</strong>{" "}
                         <Link
                           className="btn"
                           to={`/historial-nodos?nodo=${row.id}`}
-                        >
-                          Historial
-                        </Link>
+                        >{translate("Historial")}</Link>
                       </>
                     )}
                     <div className="management-actions">
                       <button className="btn" onClick={() => void inspect(row)}>
-                        <Eye size={14} /> Detalle
-                      </button>
+                        <Eye size={14} />{translate(" Detalle")}</button>
                       {resource === "trips" && (
                         <button
                           className="btn"
                           disabled={busy}
                           onClick={() => void loadReport(row)}
                         >
-                          <FileText size={14} /> Reporte
-                        </button>
+                          <FileText size={14} />{translate(" Reporte")}</button>
                       )}
                       {editable && row.active && (
                         <>
@@ -624,15 +599,13 @@ function GestionModule({ resource }: { resource: string }) {
                             disabled={busy}
                             onClick={() => start(row)}
                           >
-                            <Pencil size={14} /> Editar
-                          </button>
+                            <Pencil size={14} />{translate(" Editar")}</button>
                           <button
                             className="btn"
                             disabled={busy || row.id === user?.id}
                             onClick={() => void archive(row)}
                           >
-                            <Archive size={14} /> Archivar
-                          </button>
+                            <Archive size={14} />{translate(" Archivar")}</button>
                         </>
                       )}
                       {editable && !row.active && resource !== "nodes" && (
@@ -640,9 +613,7 @@ function GestionModule({ resource }: { resource: string }) {
                           className="btn"
                           disabled={busy}
                           onClick={() => void reactivate(row)}
-                        >
-                          Reactivar
-                        </button>
+                        >{translate("Reactivar")}</button>
                       )}
                     </div>
                   </td>
@@ -655,12 +626,12 @@ function GestionModule({ resource }: { resource: string }) {
       <Pagination page={page} pageSize={limit} total={data.data?.total ?? 0} disabled={data.loading || !!data.error} onPage={n => updateQuery({ page: n })} onPageSize={n => updateQuery({ page: 1, limit: n })} />
       </section>
       {detail && (
-        <Dialog wide title={`Detalle · ${selected.label}`} onClose={() => { if (!busy) { detailRequest.current++; setDetail(null); } }}>
-        {error && <p className="user-error" role="alert">{error}</p>}
+        <Dialog wide title={translate(`Detalle · ${selected.label}`)} onClose={() => { if (!busy) { detailRequest.current++; setDetail(null); } }}>
+        {translate(error && <p className="user-error" role="alert">{translate(error)}</p>)}
         <section className="user-form">
           <div className="management-toolbar">
-            <h2>Detalle del registro</h2>
-            <span className="record-status" data-status={detail.active ? 'active' : 'archived'}>{detail.active ? 'Activo' : 'Archivado'}</span>
+            <h2>{translate("Detalle del registro")}</h2>
+            <span className="record-status" data-status={detail.active ? 'active' : 'archived'}>{translate(detail.active ? 'Activo' : 'Archivado')}</span>
           </div>
           <dl className="management-detail">
             {selected.fields
@@ -671,115 +642,103 @@ function GestionModule({ resource }: { resource: string }) {
               )
               .map((f) => (
                 <div key={f.key}>
-                  <dt>{f.label}</dt>
+                  <dt>{translate(f.label)}</dt>
                   <dd>
-                    {detail._labels?.[f.key] ?? valueLabel(f, detail[f.key])}
+                    {translate(detail._labels?.[f.key] ?? valueLabel(f, detail[f.key]))}
                   </dd>
                 </div>
               ))}
             <div>
-              <dt>Creado</dt>
+              <dt>{translate("Creado")}</dt>
               <dd>
-                {new Date(String(detail.created_at)).toLocaleString("es-MX")}
+                {translate(new Date(String(detail.created_at)).toLocaleString(locale()))}
               </dd>
             </div>
-            {detail.version && (
+            {translate(detail.version && (
               <div>
-                <dt>Versión</dt>
-                <dd>{detail.version}</dd>
+                <dt>{translate("Versión")}</dt>
+                <dd>{translate(detail.version)}</dd>
               </div>
-            )}
+            ))}
           </dl>
-          {detailLoading && <p role="status">Cargando historial…</p>}
+          {detailLoading && <p role="status">{translate("Cargando historial…")}</p>}
           {resource === "monitoring-profiles" && (
             <>
-              <h3>Aplicaciones al dispositivo</h3>
+              <h3>{translate("Aplicaciones al dispositivo")}</h3>
               {["admin", "control_center"].includes(user?.role ?? "") &&
                 detail.active && (
                   <form className="management-toolbar" onSubmit={apply}>
                     <select
-                      aria-label="Dispositivo para aplicar perfil"
+                      aria-label={translate("Dispositivo para aplicar perfil")}
                       required
                       value={applyNode}
                       onChange={(e) => setApplyNode(e.target.value)}
                     >
-                      <option value="">Selecciona un dispositivo</option>
+                      <option value="">{translate("Selecciona un dispositivo")}</option>
                       {deviceOptions.data?.map((n) => (
                         <option key={n.id} value={n.id}>
-                          {n.label}
+                          {translate(n.label)}
                         </option>
                       ))}
                     </select>
-                    <button className="btn" disabled={busy}>
-                      Aplicar muestreo y umbral de impacto
-                    </button>
+                    <button className="btn" disabled={busy}>{translate("Aplicar muestreo y umbral de impacto")}</button>
                   </form>
                 )}
               {applications.length ? (
                 applications.map((a) => (
                   <article key={a.id} className="management-note">
                     <strong>
-                      {a.node_code} · versión {a.profile_version}
+                      {translate(a.node_code)}{translate(" · versión ")}{translate(a.profile_version)}
                     </strong>
-                    {a.commands.map((c: any) => (
+                    {translate(a.commands.map((c: any) => (
                       <p key={c.cmd_id}>
-                        {c.action} · {c.status}
-                        {c.reason ? " · " + c.reason : ""}
+                        {translate(c.action)} · {translate(c.status)}
+                        {translate(c.reason ? " · " + c.reason : "")}
                       </p>
-                    ))}
+                    )))}
                   </article>
                 ))
               ) : (
-                <p>Sin aplicaciones registradas.</p>
+                <p>{translate("Sin aplicaciones registradas.")}</p>
               )}
-              <button className="btn" onClick={() => void inspect(detail)}>
-                Actualizar confirmaciones
-              </button>
+              <button className="btn" onClick={() => void inspect(detail)}>{translate("Actualizar confirmaciones")}</button>
             </>
           )}
           {resource === "incidents" && (
             <>
-              <h3>Comentarios y evidencias</h3>
+              <h3>{translate("Comentarios y evidencias")}</h3>
               {notes.length ? (
                 notes.map((n) => (
                   <article className="management-note" key={n.id}>
                     <strong>
-                      {n.author} ·{" "}
-                      {new Date(n.created_at).toLocaleString("es-MX")}
+                      {translate(n.author)} ·{" "}
+                      {translate(new Date(n.created_at).toLocaleString(locale()))}
                     </strong>
-                    <p>{n.body}</p>
-                    {n.evidence_url && (
-                      <a href={n.evidence_url} target="_blank" rel="noreferrer">
-                        Abrir evidencia
-                      </a>
-                    )}
+                    <p>{translate(n.body)}</p>
+                    {translate(n.evidence_url && (
+                      <a href={n.evidence_url} target="_blank" rel="noreferrer">{translate("Abrir evidencia")}</a>
+                    ))}
                   </article>
                 ))
               ) : (
-                <p>Sin comentarios.</p>
+                <p>{translate("Sin comentarios.")}</p>
               )}
               {editable &&
                 !["resolved", "dismissed"].includes(String(detail.status)) && (
                   <form onSubmit={addNote} className="management-fields">
-                    <label className="field">
-                      Comentario
-                      <textarea
+                    <label className="field">{translate("Comentario")}<textarea
                         required
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                       />
                     </label>
-                    <label className="field">
-                      Enlace a evidencia
-                      <input
+                    <label className="field">{translate("Enlace a evidencia")}<input
                         type="url"
                         value={evidence}
                         onChange={(e) => setEvidence(e.target.value)}
                       />
                     </label>
-                    <button className="btn" disabled={busy}>
-                      Agregar comentario
-                    </button>
+                    <button className="btn" disabled={busy}>{translate("Agregar comentario")}</button>
                   </form>
                 )}
             </>
@@ -787,45 +746,44 @@ function GestionModule({ resource }: { resource: string }) {
         </section>
         </Dialog>
       )}
-      {report && (
-        <Dialog wide title={`Reporte de viaje · ${report.trip.name}`} onClose={() => setReport(null)}>
+      {translate(report && (
+        <Dialog wide title={translate(`Reporte de viaje · ${report.trip.name}`)} onClose={() => setReport(null)}>
         <section className="user-form">
-          <h2>Reporte: {report.trip.name}</h2>
+          <h2>{translate("Reporte: ")}{translate(report.trip.name)}</h2>
           <dl className="management-detail">
             <div>
-              <dt>Lecturas reales</dt>
-              <dd>{report.telemetry.samples}</dd>
+              <dt>{translate("Lecturas reales")}</dt>
+              <dd>{translate(report.telemetry.samples)}</dd>
             </div>
             <div>
-              <dt>Lecturas recibidas con más de 30 s de demora</dt>
-              <dd>{report.telemetry.delayed_samples}</dd>
+              <dt>{translate("Lecturas recibidas con más de 30 s de demora")}</dt>
+              <dd>{translate(report.telemetry.delayed_samples)}</dd>
             </div>
             <div>
-              <dt>Velocidad promedio</dt>
+              <dt>{translate("Velocidad promedio")}</dt>
               <dd>
-                {report.telemetry.average_speed_kmh == null
+                {translate(report.telemetry.average_speed_kmh == null
                   ? "Sin datos"
-                  : `${Number(report.telemetry.average_speed_kmh).toFixed(1)} km/h`}
+                  : `${Number(report.telemetry.average_speed_kmh).toFixed(1)} km/h`)}
               </dd>
             </div>
             <div>
-              <dt>Velocidad máxima</dt>
+              <dt>{translate("Velocidad máxima")}</dt>
               <dd>
-                {report.telemetry.max_speed_kmh == null
+                {translate(report.telemetry.max_speed_kmh == null
                   ? "Sin datos"
-                  : `${Number(report.telemetry.max_speed_kmh).toFixed(1)} km/h`}
+                  : `${Number(report.telemetry.max_speed_kmh).toFixed(1)} km/h`)}
               </dd>
             </div>
           </dl>
-          <h3>Envíos</h3>
-          {report.shipments.map((s: any) => (
+          <h3>{translate("Envíos")}</h3>
+          {translate(report.shipments.map((s: any) => (
             <p key={s.code}>
-              {s.code} · {s.name} · {s.weight_kg} kg
-            </p>
-          ))}
-          {report.limitations.map((l: string) => (
-            <p key={l}>{l}</p>
-          ))}
+              {translate(s.code)} · {translate(s.name)} · {translate(s.weight_kg)}{translate(" kg")}</p>
+          )))}
+          {translate(report.limitations.map((l: string) => (
+            <p key={l}>{translate(l)}</p>
+          )))}
           <button
             className="btn"
             onClick={() => {
@@ -841,14 +799,11 @@ function GestionModule({ resource }: { resource: string }) {
               URL.revokeObjectURL(url);
             }}
           >
-            <Download size={15} /> Descargar reporte
-          </button>
-          <button className="btn" onClick={() => setReport(null)}>
-            Cerrar
-          </button>
+            <Download size={15} />{translate(" Descargar reporte")}</button>
+          <button className="btn" onClick={() => setReport(null)}>{translate("Cerrar")}</button>
         </section>
         </Dialog>
-      )}
+      ))}
     </>
   );
 }

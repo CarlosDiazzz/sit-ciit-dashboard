@@ -1,3 +1,4 @@
+import { t as translate, locale } from '../accessibility/i18n';
 /* Panel de riesgo climático por unidad.
  *
  * Muestra el clima AMBIENTAL real (Open-Meteo) en la última posición
@@ -90,7 +91,7 @@ export default function WeatherRiskPanel({ unit, canEditCategory, allRules, onCa
   const chartData = useMemo(
     () =>
       (history.data ?? []).map((r: WeatherReading) => ({
-        time: new Date(r.ts).toLocaleTimeString('es-MX', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        time: new Date(r.ts).toLocaleTimeString(locale(), { hour12: false, hour: '2-digit', minute: '2-digit' }),
         tempC: r.tempC,
         humidityPct: r.humidityPct,
       })),
@@ -113,23 +114,20 @@ export default function WeatherRiskPanel({ unit, canEditCategory, allRules, onCa
   return (
     <section className="chart-card weather-risk-card">
       <div className="card-head">
-        <h3>Riesgo climático</h3>
+        <h3>{translate("Riesgo climático")}</h3>
         {unit.cargoCategory ? <CargoCategoryBadge category={unit.cargoCategory} /> : null}
       </div>
 
       {canEditCategory ? (
-        <label className="node-picker weather-category-picker">
-          Categoría de carga:{' '}
+        <label className="node-picker weather-category-picker">{translate("Categoría de carga:")}{' '}
           <select
             value={unit.cargoCategory ?? ''}
             onChange={(e) => handleCategoryChange(e.target.value as CargoCategory)}
           >
-            <option value="" disabled>
-              Sin asignar
-            </option>
+            <option value="" disabled>{translate("Sin asignar")}</option>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {cargoCategoryLabel(c)}
+                {translate(cargoCategoryLabel(c))}
               </option>
             ))}
           </select>
@@ -138,16 +136,16 @@ export default function WeatherRiskPanel({ unit, canEditCategory, allRules, onCa
 
       {unit.cargoCategory && categoryRules.length > 0 ? (
         <details className="weather-thresholds-details">
-          <summary>Ver umbrales de {cargoCategoryLabel(unit.cargoCategory)} ({categoryRules.length})</summary>
+          <summary>{translate("Ver umbrales de ")}{translate(cargoCategoryLabel(unit.cargoCategory))} ({categoryRules.length})</summary>
           <ul className="weather-rules weather-thresholds">
             {categoryRules.map((r) => (
               <li key={r.id}>
                 <SeverityBadge severity={r.severity} />
-                <span>{formatConditions(r.conditions).join(' y ')}</span>
-                {activeRuleIds.has(r.id) ? <span className="tag">activa ahora</span> : null}
+                <span>{translate(formatConditions(r.conditions).join(' y '))}</span>
+                {activeRuleIds.has(r.id) ? <span className="tag">{translate("activa ahora")}</span> : null}
                 <span className="weather-rule-source">
-                  {r.isAssumption ? 'Supuesto del equipo — ' : ''}
-                  {r.source}
+                  {translate(r.isAssumption ? 'Supuesto del equipo — ' : '')}
+                  {translate(r.source)}
                 </span>
               </li>
             ))}
@@ -156,51 +154,40 @@ export default function WeatherRiskPanel({ unit, canEditCategory, allRules, onCa
       ) : null}
 
       {!unit.cargoCategory ? (
-        <p className="chart-hint">
-          Esta unidad todavía no tiene categoría de carga asignada — sin eso no se pueden evaluar
-          reglas de riesgo climático.
-        </p>
+        <p className="chart-hint">{translate("Esta unidad todavía no tiene categoría de carga asignada — sin eso no se pueden evaluar reglas de riesgo climático.")}</p>
       ) : latest.loading && latest.data === null ? (
         <Loading />
       ) : latest.error && latest.error.status !== 404 ? (
         <ErrorState error={latest.error} onRetry={latest.reload} />
       ) : !latest.data ? (
-        <p className="chart-hint">
-          Todavía no hay una lectura de clima para esta unidad — llega en cuanto reporte GPS y el
-          vigilante del backend corra (cada 15 min).
-        </p>
+        <p className="chart-hint">{translate("Todavía no hay una lectura de clima para esta unidad — llega en cuanto reporte GPS y el vigilante del backend corra (cada 15 min).")}</p>
       ) : (
         <>
           <dl className="weather-summary">
-            <dt>Temperatura</dt>
-            <dd>{formatNumber(latest.data.weather.tempC, 1)} °C</dd>
-            <dt>Humedad relativa</dt>
-            <dd>{formatNumber(latest.data.weather.humidityPct, 0)} %</dd>
-            <dt>Precipitación</dt>
-            <dd>{formatNumber(latest.data.weather.precipMm, 1)} mm</dd>
+            <dt>{translate("Temperatura")}</dt>
+            <dd>{translate(formatNumber(latest.data.weather.tempC, 1))}{translate(" °C")}</dd>
+            <dt>{translate("Humedad relativa")}</dt>
+            <dd>{translate(formatNumber(latest.data.weather.humidityPct, 0))} %</dd>
+            <dt>{translate("Precipitación")}</dt>
+            <dd>{translate(formatNumber(latest.data.weather.precipMm, 1))}{translate(" mm")}</dd>
           </dl>
-          <p className="chart-meta weather-source">
-            Clima ambiental real (Open-Meteo) en la última posición GPS conocida — no es la
-            temperatura dentro de la carga.
-          </p>
+          <p className="chart-meta weather-source">{translate("Clima ambiental real (Open-Meteo) en la última posición GPS conocida — no es la temperatura dentro de la carga.")}</p>
 
           {unit.cargoCategory === 'sin_carga' ? (
-            <p className="chart-hint">
-              Esta unidad va sin carga — no aplican reglas de riesgo climático.
-            </p>
+            <p className="chart-hint">{translate("Esta unidad va sin carga — no aplican reglas de riesgo climático.")}</p>
           ) : latest.data.activeRules.length === 0 ? (
-            <p className="chart-hint weather-clear">Sin riesgo detectado en las condiciones actuales.</p>
+            <p className="chart-hint weather-clear">{translate("Sin riesgo detectado en las condiciones actuales.")}</p>
           ) : (
             <ul className="weather-rules">
               {latest.data.activeRules.map((r) => (
                 <li key={r.id}>
                   <SeverityBadge severity={r.severity} />
                   <span>
-                    {r.message} <span className="weather-rule-source">({formatConditions(r.conditions).join(' y ')})</span>
+                    {translate(r.message)} <span className="weather-rule-source">({translate(formatConditions(r.conditions).join(' y '))})</span>
                   </span>
                   <span className="weather-rule-source">
-                    {r.isAssumption ? 'Supuesto del equipo — ' : ''}
-                    {r.source}
+                    {translate(r.isAssumption ? 'Supuesto del equipo — ' : '')}
+                    {translate(r.source)}
                   </span>
                 </li>
               ))}
@@ -219,8 +206,8 @@ export default function WeatherRiskPanel({ unit, canEditCategory, allRules, onCa
                     labelStyle={{ color: colors.textSecondary }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12, color: colors.textSecondary }} />
-                  <Line type="monotone" dataKey="tempC" name="°C" stroke={colors.seriesTemp} dot={false} isAnimationActive={false} connectNulls />
-                  <Line type="monotone" dataKey="humidityPct" name="% HR" stroke={colors.seriesHumidity} dot={false} isAnimationActive={false} connectNulls />
+                  <Line type="monotone" dataKey="tempC" name={translate("°C")} stroke={colors.seriesTemp} dot={false} isAnimationActive={false} connectNulls />
+                  <Line type="monotone" dataKey="humidityPct" name={translate("% HR")} stroke={colors.seriesHumidity} dot={false} isAnimationActive={false} connectNulls />
                 </LineChart>
               </ResponsiveContainer>
             </div>

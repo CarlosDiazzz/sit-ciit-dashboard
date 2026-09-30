@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 import DecisionBrief from '../components/DecisionBrief';
 import { PagedRows } from '../components/Pagination';
 /* Bitácora: cada cambio de estado de cada comando, para auditoría.
@@ -33,13 +34,13 @@ export default function Bitacora() {
     <>
       <div className="page-head">
         <div>
-          <h1>Bitácora</h1>
-          <p>Registro de auditoría: quién mandó qué, a qué nodo y cuándo.</p>
+          <h1>{translate("Bitácora")}</h1>
+          <p>{translate("Registro de auditoría: quién mandó qué, a qué nodo y cuándo.")}</p>
         </div>
         <PageBreadcrumbs current="Bitácora" />
       </div>
 
-      <DecisionBrief title="Reconstruye la secuencia de la intervención" evidence="Cada entrada representa una transición de estado. Compara los tiempos y motivos del mismo comando para comprender qué ocurrió." action="Revisa el seguimiento del comando para distinguir una solicitud enviada de una ejecución confirmada." to="/comandos" linkLabel="Revisar comandos" />
+      <DecisionBrief title={translate("Reconstruye la secuencia de la intervención")} evidence={translate("Cada entrada representa una transición de estado. Compara los tiempos y motivos del mismo comando para comprender qué ocurrió.")} action={translate("Revisa el seguimiento del comando para distinguir una solicitud enviada de una ejecución confirmada.")} to="/comandos" linkLabel={translate("Revisar comandos")} />
       <AsyncBoundary
         state={state}
         empty={{
@@ -48,30 +49,30 @@ export default function Bitacora() {
         }}
       >
         {(entradas) => (
-          <PagedRows items={entradas} label="Historial de comandos">{rows => (
+          <PagedRows items={entradas} label={translate("Historial de comandos")}>{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Cuándo</th>
-                  <th>Acción</th>
-                  <th>Nodo</th>
-                  <th>Estado</th>
-                  <th>Emitió</th>
-                  <th>Motivo</th>
+                  <th>{translate("Cuándo")}</th>
+                  <th>{translate("Acción")}</th>
+                  <th>{translate("Nodo")}</th>
+                  <th>{translate("Estado")}</th>
+                  <th>{translate("Emitió")}</th>
+                  <th>{translate("Motivo")}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((e) => (
                   <tr key={e.id}>
-                    <td className="tabular">{formatDateTime(e.occurredAt)}</td>
-                    <td>{ACCION_LABEL[e.action] ?? e.action}</td>
-                    <td className="mono">{e.targetNodeCode}</td>
+                    <td className="tabular">{translate(formatDateTime(e.occurredAt))}</td>
+                    <td>{translate(ACCION_LABEL[e.action] ?? e.action)}</td>
+                    <td className="mono">{translate(e.targetNodeCode)}</td>
                     <td>
                       <CommandStatusBadge status={e.status} />
                     </td>
-                    <td>{e.issuedByEmail}</td>
-                    <td>{e.reason ?? '—'}</td>
+                    <td>{translate(e.issuedByEmail)}</td>
+                    <td>{translate(e.reason ?? '—')}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,3 +1,5 @@
+import { useReducedMotion } from '../accessibility/useReducedMotion';
+import { t as translate } from '../accessibility/i18n';
 /* Capas en vivo del mapa: dónde está cada unidad y dónde ocurrió cada
  * evento.
  *
@@ -185,6 +187,7 @@ export default function LiveMapLayers({
   // El mapa hace falta para separar los marcadores en pixeles: la
   // conversion depende del zoom, que cambia cuando el usuario amplia.
   const map = useMap();
+  const reducedMotion = useReducedMotion();
   unidadesRef.current = unidades;
   /** Nodo que cada unidad usa como fuente, por codigo de unidad. Lo
    *  emite el backend al hacer failover. */
@@ -197,8 +200,7 @@ export default function LiveMapLayers({
   // pide menos movimiento no se anima: el marcador salta a cada
   // posición nueva, que es el comportamiento honesto sin animación.
   useEffect(() => {
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    if (reduce) {
+    if (reducedMotion) {
       // Sin animación el reloj sigue avanzando, más lento: hace falta
       // para que una unidad que se calla acabe dibujándose apagada.
       const id = setInterval(() => setAhora(Date.now()), 5000);
@@ -225,7 +227,7 @@ export default function LiveMapLayers({
       vivo = false;
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [reducedMotion]);
 
   // Última posición real conocida al abrir el mapa: sin esto, una unidad
   // que no estuviera publicando justo en este instante no aparecía en
@@ -515,9 +517,7 @@ export default function LiveMapLayers({
           reporte un evento o una unidad real. */}
       {torres.map((t, i) => (
         <Marker key={`torre-${i}`} position={[t.lat, t.lon]} icon={iconoAntena()}>
-          <Tooltip direction="top" offset={[0, -6]}>
-            Antena {t.radio ?? 'real'} (OpenCelliD)
-            {t.rangeM !== null ? ` · rango real ${(t.rangeM / 1000).toFixed(1)} km` : ' · sin rango reportado'}
+          <Tooltip direction="top" offset={[0, -6]}>{translate("Antena ")}{translate(t.radio ?? 'real')}{translate(" (OpenCelliD)")}{translate(t.rangeM !== null ? ` · rango real ${(t.rangeM / 1000).toFixed(1)} km` : ' · sin rango reportado')}
           </Tooltip>
         </Marker>
       ))}
@@ -534,19 +534,19 @@ export default function LiveMapLayers({
           }
         >
           <Tooltip direction="top" offset={[0, -10]}>
-            {eventKindLabel(ev.kind)}
-            {ev.value !== null
+            {translate(eventKindLabel(ev.kind))}
+            {translate(ev.value !== null
               ? ` · ${ev.value.toFixed(2)} ${eventValueUnit(ev.kind)}`.trimEnd()
-              : ''}
+              : '')}
           </Tooltip>
           <Popup>
-            <strong>{eventKindLabel(ev.kind)}</strong>
+            <strong>{translate(eventKindLabel(ev.kind))}</strong>
             <br />
-            {ev.value !== null
+            {translate(ev.value !== null
               ? `${ev.value.toFixed(2)} ${eventValueUnit(ev.kind)}`.trimEnd()
-              : 'sin valor medido'}
+              : 'sin valor medido')}
             <br />
-            {formatTime(new Date(ev.ts).toISOString())}
+            {translate(formatTime(new Date(ev.ts).toISOString()))}
           </Popup>
         </Marker>
       ))}
@@ -562,19 +562,15 @@ export default function LiveMapLayers({
             pathOptions={{ color: '#6e7681', weight: 2, dashArray: '2 6', opacity: 0.6 }}
           />
           <Marker position={e.posicion} icon={iconoEstimado(e.rumbo)}>
-            <Tooltip direction="top" offset={[0, -10]}>
-              Posición estimada — {e.unitId}
+            <Tooltip direction="top" offset={[0, -10]}>{translate("Posición estimada — ")}{translate(e.unitId)}
             </Tooltip>
             <Popup>
-              <strong>Posición estimada</strong>
+              <strong>{translate("Posición estimada")}</strong>
+              <br />{translate("A partir de su última velocidad real (")}{translate(e.speedKmh.toFixed(0))}{translate(" km/h)")}<br />{translate("Sin señal desde hace ")}{translate(formatMin(e.sinSenalDesdeS))}
               <br />
-              A partir de su última velocidad real ({e.speedKmh.toFixed(0)} km/h)
-              <br />
-              Sin señal desde hace {formatMin(e.sinSenalDesdeS)}
-              <br />
-              {e.etaSegundos !== null
+              {translate(e.etaSegundos !== null
                 ? `ETA a próxima zona con cobertura conocida: ~${formatMin(e.etaSegundos)}${e.rangoSupuesto ? ' (rango supuesto, esa torre no reporta uno real)' : ''}`
-                : 'No se encontró una zona de cobertura conocida más adelante en los datos de OpenCelliD.'}
+                : 'No se encontró una zona de cobertura conocida más adelante en los datos de OpenCelliD.')}
             </Popup>
           </Marker>
         </div>
@@ -603,7 +599,7 @@ export default function LiveMapLayers({
       )}
 
       {lista.map((u) => {
-        const medida = posicionActual(u, ahora);
+        const medida = reducedMotion ? u.destino : posicionActual(u, ahora);
         // Si hay otro nodo de la misma unidad casi encima, se separan:
         // el primario arriba, el respaldo abajo. La comparacion va en
         // pixeles, asi que el ajuste se mantiene igual a cualquier zoom.
@@ -612,7 +608,7 @@ export default function LiveMapLayers({
 
         if (hermano) {
           const p = map.latLngToLayerPoint(medida);
-          const q = map.latLngToLayerPoint(posicionActual(hermano, ahora));
+          const q = map.latLngToLayerPoint(reducedMotion ? hermano.destino : posicionActual(hermano, ahora));
           if (p.distanceTo(q) < SOLAPE_PX) {
             const desplazado = map.layerPointToLatLng([
               p.x,
@@ -644,15 +640,15 @@ export default function LiveMapLayers({
               zIndexOffset={500}
             >
               <Popup>
-                <strong>{u.nodeId}</strong>
+                <strong>{translate(u.nodeId)}</strong>
                 <br />
-                {u.role === 'primary' ? 'Nodo primario' : 'Nodo de respaldo'}
+                {translate(u.role === 'primary' ? 'Nodo primario' : 'Nodo de respaldo')}
                 <br />
-                {u.speedKmh !== null ? `${u.speedKmh.toFixed(1)} km/h` : 'sin velocidad'}
+                {translate(u.speedKmh !== null ? `${u.speedKmh.toFixed(1)} km/h` : 'sin velocidad')}
                 <br />
-                {callada
+                {translate(callada
                   ? `Sin datos desde ${formatTime(new Date(u.recibidoEn).toISOString())}`
-                  : `Último dato ${formatTime(new Date(u.recibidoEn).toISOString())}`}
+                  : `Último dato ${formatTime(new Date(u.recibidoEn).toISOString())}`)}
               </Popup>
             </Marker>
           </div>

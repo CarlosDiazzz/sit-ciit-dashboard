@@ -1,3 +1,5 @@
+import { t as translate, locale } from '../accessibility/i18n';
+import { RefreshCw } from 'lucide-react';
 import { api } from "../api/client";
 import PageBreadcrumbs from "../components/PageBreadcrumbs";
 import { useApi } from "../api/useApi";
@@ -16,38 +18,44 @@ export default function Avisos() {
     <>
       <div className="page-head">
         <div>
-          <h1>Mis avisos</h1>
-          <p>Notificaciones de incidentes dentro de tu ámbito de acceso.</p>
+          <h1>{translate("Mis avisos")}</h1>
+          <p>{translate("Notificaciones de incidentes dentro de tu ámbito de acceso.")}</p>
         </div>
-        <PageBreadcrumbs current="Mis avisos" />
-        <button className="btn" onClick={notices.reload}>
-          Actualizar
-        </button>
+        <div className="page-head-actions">
+          <PageBreadcrumbs current="Mis avisos" />
+          <button
+            className="btn page-refresh-btn"
+            onClick={notices.reload}
+            disabled={notices.loading}
+          >
+            <RefreshCw size={15} aria-hidden="true" />
+            {translate("Actualizar")}
+          </button>
+        </div>
       </div>
       {notices.loading ? (
-        <p role="status">Cargando avisos…</p>
+        <p role="status">{translate("Cargando avisos…")}</p>
       ) : notices.error ? (
-        <p role="alert">{notices.error.userMessage}</p>
+        <p role="alert">{translate(notices.error.userMessage)}</p>
       ) : notices.data?.length ? (
         notices.data.map((n) => (
           <article className="management-note" key={n.id}>
-            <h2>{n.title}</h2>
+            <h2>{translate(n.title)}</h2>
             <p>
-              {new Date(n.created_at).toLocaleString("es-MX")} ·{" "}
+              {translate(new Date(n.created_at).toLocaleString(locale()))} ·{" "}
               {
-                (
+                translate((
                   {
                     info: "Información",
                     warning: "Advertencia",
                     critical: "Crítico",
                   } as Record<string, string>
-                )[n.severity]
+                )[n.severity])
               }
             </p>
-            <p>
-              Estado:{" "}
+            <p>{translate("Estado:")}{" "}
               {
-                (
+                translate((
                   {
                     open: "Abierto",
                     acknowledged: "Reconocido",
@@ -55,13 +63,13 @@ export default function Avisos() {
                     resolved: "Resuelto",
                     dismissed: "Descartado",
                   } as Record<string, string>
-                )[n.incident_status]
+                )[n.incident_status])
               }
             </p>
           </article>
         ))
       ) : (
-        <p>No tienes avisos disponibles.</p>
+        <p>{translate("No tienes avisos disponibles.")}</p>
       )}
     </>
   );

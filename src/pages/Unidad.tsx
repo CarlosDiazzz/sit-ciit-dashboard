@@ -1,3 +1,4 @@
+import { t as translate, locale } from '../accessibility/i18n';
 import DecisionBrief from "../components/DecisionBrief";
 /* Vista Unidad: monitoreo del nodo seleccionado y su conectividad.
  *
@@ -135,7 +136,7 @@ function toChartPoint(row: TelemetryPoint): ChartPoint {
   const { accelX, accelY, accelZ, gyroX, gyroY, gyroZ } = row;
   return {
     ts: new Date(row.ts).getTime(),
-    time: new Date(row.ts).toLocaleTimeString("es-MX", { hour12: false }),
+    time: new Date(row.ts).toLocaleTimeString(locale(), { hour12: false }),
     x: accelX,
     y: accelY,
     z: accelZ,
@@ -239,7 +240,7 @@ export default function Unidad() {
     setPoints((prev) => {
       const point: ChartPoint = {
         ts: evt.ts,
-        time: new Date(evt.ts).toLocaleTimeString("es-MX", { hour12: false }),
+        time: new Date(evt.ts).toLocaleTimeString(locale(), { hour12: false }),
         x: a?.x ?? null,
         y: a?.y ?? null,
         z: a?.z ?? null,
@@ -360,130 +361,127 @@ export default function Unidad() {
     <>
       <div className="page-head">
         <div>
-          <span className="dss-kicker">TONATIUH / MONITOREO</span>
-          <h1>Monitoreo de nodo</h1>
-          <p>Gráficas, recomendaciones y conectividad del nodo seleccionado.</p>
+          <span className="dss-kicker">{translate("TONATIUH / MONITOREO")}</span>
+          <h1>{translate("Monitoreo de nodo")}</h1>
+          <p>{translate("Gráficas, recomendaciones y conectividad del nodo seleccionado.")}</p>
         </div>
         <PageBreadcrumbs current="Monitoreo de nodo" />
       </div>
       <div className="focused-selector">
         <label className="field">
-          <span>Buscar nodo o unidad</span>
+          <span>{translate("Buscar nodo o unidad")}</span>
           <input
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            placeholder="Código de nodo o unidad…"
+            placeholder={translate("Código de nodo o unidad…")}
           />
         </label>
         <label className="field">
-          <span>Nodo seleccionado</span>
+          <span>{translate("Nodo seleccionado")}</span>
           <select
             value={selectedNodeId ?? ""}
             onChange={(e) => selectNode(e.target.value)}
           >
-            {!selectedNodeId && <option value="">Seleccionar nodo</option>}
+            {!selectedNodeId && <option value="">{translate("Seleccionar nodo")}</option>}
             {selected &&
               !filtered.some((item) => item.node.id === selected.node.id) && (
                 <option value={selected.node.nodeCode}>
-                  {selected.node.nodeCode} ·{" "}
-                  {selected.unit.label ?? selected.unit.unitCode}
+                  {translate(selected.node.nodeCode)} ·{" "}
+                  {translate(selected.unit.label ?? selected.unit.unitCode)}
                 </option>
               )}
             {filtered.map(({ unit, node }) => (
               <option key={node.id} value={node.nodeCode}>
-                {node.nodeCode} · {unit.label ?? unit.unitCode} ·{" "}
-                {ROLE_LABEL[node.role]}
+                {translate(node.nodeCode)} · {translate(unit.label ?? unit.unitCode)} ·{" "}
+                {translate(ROLE_LABEL[node.role])}
               </option>
             ))}
           </select>
         </label>
-        {filtro && !filtered.length && (
-          <p>Sin coincidencias para «{filtro}».</p>
-        )}
+        {translate(filtro && !filtered.length && (
+          <p>{translate("Sin coincidencias para «")}{translate(filtro)}».</p>
+        ))}
       </div>
-      {state.loading && !state.data && <Loading label="Cargando nodos…" />}
+      {state.loading && !state.data && <Loading label={translate("Cargando nodos…")} />}
       {state.error && <ErrorState error={state.error} onRetry={state.reload} />}
       {!state.loading && !state.error && !catalog.length && (
-        <p>No hay nodos registrados.</p>
+        <p>{translate("No hay nodos registrados.")}</p>
       )}
       {selected && (
         <section className="chart-card focused-summary">
           <div className="card-head">
-            <h2>{selected.node.nodeCode}</h2>
+            <h2>{translate(selected.node.nodeCode)}</h2>
             <ConnectionBadge online={selected.node.isOnline} />
           </div>
           <dl>
             <div>
-              <dt>Unidad</dt>
-              <dd>{selected.unit.label ?? selected.unit.unitCode}</dd>
+              <dt>{translate("Unidad")}</dt>
+              <dd>{translate(selected.unit.label ?? selected.unit.unitCode)}</dd>
             </div>
             <div>
-              <dt>Función</dt>
+              <dt>{translate("Función")}</dt>
               <dd>
-                {ROLE_LABEL[selected.node.role]}
-                {selected.unit.activeNodeId === selected.node.id
+                {translate(ROLE_LABEL[selected.node.role])}
+                {translate(selected.unit.activeNodeId === selected.node.id
                   ? " · fuente activa"
-                  : ""}
+                  : "")}
               </dd>
             </div>
             <div>
-              <dt>Último heartbeat</dt>
-              <dd>{formatAgo(selected.node.lastHeartbeatAt)}</dd>
+              <dt>{translate("Último heartbeat")}</dt>
+              <dd>{translate(formatAgo(selected.node.lastHeartbeatAt))}</dd>
             </div>
             <div>
-              <dt>Batería</dt>
+              <dt>{translate("Batería")}</dt>
               <dd>
-                {selected.node.batteryPct == null
+                {translate(selected.node.batteryPct == null
                   ? "—"
-                  : `${formatNumber(selected.node.batteryPct, 0)} %`}
+                  : `${formatNumber(selected.node.batteryPct, 0)} %`)}
               </dd>
             </div>
             <div>
-              <dt>Cola pendiente</dt>
-              <dd>{selected.node.pendingOutbox ?? "—"}</dd>
+              <dt>{translate("Cola pendiente")}</dt>
+              <dd>{translate(selected.node.pendingOutbox ?? "—")}</dd>
             </div>
             <div>
-              <dt>Última muestra</dt>
+              <dt>{translate("Última muestra")}</dt>
               <dd>
-                {selectedNodeId && lastByNode[selectedNodeId]
+                {translate(selectedNodeId && lastByNode[selectedNodeId]
                   ? formatAgo(
                       new Date(
                         lastByNode[selectedNodeId].receivedAt,
                       ).toISOString(),
                     )
-                  : "Sin lecturas"}
+                  : "Sin lecturas")}
               </dd>
             </div>
           </dl>
-          {selectedNodeId &&
+          {translate(selectedNodeId &&
             lastByNode[selectedNodeId] &&
             ahora - lastByNode[selectedNodeId].receivedAt > 15000 && (
-              <p role="status">
-                La última lectura está retenida; no confirma el movimiento
-                actual.
-              </p>
-            )}
+              <p role="status">{translate("La última lectura está retenida; no confirma el movimiento actual.")}</p>
+            ))}
         </section>
       )}
 
       <DecisionBrief
         title={
-          selectedNodeId
+          translate(selectedNodeId
             ? `Fuente observada: ${selectedNodeId}`
-            : "Aún no hay una fuente para evaluar"
+            : "Aún no hay una fuente para evaluar")
         }
         evidence={
-          selectedNodeId && lastByNode[selectedNodeId]
+          translate(selectedNodeId && lastByNode[selectedNodeId]
             ? `Última recepción: ${formatAgo(new Date(lastByNode[selectedNodeId].receivedAt).toISOString())}. Las gráficas conservan hasta 60 muestras recibidas en esta sesión; una lectura retenida no garantiza el estado actual.`
-            : "Esperando telemetría. Sin lecturas no se puede determinar el movimiento ni el estado de la carga."
+            : "Esperando telemetría. Sin lecturas no se puede determinar el movimiento ni el estado de la carga.")
         }
         action={
-          selected?.node.isOnline
+          translate(selected?.node.isOnline
             ? "Revisa las gráficas y los riesgos de la carga. Ante un cambio brusco, consulta las incidencias y confirma con el operador."
-            : "Verifica la conexión del nodo y su cola pendiente. Consulta el mapa para revisar las interrupciones registradas."
+            : "Verifica la conexión del nodo y su cola pendiente. Consulta el mapa para revisar las interrupciones registradas.")
         }
         to="/eventos"
-        linkLabel="Revisar incidencias"
+        linkLabel={translate("Revisar incidencias")}
       />
       {selected && (
         <NodeConnectivityMap
@@ -492,14 +490,14 @@ export default function Unidad() {
           nodeCode={selected.node.nodeCode}
         />
       )}
-      {historyError && <p role="alert">{historyError}</p>}
+      {translate(historyError && <p role="alert">{translate(historyError)}</p>)}
 
       {points.length === 0 ? (
         <section className="chart-card">
           <p className="chart-hint">
-            {historyLoading
+            {translate(historyLoading
               ? "Cargando las últimas muestras…"
-              : "Sin muestras del nodo seleccionado en las últimas 24 horas. Esperando telemetría en vivo."}
+              : "Sin muestras del nodo seleccionado en las últimas 24 horas. Esperando telemetría en vivo.")}
           </p>
         </section>
       ) : (
@@ -513,8 +511,8 @@ export default function Unidad() {
 
           <section className="chart-card">
             <div className="card-head">
-              <h2>Aceleración</h2>
-              <span className="chart-meta mono">{selectedNodeId}</span>
+              <h2>{translate("Aceleración")}</h2>
+              <span className="chart-meta mono">{translate(selectedNodeId)}</span>
             </div>
             <div className="chart-frame">
               <ResponsiveContainer>
@@ -555,7 +553,7 @@ export default function Unidad() {
                   <Line
                     type="monotone"
                     dataKey="magnitude"
-                    name="|a|"
+                    name={translate("|a|")}
                     stroke={colors.textPrimary}
                     strokeDasharray="4 3"
                     dot={false}
@@ -568,14 +566,14 @@ export default function Unidad() {
 
           <section className="chart-card">
             <div className="card-head">
-              <h2>Velocidad</h2>
+              <h2>{translate("Velocidad")}</h2>
               {selected?.node.isOnline &&
               selectedNodeId &&
               lastByNode[selectedNodeId]?.accel &&
               ahora - lastByNode[selectedNodeId].receivedAt <= 15000 ? (
                 <MovementBadge moving={isMoving} />
               ) : (
-                <span className="chart-meta">Movimiento sin confirmar</span>
+                <span className="chart-meta">{translate("Movimiento sin confirmar")}</span>
               )}
             </div>
 
@@ -598,7 +596,7 @@ export default function Unidad() {
                   <Line
                     type="monotone"
                     dataKey="speedKmh"
-                    name="km/h"
+                    name={translate("km/h")}
                     stroke={colors.seriesSpeed}
                     dot={false}
                     isAnimationActive={false}
@@ -610,8 +608,8 @@ export default function Unidad() {
 
           <section className="chart-card">
             <div className="card-head">
-              <h2>Rotación</h2>
-              <span className="chart-meta">giroscopio · rad/s</span>
+              <h2>{translate("Rotación")}</h2>
+              <span className="chart-meta">{translate("giroscopio · rad/s")}</span>
             </div>
             <div className="chart-frame chart-frame-sm">
               <ResponsiveContainer>
@@ -629,7 +627,7 @@ export default function Unidad() {
                   <Line
                     type="monotone"
                     dataKey="rotacion"
-                    name="rad/s"
+                    name={translate("rad/s")}
                     stroke={colors.seriesY}
                     dot={false}
                     isAnimationActive={false}

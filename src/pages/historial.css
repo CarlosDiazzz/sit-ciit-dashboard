@@ -5,9 +5,42 @@
   align-items: center;
   margin: 20px 0;
 }
+
+.history-consult-btn {
+  background: var(--text-strong);
+  border-color: var(--text-strong);
+  color: var(--bg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transition: background 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, transform 160ms ease;
+}
+
+.history-consult-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-strong) 88%, var(--surface));
+  border-color: var(--text-strong);
+  color: var(--bg);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+  transform: translateY(-1px);
+}
+
+.history-consult-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.history-consult-btn:disabled {
+  background: color-mix(in srgb, var(--text-strong) 58%, var(--surface));
+  border-color: color-mix(in srgb, var(--text-strong) 58%, var(--surface));
+  color: var(--bg);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+}
+
 .history-summary span {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 0.928571rem;
 }
 .history-chart {
   height: 320px;

@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 // Velocímetro digital — mismo dato que la línea "velocidad (km/h)" de
 // Unidad.tsx (gps.speedMs del backend), mostrado como número grande en
 // vez de serie de tiempo. Mismo violeta que esa línea, para que se lea
@@ -34,11 +35,11 @@ export default function SpeedGauge({ speedKmh, label, colors }: SpeedGaugeProps)
           lineHeight: 1,
         }}
       >
-        {animated != null ? animated.toFixed(1) : '—'}
+        {translate(animated != null ? animated.toFixed(1) : '—')}
       </div>
       <div style={{ fontSize: 13, color: colors.muted, marginTop: 4 }}>
-        {speedKmh != null ? 'km/h' : 'sin dato'}
-        {label ? ` · ${label}` : ''}
+        {translate(speedKmh != null ? 'km/h' : 'sin dato')}
+        {translate(label ? ` · ${label}` : '')}
       </div>
     </div>
   );

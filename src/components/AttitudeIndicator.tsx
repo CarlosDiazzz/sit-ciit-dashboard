@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Indicador de actitud del contenedor, en la tradición del horizonte
  * artificial de un avión.
  *
@@ -44,7 +45,7 @@ export default function AttitudeIndicator({
   if (!actitud) {
     return (
       <div className="attitude attitude--empty">
-        <p>Esperando lecturas del acelerómetro</p>
+        <p>{translate("Esperando lecturas del acelerómetro")}</p>
       </div>
     );
   }
@@ -62,12 +63,12 @@ export default function AttitudeIndicator({
   return (
     <div className={`attitude attitude--${estado}`}>
       <div className="attitude__head">
-        <h3>Actitud</h3>
-        {nodeCode ? <span className="attitude__node mono">{nodeCode}</span> : null}
+        <h3>{translate("Actitud")}</h3>
+        {nodeCode ? <span className="attitude__node mono">{translate(nodeCode)}</span> : null}
       </div>
 
       <div className="attitude__dial">
-        <svg viewBox="0 0 200 200" role="img" aria-label={`Alabeo ${alabeo.toFixed(0)} grados, cabeceo ${cabeceo.toFixed(0)} grados`}>
+        <svg viewBox="0 0 200 200" role="img" aria-label={translate(`Alabeo ${alabeo.toFixed(0)} grados, cabeceo ${cabeceo.toFixed(0)} grados`)}>
           <defs>
             <clipPath id="attitude-disc">
               <circle cx="100" cy="100" r="76" />
@@ -131,31 +132,29 @@ export default function AttitudeIndicator({
 
       <dl className="attitude__values">
         <div>
-          <dt>Alabeo</dt>
+          <dt>{translate("Alabeo")}</dt>
           <dd className={estado !== 'normal' ? `is-${estado}` : undefined}>
-            {alabeo >= 0 ? '+' : ''}
-            {alabeo.toFixed(1)}°
+            {translate(alabeo >= 0 ? '+' : '')}
+            {translate(alabeo.toFixed(1))}°
           </dd>
         </div>
         <div>
-          <dt>Cabeceo</dt>
+          <dt>{translate("Cabeceo")}</dt>
           <dd>
-            {cabeceo >= 0 ? '+' : ''}
-            {cabeceo.toFixed(1)}°
+            {translate(cabeceo >= 0 ? '+' : '')}
+            {translate(cabeceo.toFixed(1))}°
           </dd>
         </div>
         <div>
-          <dt>Rotación</dt>
+          <dt>{translate("Rotación")}</dt>
           <dd className={rotacion !== null && rotacion > ROTACION_AVISO ? 'is-aviso' : undefined}>
-            {rotacion === null ? '—' : `${rotacion.toFixed(2)} rad/s`}
+            {translate(rotacion === null ? '—' : `${rotacion.toFixed(2)} rad/s`)}
           </dd>
         </div>
       </dl>
 
       {estado === 'critico' ? (
-        <p className="attitude__warn">
-          Inclinación sostenida: el contrato marca volcadura a los 60°.
-        </p>
+        <p className="attitude__warn">{translate("Inclinación sostenida: el contrato marca volcadura a los 60°.")}</p>
       ) : null}
     </div>
   );

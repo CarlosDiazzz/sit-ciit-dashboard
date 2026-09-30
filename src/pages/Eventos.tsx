@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Historial de eventos: severidad, confirmación y marca de tardíos.
  *
  * Los eventos nuevos llegan por Socket.IO y se anteponen a la lista
@@ -51,31 +52,31 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
   const critical = pending.filter(e => e.severity === 'critical').length;
   return <>
     <div className="dss-metrics">
-      <article><span>Críticos sin confirmar</span><strong className={critical ? 'dss-critical' : ''}>{critical}</strong><small>Primera prioridad de revisión</small></article>
-      <article><span>Pendientes de confirmar</span><strong>{pending.length}</strong><small>Confirmar no equivale a resolver</small></article>
-      <article><span>Unidades con pendientes</span><strong>{new Set(pending.map(e => e.unitId)).size}</strong><small>Dentro de la consulta actual</small></article>
-      <article><span>Alertas de posible volcadura</span><strong>{pending.filter(e => e.kind === 'rollover').length}</strong><small>Sin confirmar · No son incidentes verificados</small></article>
+      <article><span>{translate("Críticos sin confirmar")}</span><strong className={critical ? 'dss-critical' : ''}>{critical}</strong><small>{translate("Primera prioridad de revisión")}</small></article>
+      <article><span>{translate("Pendientes de confirmar")}</span><strong>{pending.length}</strong><small>{translate("Confirmar no equivale a resolver")}</small></article>
+      <article><span>{translate("Unidades con pendientes")}</span><strong>{new Set(pending.map(e => e.unitId)).size}</strong><small>{translate("Dentro de la consulta actual")}</small></article>
+      <article><span>{translate("Alertas de posible volcadura")}</span><strong>{pending.filter(e => e.kind === 'rollover').length}</strong><small>{translate("Sin confirmar · No son incidentes verificados")}</small></article>
     </div>
     <div className="dss-workspace">
       <section className="dss-panel">
-        <div className="dss-panel-head"><div><span className="dss-kicker">01 / PRIORIZAR</span><h2>Detecciones de la unidad</h2></div><span className="dss-count">{visible.length} eventos</span></div>
-        <div className="dss-filters"><label>Prioridad<select value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todos los eventos</option><option value="pending">Sin confirmar</option><option value="critical">Críticos</option><option value="warning">Advertencias</option><option value="info">Informativos</option></select></label><label>Detección<select value={kind} onChange={e => setKind(e.target.value)}><option value="all">Todos los tipos</option><option value="movement">Movimientos bruscos</option><option value="rollover">Posible volcadura</option><option value="impact">Impactos</option><option value="hard_brake">Frenado brusco</option><option value="curve_overspeed">Exceso en curva</option><option value="dynamic_impact">Golpe dinámico</option><option value="track_irregularity">Irregularidad de vía</option></select></label><label>Unidad<select value={unit} onChange={e => setUnit(e.target.value)}><option value="">Todas las unidades</option>{[...new Map(events.map(e => [e.unitId, e.unitCode ?? e.unitId.slice(0, 8)])).entries()].map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label></div>
-        <p className="dss-caption">Sin confirmar primero, después severidad y fecha más reciente.</p>
-        <div className="dss-event-list">{visible.map(e => <button className={`dss-event ${selected?.id === e.id ? 'is-selected' : ''}`} key={e.id} onClick={() => setSelectedId(e.id)} aria-pressed={selected?.id === e.id}><span className="dss-event-top"><strong>{eventKindLabel(e.kind)}</strong><SeverityBadge severity={e.severity} /></span><span className="dss-event-unit">{e.unitCode ?? `Unidad ${e.unitId.slice(0, 8)}`}</span><span className="dss-event-bottom"><span>{formatAgo(e.ts)}</span><span>{e.acknowledgedAt ? 'Confirmado' : 'Sin confirmar'} →</span></span></button>)}</div>
-        {!visible.length && <EmptyState title="Sin coincidencias" hint="Prueba otra prioridad o unidad." />}
+        <div className="dss-panel-head"><div><span className="dss-kicker">{translate("01 / PRIORIZAR")}</span><h2>{translate("Detecciones de la unidad")}</h2></div><span className="dss-count">{visible.length}{translate(" eventos")}</span></div>
+        <div className="dss-filters"><label>{translate("Prioridad")}<select value={filter} onChange={e => setFilter(e.target.value)}><option value="all">{translate("Todos los eventos")}</option><option value="pending">{translate("Sin confirmar")}</option><option value="critical">{translate("Críticos")}</option><option value="warning">{translate("Advertencias")}</option><option value="info">{translate("Informativos")}</option></select></label><label>{translate("Detección")}<select value={kind} onChange={e => setKind(e.target.value)}><option value="all">{translate("Todos los tipos")}</option><option value="movement">{translate("Movimientos bruscos")}</option><option value="rollover">{translate("Posible volcadura")}</option><option value="impact">{translate("Impactos")}</option><option value="hard_brake">{translate("Frenado brusco")}</option><option value="curve_overspeed">{translate("Exceso en curva")}</option><option value="dynamic_impact">{translate("Golpe dinámico")}</option><option value="track_irregularity">{translate("Irregularidad de vía")}</option></select></label><label>{translate("Unidad")}<select value={unit} onChange={e => setUnit(e.target.value)}><option value="">{translate("Todas las unidades")}</option>{[...new Map(events.map(e => [e.unitId, e.unitCode ?? e.unitId.slice(0, 8)])).entries()].map(([id, label]) => <option key={id} value={id}>{translate(label)}</option>)}</select></label></div>
+        <p className="dss-caption">{translate("Sin confirmar primero, después severidad y fecha más reciente.")}</p>
+        <div className="dss-event-list">{visible.map(e => <button className={`dss-event ${selected?.id === e.id ? 'is-selected' : ''}`} key={e.id} onClick={() => setSelectedId(e.id)} aria-pressed={selected?.id === e.id}><span className="dss-event-top"><strong>{translate(eventKindLabel(e.kind))}</strong><SeverityBadge severity={e.severity} /></span><span className="dss-event-unit">{translate(e.unitCode ?? `Unidad ${e.unitId.slice(0, 8)}`)}</span><span className="dss-event-bottom"><span>{translate(formatAgo(e.ts))}</span><span>{translate(e.acknowledgedAt ? 'Confirmado' : 'Sin confirmar')} →</span></span></button>)}</div>
+        {!visible.length && <EmptyState title={translate("Sin coincidencias")} hint="Prueba otra prioridad o unidad." />}
       </section>
-      <aside className="dss-panel dss-evidence" aria-label="Detalle del evento seleccionado">
-        <div className="dss-panel-head"><div><span className="dss-kicker">02 / COMPRENDER</span><h2>Evidencia y contexto</h2></div></div>
+      <aside className="dss-panel dss-evidence" aria-label={translate("Detalle del evento seleccionado")}>
+        <div className="dss-panel-head"><div><span className="dss-kicker">{translate("02 / COMPRENDER")}</span><h2>{translate("Evidencia y contexto")}</h2></div></div>
         {selected ? <div key={selected.id}>
-          <div className="dss-detail-title"><SeverityBadge severity={selected.severity} /><h3>{eventKindLabel(selected.kind)}</h3><p>{selected.unitCode ?? `Unidad ${selected.unitId.slice(0, 8)}`}</p></div>
+          <div className="dss-detail-title"><SeverityBadge severity={selected.severity} /><h3>{translate(eventKindLabel(selected.kind))}</h3><p>{translate(selected.unitCode ?? `Unidad ${selected.unitId.slice(0, 8)}`)}</p></div>
                     {(selected.kind === 'rollover' || selected.kind === 'impact') && <section className="movement-assessment">
-            <span className="dss-kicker">INTERPRETACIÓN DEL MOVIMIENTO</span>
-            <h3>{selected.kind === 'rollover' ? 'Alerta de posible pérdida de estabilidad' : 'Impacto o movimiento brusco detectado'}</h3>
-            <p>{selected.kind === 'rollover' ? 'El nodo reportó una posible volcadura. Requiere corroboración con otras lecturas y verificación del operador.' : 'Un impacto no equivale a una volcadura ni confirma un descarrilamiento.'}</p>
-            <dl><div><dt>Giroscopio X / Y / Z del evento</dt><dd>No adjunto al registro</dd></div><div><dt>Descarrilamiento</dt><dd>No determinado</dd></div></dl>
-            <small>La confirmación de lectura de la alerta no verifica físicamente el incidente.</small>
+            <span className="dss-kicker">{translate("INTERPRETACIÓN DEL MOVIMIENTO")}</span>
+            <h3>{translate(selected.kind === 'rollover' ? 'Alerta de posible pérdida de estabilidad' : 'Impacto o movimiento brusco detectado')}</h3>
+            <p>{translate(selected.kind === 'rollover' ? 'El nodo reportó una posible volcadura. Requiere corroboración con otras lecturas y verificación del operador.' : 'Un impacto no equivale a una volcadura ni confirma un descarrilamiento.')}</p>
+            <dl><div><dt>{translate("Giroscopio X / Y / Z del evento")}</dt><dd>{translate("No adjunto al registro")}</dd></div><div><dt>{translate("Descarrilamiento")}</dt><dd>{translate("No determinado")}</dd></div></dl>
+            <small>{translate("La confirmación de lectura de la alerta no verifica físicamente el incidente.")}</small>
           </section>}
-          <dl className="dss-facts"><div><dt>Lectura registrada</dt><dd>{selected.value === null ? 'No disponible' : String(selected.value) + ' ' + eventValueUnit(selected.kind)}</dd></div><div><dt>Umbral del evento</dt><dd>{selected.threshold === null ? 'No disponible' : String(selected.threshold) + ' ' + eventValueUnit(selected.kind)}</dd></div><div><dt>Ocurrió</dt><dd>{formatDateTime(selected.ts)}<small>{formatAgo(selected.ts)}</small></dd></div><div><dt>Recibido</dt><dd>{formatDateTime(selected.receivedAt)} <LateBadge ts={selected.ts} receivedAt={selected.receivedAt} /></dd></div><div><dt>Fuente</dt><dd>{selected.nodeId ?? 'Comparación a nivel unidad'}</dd></div><div><dt>Confirmación</dt><dd>{selected.acknowledgedAt ? formatDateTime(selected.acknowledgedAt) : 'Pendiente'}</dd></div></dl>
+          <dl className="dss-facts"><div><dt>{translate("Lectura registrada")}</dt><dd>{translate(selected.value === null ? 'No disponible' : String(selected.value) + ' ' + eventValueUnit(selected.kind))}</dd></div><div><dt>{translate("Umbral del evento")}</dt><dd>{translate(selected.threshold === null ? 'No disponible' : String(selected.threshold) + ' ' + eventValueUnit(selected.kind))}</dd></div><div><dt>{translate("Ocurrió")}</dt><dd>{translate(formatDateTime(selected.ts))}<small>{translate(formatAgo(selected.ts))}</small></dd></div><div><dt>{translate("Recibido")}</dt><dd>{translate(formatDateTime(selected.receivedAt))} <LateBadge ts={selected.ts} receivedAt={selected.receivedAt} /></dd></div><div><dt>{translate("Fuente")}</dt><dd>{translate(selected.nodeId ?? 'Comparación a nivel unidad')}</dd></div><div><dt>{translate("Confirmación")}</dt><dd>{translate(selected.acknowledgedAt ? formatDateTime(selected.acknowledgedAt) : 'Pendiente')}</dd></div></dl>
           <EventVerdictPanel
             eventId={selected.id}
             actual={veredictos[selected.id]?.verdict ?? selected.verdict}
@@ -88,17 +89,17 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
             }
           />
           <EventSignal eventId={selected.id} />
-          <p className="dss-caption">{eventValueUnit(selected.kind) ? 'Unidad de medida indicada según el contrato. ' : 'El registro no especifica la unidad de medida. '}La severidad proviene del evento; no confirma por sí sola el estado actual de la carga.</p>
+          <p className="dss-caption">{translate(eventValueUnit(selected.kind) ? 'Unidad de medida indicada según el contrato. ' : 'El registro no especifica la unidad de medida. ')}{translate("La severidad proviene del evento; no confirma por sí sola el estado actual de la carga.")}</p>
           <section className="dss-recommendation">
-            <span className="dss-kicker">03 / DECIDIR</span>
-            <h3>Acción sugerida</h3>
-            <p>{eventGuidance[selected.kind] ?? 'Verifica la evidencia con el operador antes de actuar.'}</p>
+            <span className="dss-kicker">{translate("03 / DECIDIR")}</span>
+            <h3>{translate("Acción sugerida")}</h3>
+            <p>{translate(eventGuidance[selected.kind] ?? 'Verifica la evidencia con el operador antes de actuar.')}</p>
             {/* Las cifras del propio evento, para no obligar a ir a
                 buscarlas: cuánto se midió, dónde y si llegó tarde. */}
             {[medicionResumida(selected), ubicacionResumida(selected), retrasoResumido(selected)]
               .filter((f): f is string => f !== null)
               .map((frase) => (
-                <p key={frase} className="dss-evidence-line">{frase}</p>
+                <p key={frase} className="dss-evidence-line">{translate(frase)}</p>
               ))}
             <div className="dss-actions">
               {/* Con el nodo en el enlace, la vista abre centrada en él
@@ -106,16 +107,12 @@ export function EventWorkspace({ events }: { events: EventRecord[] }) {
               <Link
                 to={selected.nodeCode ? `/unidad?nodo=${selected.nodeCode}` : '/unidad'}
                 className="btn"
-              >
-                Consultar telemetría ↗
-              </Link>
-              <Link to={selected.nodeCode ? `/comandos?nodo=${selected.nodeCode}` : '/comandos'}>
-                Seguimiento de comandos →
-              </Link>
+              >{translate("Consultar telemetría ↗")}</Link>
+              <Link to={selected.nodeCode ? `/comandos?nodo=${selected.nodeCode}` : '/comandos'}>{translate("Seguimiento de comandos →")}</Link>
             </div>
-            <small>Orientación para revisión humana. No ejecuta acciones automáticas.</small>
+            <small>{translate("Orientación para revisión humana. No ejecuta acciones automáticas.")}</small>
           </section>
-        </div> : <p className="dss-caption">Selecciona un evento para revisar su evidencia.</p>}
+        </div> : <p className="dss-caption">{translate("Selecciona un evento para revisar su evidencia.")}</p>}
       </aside>
     </div>
   </>;
@@ -166,8 +163,8 @@ export default function Eventos() {
     <>
       <div className="page-head">
         <div>
-          <h1>Eventos</h1>
-          <p>Detecciones de los nodos y eventos generados por el backend.</p>
+          <h1>{translate("Eventos")}</h1>
+          <p>{translate("Detecciones de los nodos y eventos generados por el backend.")}</p>
         </div>
         <PageBreadcrumbs current="Eventos" />
       </div>

@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Insignias de severidad, conexión y estado de comando.
  *
  * Concentran la traducción de los valores del contrato a texto en español
@@ -18,7 +19,7 @@ const SEVERITY_LABEL: Record<EventSeverity, string> = {
 
 export function SeverityBadge({ severity }: { severity: EventSeverity }) {
   return (
-    <span className={`badge badge-${severity}`}>{SEVERITY_LABEL[severity]}</span>
+    <span className={`badge badge-${severity}`}>{translate(SEVERITY_LABEL[severity])}</span>
   );
 }
 
@@ -26,7 +27,7 @@ export function ConnectionBadge({ online }: { online: boolean }) {
   return (
     <span className={`badge ${online ? 'badge-online' : 'badge-offline'}`}>
       <span className="badge-dot" aria-hidden="true" />
-      {online ? 'En línea' : 'Sin conexión'}
+      {translate(online ? 'En línea' : 'Sin conexión')}
     </span>
   );
 }
@@ -38,10 +39,10 @@ export function MovementBadge({ moving }: { moving: boolean }) {
   return (
     <span
       className={`badge ${moving ? 'badge-online' : 'badge-offline'}`}
-      title="Acelerómetro + giroscopio, no es velocidad"
+      title={translate("Acelerómetro + giroscopio, no es velocidad")}
     >
       <span className="badge-dot" aria-hidden="true" />
-      {moving ? 'En movimiento' : 'Quieto'}
+      {translate(moving ? 'En movimiento' : 'Quieto')}
     </span>
   );
 }
@@ -49,7 +50,7 @@ export function MovementBadge({ moving }: { moving: boolean }) {
 /** Chip informativo, no de severidad: la categoría de carga no es un
  *  estado que "empeora", es un dato declarado. */
 export function CargoCategoryBadge({ category }: { category: CargoCategory }) {
-  return <span className="badge badge-neutral">{cargoCategoryLabel(category)}</span>;
+  return <span className="badge badge-neutral">{translate(cargoCategoryLabel(category))}</span>;
 }
 
 export const STATUS_LABEL: Record<CommandStatus, string> = {
@@ -60,7 +61,7 @@ export const STATUS_LABEL: Record<CommandStatus, string> = {
 };
 
 export function CommandStatusBadge({ status }: { status: CommandStatus }) {
-  return <span className={`badge badge-cmd-${status}`}>{STATUS_LABEL[status]}</span>;
+  return <span className={`badge badge-cmd-${status}`}>{translate(STATUS_LABEL[status])}</span>;
 }
 
 /** Marca los mensajes que llegaron tarde: se generaron sin señal y
@@ -73,8 +74,7 @@ export function LateBadge({ ts, receivedAt }: { ts: string; receivedAt: string }
   if (!Number.isFinite(delayMs) || delayMs < 10_000) return null;
 
   return (
-    <span className="badge badge-late" title={`Recibido ${formatDelay(delayMs)} después`}>
-      Tardío +{formatDelay(delayMs)}
+    <span className="badge badge-late" title={translate(`Recibido ${formatDelay(delayMs)} después`)}>{translate("Tardío +")}{translate(formatDelay(delayMs))}
     </span>
   );
 }

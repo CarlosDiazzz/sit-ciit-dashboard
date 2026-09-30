@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* CRUD de usuarios — solo control_center. La autoridad real la impone el
  * backend (todas las rutas exigen ese rol); aquí solo se oculta la
  * sección para quien no lo tiene, igual que Comandos.tsx oculta acciones.
@@ -36,8 +37,8 @@ export default function Usuarios() {
       <>
         <div className="page-head">
           <div>
-            <h1>Usuarios</h1>
-            <p>Esta sección es solo para el centro de control.</p>
+            <h1>{translate("Usuarios")}</h1>
+            <p>{translate("Esta sección es solo para el centro de control.")}</p>
           </div>
           <PageBreadcrumbs current="Usuarios" />
         </div>
@@ -73,7 +74,7 @@ export default function Usuarios() {
   }
 
   async function borrar(u: ManagedUser) {
-    if (!confirm(`¿Borrar a ${u.email}? No se puede deshacer.`)) return;
+    if (!confirm(translate(`¿Borrar a ${u.email}? No se puede deshacer.`))) return;
     try {
       await api.deleteUser(u.id);
       usuarios.reload();
@@ -86,8 +87,8 @@ export default function Usuarios() {
     <>
       <div className="page-head">
         <div>
-          <h1>Usuarios</h1>
-          <p>Altas, roles y bajas de quien accede al centro de control.</p>
+          <h1>{translate("Usuarios")}</h1>
+          <p>{translate("Altas, roles y bajas de quien accede al centro de control.")}</p>
         </div>
         <PageBreadcrumbs current="Usuarios" />
       </div>
@@ -95,7 +96,7 @@ export default function Usuarios() {
       <form className="user-form" onSubmit={crear}>
         <div className="user-fields">
           <label className="field">
-            <span>Correo</span>
+            <span>{translate("Correo")}</span>
             <input
               type="email"
               value={email}
@@ -106,7 +107,7 @@ export default function Usuarios() {
           </label>
 
           <label className="field">
-            <span>Contraseña</span>
+            <span>{translate("Contraseña")}</span>
             <input
               type="password"
               value={password}
@@ -118,23 +119,23 @@ export default function Usuarios() {
           </label>
 
           <label className="field">
-            <span>Rol</span>
+            <span>{translate("Rol")}</span>
             <select value={role} onChange={(e) => setRole(e.target.value as UserRole)}>
               {ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {userRoleLabel(r)}
+                  {translate(userRoleLabel(r))}
                 </option>
               ))}
             </select>
           </label>
 
           <button type="submit" className="btn btn-primary" disabled={enviando}>
-            {enviando ? 'Creando…' : 'Crear usuario'}
+            {translate(enviando ? 'Creando…' : 'Crear usuario')}
           </button>
         </div>
 
-        {error ? <p className="user-error" role="alert">{error}</p> : null}
-        {aviso ? <p className="user-aviso" role="status">{aviso}</p> : null}
+        {error ? <p className="user-error" role="alert">{translate(error)}</p> : null}
+        {aviso ? <p className="user-aviso" role="status">{translate(aviso)}</p> : null}
       </form>
 
       <AsyncBoundary
@@ -142,14 +143,14 @@ export default function Usuarios() {
         empty={{ title: 'No hay usuarios', hint: 'Crea el primero con el formulario de arriba.' }}
       >
         {(lista) => (
-          <PagedRows items={lista} label="Personas con acceso">{rows => (
+          <PagedRows items={lista} label={translate("Personas con acceso")}>{rows => (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Correo</th>
-                  <th>Rol</th>
-                  <th>Creado</th>
+                  <th>{translate("Correo")}</th>
+                  <th>{translate("Rol")}</th>
+                  <th>{translate("Creado")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -157,24 +158,22 @@ export default function Usuarios() {
                 {rows.map((u) => (
                   <tr key={u.id}>
                     <td>
-                      <span className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={18} /></span>{u.email}</span>
-                      {u.id === user.id ? <span className="tag">tú</span> : null}
+                      <span className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={18} /></span>{translate(u.email)}</span>
+                      {u.id === user.id ? <span className="tag">{translate("tú")}</span> : null}
                     </td>
                     <td>
                       <select value={u.role} onChange={(e) => cambiarRol(u.id, e.target.value as UserRole)}>
                         {ROLES.map((r) => (
                           <option key={r} value={r}>
-                            {userRoleLabel(r)}
+                            {translate(userRoleLabel(r))}
                           </option>
                         ))}
                       </select>
                     </td>
-                    <td className="tabular">{formatDateTime(u.createdAt)}</td>
+                    <td className="tabular">{translate(formatDateTime(u.createdAt))}</td>
                     <td>
                       {u.id !== user.id ? (
-                        <button type="button" className="btn" onClick={() => borrar(u)}>
-                          Borrar
-                        </button>
+                        <button type="button" className="btn" onClick={() => borrar(u)}>{translate("Borrar")}</button>
                       ) : null}
                     </td>
                   </tr>

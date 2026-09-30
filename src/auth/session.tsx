@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Sesión del usuario y permisos por rol.
  *
  * La autoridad real la impone el backend antes de publicar en MQTT (y el
@@ -76,5 +77,5 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [user, signIn, signOut, can],
   );
 
-  return <SessionContext value={value}>{children}</SessionContext>;
+  return <SessionContext value={value}>{translate(children)}</SessionContext>;
 }

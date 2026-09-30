@@ -1,3 +1,4 @@
+import { t as translate } from '../accessibility/i18n';
 /* Resumen de defectos de vía, sobre el panel del mapa.
  *
  * Es el resultado que justifica el sistema: no "hubo 40 sacudidas", sino
@@ -27,8 +28,8 @@ export default function TrackDefectSummary({
   if (estado.loading && estado.data === null) {
     return (
       <section className="defects-panel">
-        <h2 className="defects-panel__title">Estado de la vía</h2>
-        <p className="defects-panel__note">Analizando detecciones…</p>
+        <h2 className="defects-panel__title">{translate("Estado de la vía")}</h2>
+        <p className="defects-panel__note">{translate("Analizando detecciones…")}</p>
       </section>
     );
   }
@@ -36,9 +37,9 @@ export default function TrackDefectSummary({
   if (estado.error) {
     return (
       <section className="defects-panel">
-        <h2 className="defects-panel__title">Estado de la vía</h2>
+        <h2 className="defects-panel__title">{translate("Estado de la vía")}</h2>
         <p className="defects-panel__note defects-panel__note--error">
-          {estado.error.userMessage}
+          {translate(estado.error.userMessage)}
         </p>
       </section>
     );
@@ -52,10 +53,9 @@ export default function TrackDefectSummary({
   return (
     <section className="defects-panel">
       <div className="defects-panel__head">
-        <h2 className="defects-panel__title">Estado de la vía</h2>
+        <h2 className="defects-panel__title">{translate("Estado de la vía")}</h2>
         <span className="defects-panel__window">
-          {estado.data?.analyzed ?? 0} detecciones · {estado.data?.windowDays ?? 0} d
-        </span>
+          {estado.data?.analyzed ?? 0}{translate(" detecciones · ")}{estado.data?.windowDays ?? 0}{translate(" d")}</span>
       </div>
 
       {/* La cifra grande es la que importa: lo confirmado es lo que se
@@ -64,24 +64,19 @@ export default function TrackDefectSummary({
         <div className="defects-tally__main">
           <strong>{confirmados.length}</strong>
           <span>
-            {confirmados.length === 1 ? 'punto confirmado' : 'puntos confirmados'}
+            {translate(confirmados.length === 1 ? 'punto confirmado' : 'puntos confirmados')}
           </span>
         </div>
         <div className="defects-tally__side">
           <span>
-            <b>{probables.length}</b> probables
-          </span>
+            <b>{probables.length}</b>{translate(" probables")}</span>
           <span>
-            <b>{indicios.length}</b> indicios
-          </span>
+            <b>{indicios.length}</b>{translate(" indicios")}</span>
         </div>
       </div>
 
       {defectos.length === 0 ? (
-        <p className="defects-panel__note">
-          Sin detecciones geolocalizadas todavía. Los defectos aparecen cuando
-          varias unidades reportan lo mismo en el mismo punto del corredor.
-        </p>
+        <p className="defects-panel__note">{translate("Sin detecciones geolocalizadas todavía. Los defectos aparecen cuando varias unidades reportan lo mismo en el mismo punto del corredor.")}</p>
       ) : (
         <>
           <ul className="defects-list">
@@ -91,11 +86,7 @@ export default function TrackDefectSummary({
           </ul>
 
           {confirmados.length === 0 ? (
-            <p className="defects-panel__note">
-              Ningún punto confirmado aún: hace falta que unidades distintas
-              detecten lo mismo en el mismo lugar. Una sola unidad no descarta
-              que el origen sea el vehículo.
-            </p>
+            <p className="defects-panel__note">{translate("Ningún punto confirmado aún: hace falta que unidades distintas detecten lo mismo en el mismo lugar. Una sola unidad no descarta que el origen sea el vehículo.")}</p>
           ) : null}
 
           <label className="defects-toggle">
@@ -103,9 +94,7 @@ export default function TrackDefectSummary({
               type="checkbox"
               checked={verIndicios}
               onChange={(e) => onVerIndicios(e.target.checked)}
-            />
-            Mostrar indicios en el mapa
-          </label>
+            />{translate("Mostrar indicios en el mapa")}</label>
         </>
       )}
     </section>
@@ -116,14 +105,14 @@ function DefectoFila({ d }: { d: TrackDefect }) {
   return (
     <li className={`defect-row defect-row--${d.confidence}`}>
       <div className="defect-row__top">
-        <span className="defect-row__kind">{eventKindLabel(d.kind)}</span>
+        <span className="defect-row__kind">{translate(eventKindLabel(d.kind))}</span>
         <span className="defect-row__units">
-          {d.distinctUnits} {d.distinctUnits === 1 ? 'unidad' : 'unidades'}
+          {d.distinctUnits} {translate(d.distinctUnits === 1 ? 'unidad' : 'unidades')}
         </span>
       </div>
-      <p className="defect-row__reason">{d.reason}</p>
+      <p className="defect-row__reason">{translate(d.reason)}</p>
       <span className="defect-row__meta">
-        {d.passes} {d.passes === 1 ? 'pasada' : 'pasadas'} · última {formatAgo(d.lastSeen)}
+        {d.passes} {translate(d.passes === 1 ? 'pasada' : 'pasadas')}{translate(" · última ")}{translate(formatAgo(d.lastSeen))}
       </span>
     </li>
   );

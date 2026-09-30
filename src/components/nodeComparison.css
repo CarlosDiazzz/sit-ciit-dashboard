@@ -52,14 +52,14 @@
 
 .node-code {
   color: var(--text-strong);
-  font-size: 13px;
+  font-size: 0.928571rem;
   font-weight: 600;
 }
 
 .node-role {
   padding: 1px var(--s2);
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 0.785714rem;
   font-weight: 500;
 }
 
@@ -78,7 +78,7 @@
   grid-template-columns: auto 1fr;
   gap: 2px var(--s3);
   margin: 0;
-  font-size: 12px;
+  font-size: 0.857143rem;
 }
 
 .node-stats dt {
@@ -95,5 +95,5 @@
 .node-warn {
   margin-top: var(--s2);
   color: var(--warning);
-  font-size: 11px;
+  font-size: 0.785714rem;
 }

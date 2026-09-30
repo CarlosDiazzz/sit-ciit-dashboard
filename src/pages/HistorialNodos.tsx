@@ -1,3 +1,4 @@
+import { t as translate, locale } from '../accessibility/i18n';
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -24,11 +25,11 @@ const localInput = (time: number) => {
     .toISOString()
     .slice(0, 19);
 };
-const dateLabel = (value: string) => new Date(value).toLocaleString("es-MX");
+const dateLabel = (value: string) => new Date(value).toLocaleString(locale());
 const numberLabel = (value: number | null | undefined, digits = 3) =>
   value == null
     ? "—"
-    : value.toLocaleString("es-MX", { maximumFractionDigits: digits });
+    : value.toLocaleString(locale(), { maximumFractionDigits: digits });
 const vector = (
   x: number | null | undefined,
   y: number | null | undefined,
@@ -89,7 +90,7 @@ function exportPage(rows: TelemetryPoint[], node: string) {
     return `"${text.replaceAll('"', '""')}"`;
   };
   const body = [
-    headers,
+    headers.map(translate),
     ...rows.map((r) => [
       r.nodeCode,
       r.ts,
@@ -195,24 +196,19 @@ export default function HistorialNodos() {
     <>
       <div className="page-head history-page-head">
         <div>
-          <h1>Historial de nodos</h1>
-          <p>
-            Consulta las lecturas guardadas de un dispositivo, aunque esté
-            desconectado o archivado.
-          </p>
+          <h1>{translate("Historial de nodos")}</h1>
+          <p>{translate("Consulta las lecturas guardadas de un dispositivo, aunque esté desconectado o archivado.")}</p>
         </div>
       </div>
       {nodes.loading ? (
-        <p role="status">Cargando nodos…</p>
+        <p role="status">{translate("Cargando nodos…")}</p>
       ) : nodes.error ? (
         <div role="alert">
-          {nodes.error.userMessage}
-          <button className="btn" onClick={nodes.reload}>
-            Reintentar
-          </button>
+          {translate(nodes.error.userMessage)}
+          <button className="btn" onClick={nodes.reload}>{translate("Reintentar")}</button>
         </div>
       ) : !nodes.data?.length ? (
-        <p>No hay nodos disponibles para tu cuenta.</p>
+        <p>{translate("No hay nodos disponibles para tu cuenta.")}</p>
       ) : (
         <form
           className="user-form"
@@ -222,26 +218,22 @@ export default function HistorialNodos() {
           }}
         >
           <div className="management-fields">
-            <label className="field">
-              Nodo
-              <select
-                aria-label="Nodo"
+            <label className="field">{translate("Nodo")}<select
+                aria-label={translate("Nodo")}
                 value={nodeId}
                 onChange={(e) => setChosen(e.target.value)}
               >
                 {nodes.data.map((n) => (
                   <option key={n.id} value={n.id}>
-                    {n.nodeCode} · {n.unitLabel ?? n.unitCode} ·{" "}
-                    {n.role === "primary" ? "Principal" : "Respaldo"}
-                    {n.active ? "" : " · Archivado"}
+                    {translate(n.nodeCode)} · {translate(n.unitLabel ?? n.unitCode)} ·{" "}
+                    {translate(n.role === "primary" ? "Principal" : "Respaldo")}
+                    {translate(n.active ? "" : " · Archivado")}
                   </option>
                 ))}
               </select>
             </label>
-            <label className="field">
-              Desde
-              <input
-                aria-label="Desde"
+            <label className="field">{translate("Desde")}<input
+                aria-label={translate("Desde")}
                 type="datetime-local"
                 step="1"
                 required
@@ -249,10 +241,8 @@ export default function HistorialNodos() {
                 onChange={(e) => setFrom(e.target.value)}
               />
             </label>
-            <label className="field">
-              Hasta
-              <input
-                aria-label="Hasta"
+            <label className="field">{translate("Hasta")}<input
+                aria-label={translate("Hasta")}
                 type="datetime-local"
                 step="1"
                 required
@@ -260,10 +250,8 @@ export default function HistorialNodos() {
                 onChange={(e) => setTo(e.target.value)}
               />
             </label>
-            <label className="field">
-              Lecturas por página
-              <select
-                aria-label="Lecturas por página"
+            <label className="field">{translate("Lecturas por página")}<select
+                aria-label={translate("Lecturas por página")}
                 value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
               >
@@ -276,83 +264,69 @@ export default function HistorialNodos() {
             </label>
           </div>
           <div className="management-toolbar">
-            <button className="btn btn-primary" disabled={data.loading}>
-              Consultar historial
+            <button
+              className="btn btn-primary history-consult-btn"
+              disabled={data.loading}
+            >
+              {translate("Consultar historial")}
             </button>
-            <button className="btn" type="button" onClick={() => preset(1)}>
-              Última hora
-            </button>
-            <button className="btn" type="button" onClick={() => preset(24)}>
-              Últimas 24 horas
-            </button>
-            <button className="btn" type="button" onClick={() => preset(168)}>
-              Últimos 7 días
-            </button>
-            <span>Fechas en tu hora local · hasta 31 días por consulta</span>
+            <button className="btn" type="button" onClick={() => preset(1)}>{translate("Última hora")}</button>
+            <button className="btn" type="button" onClick={() => preset(24)}>{translate("Últimas 24 horas")}</button>
+            <button className="btn" type="button" onClick={() => preset(168)}>{translate("Últimos 7 días")}</button>
+            <span>{translate("Fechas en tu hora local · hasta 31 días por consulta")}</span>
           </div>
         </form>
       )}
-      {error && (
+      {translate(error && (
         <p className="user-error" role="alert">
-          {error}
+          {translate(error)}
         </p>
-      )}
+      ))}
       {!query ? (
-        <p>Selecciona el nodo y pulsa Consultar historial.</p>
+        <p>{translate("Selecciona el nodo y pulsa Consultar historial.")}</p>
       ) : data.loading ? (
-        <p role="status">Consultando lecturas…</p>
+        <p role="status">{translate("Consultando lecturas…")}</p>
       ) : data.error ? (
         <div role="alert">
-          {data.error.userMessage}
-          <button className="btn" onClick={data.reload}>
-            Reintentar
-          </button>
+          {translate(data.error.userMessage)}
+          <button className="btn" onClick={data.reload}>{translate("Reintentar")}</button>
         </div>
       ) : !data.data?.items.length ? (
-        <p>
-          No hay lecturas guardadas para este nodo en el periodo seleccionado.
-        </p>
+        <p>{translate("No hay lecturas guardadas para este nodo en el periodo seleccionado.")}</p>
       ) : (
         <>
           <div className="history-summary">
             <strong>
-              {activeNode?.nodeCode ?? "Nodo seleccionado"} ·{" "}
-              {data.data.items.length} lecturas en esta página
-            </strong>
+              {translate(activeNode?.nodeCode ?? "Nodo seleccionado")} ·{" "}
+              {data.data.items.length}{translate(" lecturas en esta página")}</strong>
             <span>
-              {dateLabel(query.from)} — {dateLabel(query.to)}
+              {translate(dateLabel(query.from))} — {translate(dateLabel(query.to))}
             </span>
-            <span>
-              Capturado: {dateLabel(data.data.items.at(-1)!.ts)} —{" "}
-              {dateLabel(data.data.items[0].ts)}
+            <span>{translate("Capturado: ")}{translate(dateLabel(data.data.items.at(-1)!.ts))} —{" "}
+              {translate(dateLabel(data.data.items[0].ts))}
             </span>
           </div>
           <section className="user-form">
             <div className="management-toolbar">
-              <label className="field">
-                Variable
-                <select
-                  aria-label="Variable"
+              <label className="field">{translate("Variable")}<select
+                  aria-label={translate("Variable")}
                   value={metric}
                   onChange={(e) => setMetric(e.target.value as Metric)}
                 >
                   {Object.entries(metrics).map(([key, m]) => (
                     <option key={key} value={key}>
-                      {m.label} ({m.unit})
+                      {translate(m.label)} ({translate(m.unit)})
                     </option>
                   ))}
                 </select>
               </label>
-              <span>
-                La gráfica muestra únicamente las lecturas de esta página, en
-                orden temporal.
-              </span>
+              <span>{translate("La gráfica muestra únicamente las lecturas de esta página, en orden temporal.")}</span>
             </div>
             {hasMetric ? (
               <div
                 className="history-chart"
                 role="img"
-                aria-label={`Historial de ${definition.label}`}
+                aria-label={translate(`Historial de ${definition.label}`)}
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
@@ -368,14 +342,14 @@ export default function HistorialNodos() {
                       type="number"
                       domain={["dataMin", "dataMax"]}
                       tickFormatter={(value) =>
-                        new Date(value).toLocaleTimeString("es-MX")
+                        new Date(value).toLocaleTimeString(locale())
                       }
                       stroke={palette.axis}
                     />
                     <YAxis stroke={palette.axis} width={65} />
                     <Tooltip
                       labelFormatter={(value) =>
-                        new Date(Number(value)).toLocaleString("es-MX")
+                        new Date(Number(value)).toLocaleString(locale())
                       }
                       contentStyle={{
                         background: palette.surface,
@@ -390,9 +364,9 @@ export default function HistorialNodos() {
                         type="linear"
                         dataKey={key}
                         name={
-                          definition.keys.length > 1
+                          translate(definition.keys.length > 1
                             ? `${["X", "Y", "Z"][i]} (${definition.unit})`
-                            : `${definition.label} (${definition.unit})`
+                            : `${definition.label} (${definition.unit})`)
                         }
                         stroke={
                           definition.keys.length === 1
@@ -412,7 +386,7 @@ export default function HistorialNodos() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <p>No se registró esta variable en las lecturas de la página.</p>
+              <p>{translate("No se registró esta variable en las lecturas de la página.")}</p>
             )}
           </section>
           <div className="management-toolbar">
@@ -421,30 +395,25 @@ export default function HistorialNodos() {
               onClick={() =>
                 exportPage(data.data!.items, activeNode?.nodeCode ?? "nodo")
               }
-            >
-              Descargar página CSV
-            </button>
-            <span>
-              Valores ausentes: — · Velocidad según la fuente almacenada; puede
-              ser estimada por el nodo.
-            </span>
+            >{translate("Descargar página CSV")}</button>
+            <span>{translate("Valores ausentes: — · Velocidad según la fuente almacenada; puede ser estimada por el nodo.")}</span>
           </div>
           <div className="table-wrap">
             <table className="table history-table">
               <thead>
                 <tr>
-                  <th>Capturado</th>
-                  <th>Recibido</th>
-                  <th>Demora</th>
-                  <th>Secuencia</th>
-                  <th>Aceleración X/Y/Z (g)</th>
-                  <th>Giro X/Y/Z (rad/s)</th>
-                  <th>Magnetómetro X/Y/Z (µT)</th>
-                  <th>Luz (lux)</th>
-                  <th>Presión (hPa)</th>
-                  <th>Ubicación GPS</th>
-                  <th>Velocidad (km/h)</th>
-                  <th>Precisión GPS (m)</th>
+                  <th>{translate("Capturado")}</th>
+                  <th>{translate("Recibido")}</th>
+                  <th>{translate("Demora")}</th>
+                  <th>{translate("Secuencia")}</th>
+                  <th>{translate("Aceleración X/Y/Z (g)")}</th>
+                  <th>{translate("Giro X/Y/Z (rad/s)")}</th>
+                  <th>{translate("Magnetómetro X/Y/Z (µT)")}</th>
+                  <th>{translate("Luz (lux)")}</th>
+                  <th>{translate("Presión (hPa)")}</th>
+                  <th>{translate("Ubicación GPS")}</th>
+                  <th>{translate("Velocidad (km/h)")}</th>
+                  <th>{translate("Precisión GPS (m)")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -455,34 +424,34 @@ export default function HistorialNodos() {
                     1000;
                   return (
                     <tr key={`${row.id}-${row.ts}`}>
-                      <td>{dateLabel(row.ts)}</td>
-                      <td>{dateLabel(row.receivedAt)}</td>
+                      <td>{translate(dateLabel(row.ts))}</td>
+                      <td>{translate(dateLabel(row.receivedAt))}</td>
                       <td>
-                        {delay < 0
+                        {translate(delay < 0
                           ? "Reloj desfasado"
-                          : `${numberLabel(delay, 1)} s`}
+                          : `${numberLabel(delay, 1)} s`)}
                         {delay > 30 && (
-                          <span className="tag">Recepción tardía</span>
+                          <span className="tag">{translate("Recepción tardía")}</span>
                         )}
                       </td>
                       <td>{row.seq}</td>
-                      <td>{vector(row.accelX, row.accelY, row.accelZ)}</td>
-                      <td>{vector(row.gyroX, row.gyroY, row.gyroZ)}</td>
-                      <td>{vector(row.magX, row.magY, row.magZ)}</td>
-                      <td>{numberLabel(row.lux)}</td>
-                      <td>{numberLabel(row.pressureHpa)}</td>
+                      <td>{translate(vector(row.accelX, row.accelY, row.accelZ))}</td>
+                      <td>{translate(vector(row.gyroX, row.gyroY, row.gyroZ))}</td>
+                      <td>{translate(vector(row.magX, row.magY, row.magZ))}</td>
+                      <td>{translate(numberLabel(row.lux))}</td>
+                      <td>{translate(numberLabel(row.pressureHpa))}</td>
                       <td>
-                        {row.gpsLat == null || row.gpsLon == null
+                        {translate(row.gpsLat == null || row.gpsLon == null
                           ? "—"
-                          : `${numberLabel(row.gpsLat, 6)}, ${numberLabel(row.gpsLon, 6)}`}
+                          : `${numberLabel(row.gpsLat, 6)}, ${numberLabel(row.gpsLon, 6)}`)}
                       </td>
                       <td>
-                        {numberLabel(
+                        {translate(numberLabel(
                           row.gpsSpeedMs == null ? null : row.gpsSpeedMs * 3.6,
                           2,
-                        )}
+                        ))}
                       </td>
-                      <td>{numberLabel(row.gpsAccuracyM, 1)}</td>
+                      <td>{translate(numberLabel(row.gpsAccuracyM, 1))}</td>
                     </tr>
                   );
                 })}
@@ -494,10 +463,8 @@ export default function HistorialNodos() {
               className="btn"
               disabled={page === 0}
               onClick={() => setPage(page - 1)}
-            >
-              Más recientes
-            </button>
-            <span>Página {page + 1}</span>
+            >{translate("Más recientes")}</button>
+            <span>{translate("Página ")}{page + 1}</span>
             <button
               className="btn"
               disabled={!data.data.nextCursor}
@@ -508,9 +475,7 @@ export default function HistorialNodos() {
                 ]);
                 setPage(page + 1);
               }}
-            >
-              Más antiguas
-            </button>
+            >{translate("Más antiguas")}</button>
           </div>
         </>
       )}

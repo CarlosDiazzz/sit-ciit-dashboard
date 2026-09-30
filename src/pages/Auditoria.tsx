@@ -1,3 +1,4 @@
+import { t as translate, locale } from '../accessibility/i18n';
 import { useState } from "react";
 import { UserRound } from 'lucide-react';
 import { Pagination, PagedRows } from '../components/Pagination';
@@ -19,17 +20,12 @@ export default function Auditoria() {
     <>
       <div className="page-head">
         <div>
-          <h1>Auditoría administrativa</h1>
-          <p>
-            Historial de cambios y responsables; los registros se conservan sin
-            edición.
-          </p>
+          <h1>{translate("Auditoría administrativa")}</h1>
+          <p>{translate("Historial de cambios y responsables; los registros se conservan sin edición.")}</p>
         </div>
         <PageBreadcrumbs current="Auditoría administrativa" />
       </div>
-      <label className="field">
-        Filtrar por módulo
-        <input
+      <label className="field">{translate("Filtrar por módulo")}<input
           value={filter}
           onChange={(e) => {
             setFilter(e.target.value);
@@ -38,80 +34,80 @@ export default function Auditoria() {
         />
       </label>
       {audit.loading ? (
-        <p>Cargando…</p>
+        <p>{translate("Cargando…")}</p>
       ) : audit.error ? (
-        <p role="alert">{audit.error.userMessage} <button className="btn" onClick={audit.reload}>Reintentar</button></p>
-      ) : !audit.data?.items.length ? <div className="workspace-empty"><strong>No hay cambios para esta búsqueda.</strong></div> : (
+        <p role="alert">{translate(audit.error.userMessage)} <button className="btn" onClick={audit.reload}>{translate("Reintentar")}</button></p>
+      ) : !audit.data?.items.length ? <div className="workspace-empty"><strong>{translate("No hay cambios para esta búsqueda.")}</strong></div> : (
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Persona</th>
-                <th>Módulo</th>
-                <th>Acción</th>
-                <th>Cambios</th>
+                <th>{translate("Fecha")}</th>
+                <th>{translate("Persona")}</th>
+                <th>{translate("Módulo")}</th>
+                <th>{translate("Acción")}</th>
+                <th>{translate("Cambios")}</th>
               </tr>
             </thead>
             <tbody>
-              {audit.data?.items.map((r: any) => (
+              {translate(audit.data?.items.map((r: any) => (
                 <tr key={r.id}>
-                  <td>{new Date(r.created_at).toLocaleString("es-MX")}</td>
-                  <td><span className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={17} /></span>{r.actor_email ?? 'Sistema'}</span></td>
-                  <td>{r.resource}</td>
+                  <td>{translate(new Date(r.created_at).toLocaleString(locale()))}</td>
+                  <td><span className="person-cell"><span className="person-avatar" aria-hidden="true"><UserRound size={17} /></span>{translate(r.actor_email ?? 'Sistema')}</span></td>
+                  <td>{translate(r.resource)}</td>
                   <td>
-                    {(
+                    {translate((
                       {
                         create: "Creación",
                         update: "Edición",
                         archive: "Archivo",
                         "rotate-secret": "Cambio de secreto",
                       } as Record<string, string>
-                    )[r.action] ?? r.action}
+                    )[r.action] ?? r.action)}
                   </td>
                   <td>
                     <details>
-                      <summary>Ver cambios</summary>
+                      <summary>{translate("Ver cambios")}</summary>
                       <pre>
-                        {JSON.stringify(
+                        {translate(JSON.stringify(
                           { antes: r.before_data, despues: r.after_data },
                           null,
                           2,
-                        )}
+                        ))}
                       </pre>
                     </details>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
       )}
       <Pagination page={page} pageSize={limit} total={audit.data?.total ?? 0} disabled={audit.loading || !!audit.error} onPage={setPage} onPageSize={n => { setLimit(n); setPage(1); }} />
-      <h2>Historial de notificaciones</h2>
+      <h2>{translate("Historial de notificaciones")}</h2>
       {deliveries.error ? (
-        <p role="alert">{deliveries.error.userMessage}</p>
+        <p role="alert">{translate(deliveries.error.userMessage)}</p>
       ) : deliveries.loading ? (
-        <p>Cargando…</p>
+        <p>{translate("Cargando…")}</p>
       ) : deliveries.data?.length ? (
-        <PagedRows items={deliveries.data} label="Historial de notificaciones">{rows => (
+        <PagedRows items={deliveries.data} label={translate("Historial de notificaciones")}>{rows => (
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Regla</th>
-                <th>Canal</th>
-                <th>Resultado</th>
+                <th>{translate("Fecha")}</th>
+                <th>{translate("Regla")}</th>
+                <th>{translate("Canal")}</th>
+                <th>{translate("Resultado")}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id}>
-                  <td>{new Date(r.created_at).toLocaleString("es-MX")}</td>
-                  <td>{r.name}</td>
-                  <td>{r.channel}</td>
-                  <td>{r.detail}</td>
+                  <td>{translate(new Date(r.created_at).toLocaleString(locale()))}</td>
+                  <td>{translate(r.name)}</td>
+                  <td>{translate(r.channel)}</td>
+                  <td>{translate(r.detail)}</td>
                 </tr>
               ))}
             </tbody>
@@ -119,7 +115,7 @@ export default function Auditoria() {
         </div>
         )}</PagedRows>
       ) : (
-        <p>No hay notificaciones registradas.</p>
+        <p>{translate("No hay notificaciones registradas.")}</p>
       )}
     </>
   );

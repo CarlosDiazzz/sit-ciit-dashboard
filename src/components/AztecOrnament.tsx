@@ -5,7 +5,7 @@ export default function AztecOrnament({ kind }: { kind: 'feathers' | 'serpent' }
       <img
         className="aztec-ornament aztec-serpent"
         src="/navBar.png"
-        alt=""
+        alt={""}
         aria-hidden="true"
       />
     );
