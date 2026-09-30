@@ -3,15 +3,16 @@ import DecisionBrief from '../components/DecisionBrief';
  * La lista de unidades conserva su fuente de telemetría independiente.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { latLngBounds } from 'leaflet';
 import { CircleMarker, MapContainer, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
 import { api } from '../api/client';
 import { useApi } from '../api/useApi';
 import type { Unit } from '../api/types';
 import { ErrorState, Loading } from '../components/States';
-import { ConnectionBadge } from '../components/Badges';
 import LiveMapLayers from '../components/LiveMapLayers';
+import NodeStatusPanel from '../components/NodeStatusPanel';
+import type { TelemetryBroadcast } from '../api/types';
 import { MEDIAS_AGUAS_JUNCTION, parseMainRailRoute, parseRailConnections, type MapCoordinate, type RailConnection } from '../lib/mapData';
 import './mapa.css';
 
@@ -54,6 +55,23 @@ export default function Mapa() {
   const [railRoute, setRailRoute] = useState<MapCoordinate[]>([]);
   const [railConnections, setRailConnections] = useState<RailConnection[]>([]);
   const [mapDataError, setMapDataError] = useState<string | null>(null);
+  /** Ultimo mensaje por nodo: da la velocidad en vivo del panel sin
+   *  abrir un segundo socket. */
+  const [ultimaTelemetria, setUltimaTelemetria] = useState<Record<string, TelemetryBroadcast>>({});
+  // La telemetria llega a 1 Hz por nodo y solo la usa el panel lateral
+  // para la velocidad. Actualizar el estado en cada mensaje redibujaba
+  // TODO el mapa, capas incluidas; en su lugar se acumula en una ref y
+  // se publica al estado cada 2 s, que es ritmo de sobra para un numero
+  // que se lee de reojo.
+  const bufferTelemetria = useRef<Record<string, TelemetryBroadcast>>({});
+  const recibirTelemetria = useCallback((t: TelemetryBroadcast) => {
+    bufferTelemetria.current = { ...bufferTelemetria.current, [t.nodeId]: t };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setUltimaTelemetria(bufferTelemetria.current), 2000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,11 +107,6 @@ export default function Mapa() {
       </div>
 
       <DecisionBrief title="Supervisa la cobertura antes de interpretar la ruta" evidence="El mapa reúne el trazado ferroviario y las últimas posiciones GPS recibidas. Verifica la hora y la fuente activa antes de interpretar una ubicación." action="Revisa el estado de la unidad y su último reporte antes de decidir sobre el recorrido." to="/unidad" linkLabel="Revisar unidades" />
-      <div className="dss-metrics route-metrics">
-        <article><span>Ubicación</span><strong>{state.data?.length ?? '—'}</strong><small>Unidades registradas para seguimiento</small></article>
-        <article><span>Recorrido · Línea Z</span><strong>{railRoute.length > 1 ? 'Disponible' : 'Cargando'}</strong><small>Trazado y conexiones G y K en el mapa</small></article>
-        <article><span>ETA · Llegada estimada</span><strong>Sin estimación</strong><small>Requiere destino, distancia restante y velocidad promedio</small></article>
-      </div>
       <div className="map-layout">
         <div className="map-frame">
           <MapContainer center={CENTRO} zoom={8} className="map">
@@ -103,7 +116,7 @@ export default function Mapa() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <LiveMapLayers />
+            <LiveMapLayers onTelemetria={recibirTelemetria} />
 
             <FitMapToData route={railRoute} connections={railConnections} />
             {railConnections.map((connection) => (
@@ -144,30 +157,14 @@ export default function Mapa() {
         </div>
 
         <aside className="map-side">
-          <h2>Unidades</h2>
           {mapDataError && <p className="map-hint" role="alert">{mapDataError}</p>}
 
           {state.loading ? (
-            <Loading label="Cargando unidades…" />
+            <Loading label="Cargando nodos…" />
           ) : state.error ? (
             <ErrorState error={state.error} onRetry={state.reload} />
-          ) : state.data && state.data.length > 0 ? (
-            <ul className="unit-strip">
-              {state.data.map((unidad) => {
-                const activo = unidad.nodes.find((n) => n.id === unidad.activeNodeId);
-                return (
-                  <li key={unidad.id}>
-                    <span>{unidad.label ?? unidad.unitCode}</span>
-                    <ConnectionBadge online={activo?.isOnline ?? false} />
-                  </li>
-                );
-              })}
-            </ul>
           ) : (
-            <p className="map-hint">
-              Sin unidades registradas todavía. Las posiciones GPS se muestran al recibir
-              telemetría de los nodos.
-            </p>
+            <NodeStatusPanel units={state.data} ultimaTelemetria={ultimaTelemetria} />
           )}
         </aside>
       </div>

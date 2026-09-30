@@ -77,7 +77,9 @@ export interface Node {
 
 export interface TelemetryPoint {
   id: string;
-  nodeId: string;
+  /** Código del nodo, ej. "unit-01-a" — igual que en el socket, no UUID. */
+  nodeCode: string;
+  role: NodeRole;
   seq: number;
   /** Reloj del dispositivo: cuándo ocurrió. */
   ts: string;
@@ -300,6 +302,13 @@ export interface ServerToClientEvents {
   telemetry: (payload: TelemetryBroadcast) => void;
   event: (payload: EventBroadcast) => void;
   'command:update': (payload: CommandUpdate) => void;
+  /** La unidad cambio de fuente activa (failover o recuperacion). Los
+   *  ids son codigos del contrato, no UUIDs de la base. */
+  'unit:active-node': (payload: {
+    unitId: string;
+    activeNodeId: string | null;
+    reason: 'failover' | 'recovered' | 'no_nodes_online';
+  }) => void;
 }
 
 /** Fila del CRUD de nodos. El secreto NUNCA aparece aquí — solo en la

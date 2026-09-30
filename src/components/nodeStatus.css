@@ -1,0 +1,167 @@
+/* Panel de estado de nodos, en la columna del mapa.
+ *
+ * Alta densidad: se lee de reojo mientras se mira el mapa, así que la
+ * jerarquía la marcan el color de estado y la posición fija de cada
+ * métrica, no el tamaño del texto.
+ */
+
+.nodes-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.nodes-panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.nodes-panel__head h2 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.nodes-panel__count {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.nodes-panel__count.is-alert {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.nodes-panel__empty {
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+.nodes-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Franja lateral de estado: se ve el nivel de atención sin leer nada. */
+.node-row {
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.node-row--critico {
+  border-left-color: var(--critical);
+  background: var(--critical-bg);
+}
+
+.node-row--aviso {
+  border-left-color: var(--warning);
+}
+
+.node-row__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+
+.node-row__code {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.node-row__code em {
+  font-family: inherit;
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+}
+
+.node-row__source {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Cuatro métricas en rejilla fija: la misma cifra cae en el mismo sitio
+   en cada tarjeta, que es lo que permite comparar dos nodos de reojo. */
+.node-row__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s2);
+  margin: 0;
+}
+
+.node-row__metrics dt {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1px;
+}
+
+.node-row__metrics dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.node-row__metrics dd.is-critical {
+  color: var(--critical);
+}
+
+.node-row__metrics dd.is-warning {
+  color: var(--warning);
+}
+
+/* Qué hacer con este nodo, en una frase. */
+.node-row__reason {
+  margin-top: var(--s2);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.node-row--critico .node-row__reason {
+  color: var(--critical);
+}
+
+.nodes-panel__link {
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* En pantallas angostas el panel va bajo el mapa: dos columnas de
+   métricas se leen mejor que cuatro apretadas. */
+@media (max-width: 860px) {
+  .node-row__metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--s2) var(--s3);
+  }
+}

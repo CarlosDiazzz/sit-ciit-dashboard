@@ -1,0 +1,160 @@
+/* Horizonte artificial.
+ *
+ * El cielo y la tierra usan colores propios y no tokens del tema: son
+ * la convención de un instrumento de vuelo, se leen igual en cualquier
+ * modo y cambiarlos rompería la lectura inmediata. El resto sí sale de
+ * los tokens.
+ */
+
+.attitude {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.attitude--empty {
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.attitude__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.attitude__head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.attitude__node {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.attitude__dial {
+  display: grid;
+  place-items: center;
+}
+
+.attitude__dial svg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+}
+
+/* Azul de cielo y ocre de tierra: la convención del instrumento. */
+.attitude__sky {
+  fill: #2c6489;
+}
+
+.attitude__ground {
+  fill: #7a5326;
+}
+
+.attitude__horizon {
+  stroke: #f5f0e4;
+  stroke-width: 2;
+}
+
+.attitude__tick {
+  stroke: rgba(245, 240, 228, 0.75);
+  stroke-width: 1.4;
+}
+
+.attitude__tick-label {
+  fill: rgba(245, 240, 228, 0.85);
+  font-size: 9px;
+  font-family: var(--mono, ui-monospace, monospace);
+  text-anchor: middle;
+}
+
+.attitude__rim {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 2;
+}
+
+.attitude__roll-tick {
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+}
+
+/* El cero de alabeo marcado más fuerte: es la referencia. */
+.attitude__roll-zero {
+  stroke: var(--text-strong);
+  stroke-width: 2.5;
+}
+
+/* Símbolo de la unidad: ámbar, como en la cabina, para que destaque
+   sobre cielo y tierra por igual. */
+.attitude__craft line,
+.attitude__craft circle {
+  stroke: #f5c451;
+  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+}
+
+/* El aro cambia de color con la inclinación: el estado se ve antes de
+   leer ninguna cifra. */
+.attitude--aviso .attitude__rim {
+  stroke: var(--warning);
+}
+
+.attitude--critico .attitude__rim {
+  stroke: var(--critical);
+  stroke-width: 3;
+}
+
+.attitude__values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+  margin: 0;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+
+.attitude__values dt {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.attitude__values dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.attitude__values dd.is-aviso {
+  color: var(--warning);
+}
+
+.attitude__values dd.is-critico {
+  color: var(--critical);
+}
+
+.attitude__warn {
+  margin: 0;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm);
+  background: var(--critical-bg);
+  color: var(--critical);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
