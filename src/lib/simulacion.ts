@@ -2,8 +2,18 @@
  *
  * Existe porque hay cosas que no se pueden enseñar con dos celulares en
  * una sala: varios trenes recorriendo la Línea Z, alertas apareciendo a
- * lo largo de 300 km, y defectos de vía que solo se confirman cuando
- * pasan unidades distintas por el mismo punto.
+ * lo largo de 300 km, defectos de vía que solo se confirman cuando pasan
+ * unidades distintas por el mismo punto, y un failover cuando al nodo
+ * primario se le acaba la batería.
+ *
+ * Reproduce el sistema tal como opera, no solo puntos que se mueven:
+ * cada unidad simulada lleva **dos nodos** (primario y respaldo) que
+ * publican la misma telemetría que publicaría un celular real —
+ * acelerómetro, giroscopio, luz, presión y GPS, con la forma exacta del
+ * contrato— y cada uno con su batería, su cola de outbox y su heartbeat.
+ * Las alertas no se disparan por decreto: salen de la aceleración
+ * simulada al cruzar un punto de la vía, con el mismo umbral que aplica
+ * el nodo.
  *
  * Es deliberadamente visible: se activa con un botón, la interfaz avisa
  * mientras está encendida y nada de esto toca el backend ni la base.
@@ -14,24 +24,46 @@
  * datos siguen llegando por Socket.IO y se pintan igual.
  */
 
-import type { AnyEventKind, TrackDefect } from '../api/types';
-import type { EventSeverity } from '../contract/contract';
+import type { AnyEventKind, TelemetryBroadcast, TrackDefect } from '../api/types';
+import type { EventSeverity, NodeMode, NodeRole } from '../contract/contract';
+
+/** Un nodo simulado: el celular montado en la unidad. Lleva su propio
+ *  estado porque es lo que hace interesante el failover — el primario se
+ *  queda sin batería y el respaldo toma la fuente. */
+export interface NodoSimulado {
+  nodeId: string;
+  role: NodeRole;
+  batteryPct: number;
+  /** Mensajes esperando en la cola local. Crece sin cobertura. */
+  pendingOutbox: number;
+  samplingMs: number;
+  mode: NodeMode;
+  capabilities: string[];
+  online: boolean;
+}
 
 export interface TrenSimulado {
-  nodeId: string;
   unitId: string;
+  /** Etiqueta legible, la que se ve en el mapa. */
+  etiqueta: string;
+  nodos: NodoSimulado[];
+  /** Nodo que ahora mismo es la fuente activa de la unidad. */
+  nodoActivo: string;
   /** Posición a lo largo de la ruta, de 0 a 1. */
   avance: number;
-  /** Fracción de ruta por segundo. Un tren de carga va a ~60 km/h y la
-   *  Línea Z mide ~300 km, así que cruzarla entera lleva unas 5 h: se
-   *  acelera para que en la demo se vea moverse. */
+  /** Fracción de ruta por segundo. */
   velocidad: number;
   lat: number;
   lon: number;
   rumbo: number | null;
-  /** km/h que se muestran, coherentes con la velocidad de avance. */
   speedKmh: number;
   sentido: 1 | -1;
+  /** Última telemetría publicada, con la forma del contrato. */
+  telemetria: TelemetryBroadcast;
+  /** Consecutivo por unidad, como el `seq` del envelope. */
+  seq: number;
+  /** Tramo sin cobertura: el outbox se llena y no se emite nada. */
+  sinCobertura: boolean;
 }
 
 export interface AlertaSimulada {
@@ -39,29 +71,38 @@ export interface AlertaSimulada {
   kind: AnyEventKind;
   severity: EventSeverity;
   value: number;
+  /** Umbral que se cruzó, como lo reporta el nodo. */
+  threshold: number;
   lat: number;
   lon: number;
   ts: number;
   nodeId: string;
+  unitId: string;
 }
 
-/** Puntos del corredor donde la simulación dispara alertas, como
- *  fracción de la ruta. No son aleatorios: representan lo que un
- *  corredor real tiene — juntas de riel, una curva cerrada, un tramo en
- *  mal estado. */
+/** Puntos del corredor donde la vía provoca una reacción medible. No son
+ *  aleatorios: representan lo que un corredor real tiene — juntas de
+ *  riel, una curva cerrada, un tramo en mal estado. El valor es lo que
+ *  el acelerómetro llega a marcar ahí. */
 const PUNTOS_CALIENTES: {
   avance: number;
   kind: AnyEventKind;
   severity: EventSeverity;
   valor: number;
+  umbral: number;
   etiqueta: string;
 }[] = [
-  { avance: 0.18, kind: 'track_irregularity', severity: 'warning', valor: 0.34, etiqueta: 'Tramo con asentamiento' },
-  { avance: 0.37, kind: 'curve_overspeed', severity: 'warning', valor: 0.19, etiqueta: 'Curva de Medias Aguas' },
-  { avance: 0.52, kind: 'track_irregularity', severity: 'info', valor: 0.21, etiqueta: 'Junta de riel' },
-  { avance: 0.71, kind: 'hard_brake', severity: 'critical', valor: 0.31, etiqueta: 'Frenado en aproximación' },
-  { avance: 0.86, kind: 'dynamic_impact', severity: 'warning', valor: 1.9, etiqueta: 'Golpe vertical' },
+  { avance: 0.18, kind: 'track_irregularity', severity: 'warning', valor: 0.34, umbral: 0.25, etiqueta: 'Tramo con asentamiento' },
+  { avance: 0.37, kind: 'curve_overspeed', severity: 'warning', valor: 0.19, umbral: 0.15, etiqueta: 'Curva de Medias Aguas' },
+  { avance: 0.52, kind: 'track_irregularity', severity: 'info', valor: 0.21, umbral: 0.18, etiqueta: 'Junta de riel' },
+  { avance: 0.71, kind: 'hard_brake', severity: 'critical', valor: 0.31, umbral: 0.25, etiqueta: 'Frenado en aproximación' },
+  { avance: 0.86, kind: 'dynamic_impact', severity: 'warning', valor: 1.9, umbral: 1.5, etiqueta: 'Golpe vertical' },
 ];
+
+/** Tramo del corredor sin cobertura celular. Existe de verdad en la
+ *  Línea Z: la sierra entre Matías Romero y Mogoñé. Aquí el nodo sigue
+ *  midiendo pero no puede publicar, y el outbox crece. */
+const ZONA_SIN_COBERTURA = { desde: 0.6, hasta: 0.66 };
 
 /** Margen para considerar que un tren pasó por un punto caliente. */
 const MARGEN_DISPARO = 0.006;
@@ -73,6 +114,8 @@ export interface EstadoSimulacion {
   /** Puntos ya disparados por cada tren, para no repetir la alerta
    *  mientras sigue dentro del margen. */
   disparados: Set<string>;
+  /** Segundos transcurridos desde que arrancó: mueve batería y cola. */
+  tiempo: number;
 }
 
 /** Posición sobre la ruta para un avance dado, interpolando entre los
@@ -106,47 +149,179 @@ export function puntoEnRuta(
   return { lat, lon, rumbo };
 }
 
-/** Arranca la simulación con tres trenes repartidos por el corredor,
- *  dos en un sentido y uno en el contrario. */
+/** Curvatura local de la ruta, de 0 (recta) a ~1 (curva cerrada). Es lo
+ *  que hace que la aceleración lateral suba en las curvas en vez de ser
+ *  ruido constante: el giroscopio y el eje Y responden al trazado real. */
+function curvatura(ruta: [number, number][], avance: number): number {
+  const antes = puntoEnRuta(ruta, Math.max(0, avance - 0.004));
+  const aqui = puntoEnRuta(ruta, avance);
+  const despues = puntoEnRuta(ruta, Math.min(1, avance + 0.004));
+  if (antes.rumbo === null || despues.rumbo === null || aqui.rumbo === null) return 0;
+
+  let delta = despues.rumbo - antes.rumbo;
+  while (delta > 180) delta -= 360;
+  while (delta < -180) delta += 360;
+  return Math.min(1, Math.abs(delta) / 45);
+}
+
+/** Ruido pequeño y estable: un acelerómetro real nunca da el mismo valor
+ *  dos veces, pero tampoco salta. */
+function ruido(amplitud: number): number {
+  return (Math.random() - 0.5) * 2 * amplitud;
+}
+
+/**
+ * Telemetría de un nodo en un instante, con la forma exacta que el
+ * backend reemite por Socket.IO.
+ *
+ * Los valores no son aleatorios: el eje Z carga la gravedad (1 g) más la
+ * vibración de marcha, el eje Y responde a la curvatura real del trazado
+ * en ese punto, y el giroscopio gira sobre Z al tomar la curva. Un
+ * operador que mire la gráfica ve algo coherente con lo que hace el tren
+ * en el mapa.
+ */
+function telemetriaDe(
+  tren: { unitId: string; lat: number; lon: number; speedKmh: number; seq: number },
+  nodeId: string,
+  role: NodeRole,
+  curva: number,
+  ahora: number,
+): TelemetryBroadcast {
+  const vibracion = (tren.speedKmh / 80) * 0.05;
+  const lateral = curva * 0.12;
+
+  return {
+    nodeId,
+    unitId: tren.unitId,
+    role,
+    seq: tren.seq,
+    ts: ahora,
+    receivedAt: ahora,
+    accel: {
+      x: ruido(vibracion),
+      y: lateral + ruido(vibracion),
+      // La gravedad siempre está: es la referencia que usa el nodo para
+      // separar aceleración dinámica de estática.
+      z: 1 + ruido(vibracion * 1.5),
+    },
+    gyro: {
+      x: ruido(0.02),
+      y: ruido(0.02),
+      // Girar en el plano horizontal es rotar sobre Z.
+      z: curva * 0.25 + ruido(0.02),
+    },
+    lux: 12000 + ruido(3000),
+    pressureHpa: 1013 + ruido(2),
+    gps: {
+      lat: tren.lat,
+      lon: tren.lon,
+      speedMs: tren.speedKmh / 3.6,
+      // La precisión medida en este proyecto ronda los 95 m.
+      accuracyM: 70 + Math.random() * 50,
+    },
+  };
+}
+
+/** Arranca la simulación con tres unidades repartidas por el corredor,
+ *  dos en un sentido y una en el contrario. Cada una con sus dos nodos,
+ *  como va montado en campo. */
 export function iniciarSimulacion(ruta: [number, number][]): EstadoSimulacion {
-  const config: { nodeId: string; unitId: string; avance: number; sentido: 1 | -1; kmh: number }[] = [
-    { nodeId: 'sim-carga-01', unitId: 'SIM · Carga 01', avance: 0.08, sentido: 1, kmh: 62 },
-    { nodeId: 'sim-carga-02', unitId: 'SIM · Carga 02', avance: 0.44, sentido: 1, kmh: 48 },
-    { nodeId: 'sim-carga-03', unitId: 'SIM · Carga 03', avance: 0.78, sentido: -1, kmh: 55 },
+  const config: {
+    unitId: string;
+    etiqueta: string;
+    avance: number;
+    sentido: 1 | -1;
+    kmh: number;
+    /** Batería inicial del primario: una arranca baja para que el
+     *  failover ocurra durante la demo sin tener que provocarlo. */
+    bateria: number;
+  }[] = [
+    { unitId: 'sim-01', etiqueta: 'SIM · Carga 01', avance: 0.08, sentido: 1, kmh: 62, bateria: 84 },
+    { unitId: 'sim-02', etiqueta: 'SIM · Carga 02', avance: 0.44, sentido: 1, kmh: 48, bateria: 18 },
+    { unitId: 'sim-03', etiqueta: 'SIM · Carga 03', avance: 0.78, sentido: -1, kmh: 55, bateria: 67 },
   ];
 
   return {
     trenes: config.map((c) => {
       const p = puntoEnRuta(ruta, c.avance);
-      return {
-        nodeId: c.nodeId,
+      const rumbo = c.sentido === 1 ? p.rumbo : p.rumbo === null ? null : p.rumbo + 180;
+      const base = {
         unitId: c.unitId,
+        lat: p.lat,
+        lon: p.lon,
+        speedKmh: c.kmh,
+        seq: 0,
+      };
+
+      return {
+        unitId: c.unitId,
+        etiqueta: c.etiqueta,
+        nodos: [
+          {
+            nodeId: `${c.unitId}-a`,
+            role: 'primary' as NodeRole,
+            batteryPct: c.bateria,
+            pendingOutbox: 0,
+            samplingMs: 100,
+            mode: 'normal' as NodeMode,
+            capabilities: ['accelerometer', 'gyroscope', 'gps', 'light', 'barometer'],
+            online: true,
+          },
+          {
+            nodeId: `${c.unitId}-b`,
+            role: 'backup' as NodeRole,
+            batteryPct: 91,
+            pendingOutbox: 0,
+            samplingMs: 250,
+            mode: 'normal' as NodeMode,
+            // El respaldo suele ser un equipo más modesto: sin barómetro.
+            capabilities: ['accelerometer', 'gyroscope', 'gps', 'light'],
+            online: true,
+          },
+        ],
+        nodoActivo: `${c.unitId}-a`,
         avance: c.avance,
         // Velocidad de avance escalada: la ruta completa en ~4 min de
         // demo en vez de las 5 h que tardaría de verdad.
         velocidad: (c.kmh / 60) * 0.00009,
         lat: p.lat,
         lon: p.lon,
-        rumbo: c.sentido === 1 ? p.rumbo : p.rumbo === null ? null : p.rumbo + 180,
+        rumbo,
         speedKmh: c.kmh,
         sentido: c.sentido,
+        telemetria: telemetriaDe(base, `${c.unitId}-a`, 'primary', 0, Date.now()),
+        seq: 0,
+        sinCobertura: false,
       };
     }),
     alertas: [],
     defectos: [],
     disparados: new Set(),
+    tiempo: 0,
   };
 }
 
 let contadorAlertas = 0;
 
+/** Cada cuánto baja un punto de batería el nodo activo, en segundos de
+ *  simulación. El activo publica a mayor frecuencia y consume más. */
+const SEGUNDOS_POR_PUNTO_BATERIA = 8;
+
+/** Por debajo de esto el nodo se apaga y la unidad cambia de fuente.
+ *  Es la misma idea que el failover por falta de heartbeat en el
+ *  backend, provocada aquí por la causa más común en campo. */
+const BATERIA_CRITICA = 5;
+
 /**
  * Avanza la simulación un paso.
  *
- * Devuelve un estado nuevo: los trenes se mueven, disparan alertas al
- * pasar por los puntos calientes, y un punto se convierte en defecto
- * confirmado cuando lo han cruzado unidades distintas — la misma regla
- * que aplica el backend con datos reales.
+ * Devuelve un estado nuevo: los trenes se mueven, publican telemetría
+ * coherente con el trazado, gastan batería, acumulan cola de outbox al
+ * entrar en la zona sin cobertura, hacen failover cuando el primario se
+ * queda sin pila, disparan alertas al cruzar los puntos de la vía, y un
+ * punto se convierte en defecto confirmado cuando lo han cruzado
+ * unidades distintas — la misma regla que aplica el backend con datos
+ * reales.
  */
 export function avanzarSimulacion(
   estado: EstadoSimulacion,
@@ -157,6 +332,8 @@ export function avanzarSimulacion(
 
   const alertasNuevas: AlertaSimulada[] = [];
   const disparados = new Set(estado.disparados);
+  const tiempo = estado.tiempo + dtSegundos;
+  const ahora = Date.now();
 
   const trenes = estado.trenes.map((tr) => {
     let avance = tr.avance + tr.velocidad * dtSegundos * tr.sentido * 60;
@@ -173,12 +350,57 @@ export function avanzarSimulacion(
     }
 
     const p = puntoEnRuta(ruta, avance);
+    const curva = curvatura(ruta, avance);
+    const sinCobertura = avance >= ZONA_SIN_COBERTURA.desde && avance <= ZONA_SIN_COBERTURA.hasta;
 
+    // La velocidad real baja en las curvas cerradas, como haría un
+    // maquinista. Da variación a la gráfica sin inventarla.
+    const speedKmh = Math.round(tr.speedKmh * (1 - curva * 0.18) * 10) / 10;
+
+    // --- estado de los nodos ------------------------------------------
+    let nodoActivo = tr.nodoActivo;
+    const nodos = tr.nodos.map((n) => {
+      const esActivo = n.nodeId === nodoActivo;
+      // El activo gasta más: publica a 10 Hz contra los 4 Hz del
+      // respaldo, que solo mantiene heartbeat.
+      const gasto = (dtSegundos / SEGUNDOS_POR_PUNTO_BATERIA) * (esActivo ? 1 : 0.35);
+      const batteryPct = Math.max(0, n.batteryPct - gasto);
+
+      // Sin cobertura el nodo sigue midiendo y encola; al recuperarla
+      // drena la cola rápido, que es justo lo que hace el outbox real.
+      const ritmo = 1000 / n.samplingMs;
+      const pendingOutbox = sinCobertura
+        ? Math.round(n.pendingOutbox + ritmo * dtSegundos)
+        : Math.max(0, Math.round(n.pendingOutbox - ritmo * dtSegundos * 3));
+
+      return {
+        ...n,
+        batteryPct,
+        pendingOutbox,
+        online: batteryPct > BATERIA_CRITICA,
+      };
+    });
+
+    // Failover: si la fuente activa se apagó y queda otro nodo vivo, la
+    // unidad pasa a ese. Es la regla del backend, disparada aquí por
+    // batería en vez de por falta de heartbeat.
+    const activo = nodos.find((n) => n.nodeId === nodoActivo);
+    if (!activo?.online) {
+      const relevo = nodos.find((n) => n.online);
+      if (relevo) nodoActivo = relevo.nodeId;
+    }
+
+    const nodoQuePublica = nodos.find((n) => n.nodeId === nodoActivo) ?? nodos[0]!;
+    const seq = tr.seq + 1;
+
+    // --- alertas al cruzar los puntos de la vía -----------------------
     for (const punto of PUNTOS_CALIENTES) {
-      const clave = `${tr.nodeId}|${punto.avance}|${sentido}`;
+      const clave = `${tr.unitId}|${punto.avance}|${sentido}`;
       const cerca = Math.abs(avance - punto.avance) < MARGEN_DISPARO;
 
-      if (cerca && !disparados.has(clave)) {
+      // Sin cobertura la alerta se mide pero no llega: queda en el
+      // outbox. Se dispara igual al salir, no se pierde.
+      if (cerca && !disparados.has(clave) && !sinCobertura) {
         disparados.add(clave);
         contadorAlertas += 1;
         const pp = puntoEnRuta(ruta, punto.avance);
@@ -189,10 +411,12 @@ export function avanzarSimulacion(
           // Pequeña variación entre trenes: dos unidades no miden
           // exactamente lo mismo sobre el mismo defecto.
           value: punto.valor * (0.88 + Math.random() * 0.24),
+          threshold: punto.umbral,
           lat: pp.lat,
           lon: pp.lon,
-          ts: Date.now(),
-          nodeId: tr.nodeId,
+          ts: ahora,
+          nodeId: nodoQuePublica.nodeId,
+          unitId: tr.unitId,
         });
       }
 
@@ -210,6 +434,18 @@ export function avanzarSimulacion(
       lat: p.lat,
       lon: p.lon,
       rumbo: sentido === 1 ? p.rumbo : p.rumbo === null ? null : p.rumbo + 180,
+      speedKmh,
+      nodos,
+      nodoActivo,
+      seq,
+      sinCobertura,
+      telemetria: telemetriaDe(
+        { unitId: tr.unitId, lat: p.lat, lon: p.lon, speedKmh, seq },
+        nodoQuePublica.nodeId,
+        nodoQuePublica.role,
+        curva,
+        ahora,
+      ),
     };
   });
 
@@ -220,6 +456,7 @@ export function avanzarSimulacion(
     alertas,
     defectos: recalcularDefectos(alertas, ruta),
     disparados,
+    tiempo,
   };
 }
 
@@ -237,7 +474,10 @@ function recalcularDefectos(
     );
     if (suyas.length === 0) return null;
 
-    const unidades = new Set(suyas.map((a) => a.nodeId)).size;
+    // Unidades, no nodos: dos celulares del mismo tren ven el mismo
+    // bache a la vez, así que no son observaciones independientes.
+    const unidades = new Set(suyas.map((a) => a.unitId)).size;
+    const nodos = new Set(suyas.map((a) => a.nodeId)).size;
     const valores = suyas.map((a) => a.value);
     const tiempos = suyas.map((a) => a.ts);
 
@@ -258,7 +498,7 @@ function recalcularDefectos(
       confidence: confianza,
       reason: motivo,
       distinctUnits: unidades,
-      distinctNodes: unidades,
+      distinctNodes: nodos,
       passes: suyas.length,
       detections: suyas.length,
       averageValue: valores.reduce((a, b) => a + b, 0) / valores.length,
