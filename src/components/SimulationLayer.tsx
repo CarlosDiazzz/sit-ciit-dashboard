@@ -19,6 +19,7 @@ import type { MapCoordinate } from '../lib/mapData';
 import {
   avanzarSimulacion,
   iniciarSimulacion,
+  interpolarPosiciones,
   type EstadoSimulacion,
   type TrenSimulado,
 } from '../lib/simulacion';
@@ -27,8 +28,10 @@ import { iconoEvento, iconoUnidad } from './mapIcons';
 import { eventKindLabel, eventValueUnit } from '../lib/labels';
 import { formatTime } from '../lib/format';
 
-/** Ritmo de la simulación. 250 ms basta para que el movimiento se vea
- *  fluido sin cargar el navegador. */
+/** Ritmo de la física: alertas, batería, outbox y failover. 250 ms
+ *  sobra para eso, y recalcularlo por cuadro sería desperdicio. El
+ *  movimiento no va a este ritmo — a 4 posiciones por segundo el tren
+ *  se ve dando saltos. */
 const PASO_MS = 250;
 
 export default function SimulationLayer({
@@ -57,13 +60,44 @@ export default function SimulationLayer({
     let actual = iniciarSimulacion(rutaXY);
     setEstado(actual);
 
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+    // La física va a su ritmo: aquí se deciden alertas, batería, cola y
+    // failover. Quien pide menos movimiento no tiene bucle de cuadro,
+    // así que el avance se aplica aquí — se ven saltos, que es el
+    // comportamiento honesto sin animación, pero los trenes avanzan.
     const id = setInterval(() => {
+      if (reduce) actual = interpolarPosiciones(actual, rutaXY, PASO_MS / 1000);
       actual = avanzarSimulacion(actual, rutaXY, PASO_MS / 1000);
       setEstado(actual);
       onDefectosRef.current(actual.defectos);
     }, PASO_MS);
 
-    return () => clearInterval(id);
+    if (reduce) return () => clearInterval(id);
+
+    // El movimiento se dibuja por cuadro, avanzando desde el último
+    // estado con el tiempo real transcurrido. Si la pestaña se va a
+    // segundo plano el navegador deja de llamar a rAF, y al volver el
+    // primer dt sería enorme: se acota para que los trenes no peguen un
+    // salto al recuperar el foco.
+    let raf = 0;
+    let vivo = true;
+    let anterior = performance.now();
+    const cuadro = (t: number) => {
+      if (!vivo) return;
+      const dt = Math.min((t - anterior) / 1000, PASO_MS / 1000);
+      anterior = t;
+      actual = interpolarPosiciones(actual, rutaXY, dt);
+      setEstado(actual);
+      raf = requestAnimationFrame(cuadro);
+    };
+    raf = requestAnimationFrame(cuadro);
+
+    return () => {
+      clearInterval(id);
+      vivo = false;
+      cancelAnimationFrame(raf);
+    };
   }, [activa, ruta]);
 
   if (!activa || !estado) return null;

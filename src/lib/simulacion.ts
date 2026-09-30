@@ -301,6 +301,57 @@ export function iniciarSimulacion(ruta: [number, number][]): EstadoSimulacion {
   };
 }
 
+/**
+ * Mueve solo la posición de los trenes, sin tocar nada más.
+ *
+ * Existe para separar dos ritmos que no tienen por qué coincidir. La
+ * física de la demo —alertas, batería, outbox, failover— se resuelve
+ * bien 4 veces por segundo, pero a ese ritmo el ojo ve saltos: el tren
+ * aparece en 4 sitios por segundo en vez de recorrer el trayecto. Esto
+ * se llama en cada cuadro para rellenar el hueco.
+ *
+ * No inventa nada: la posición sale de la misma fórmula y de la misma
+ * ruta real que usa `avanzarSimulacion`, solo evaluada más a menudo. Por
+ * eso puede correr a 60 fps sin desviarse del estado "oficial" — es la
+ * misma recta, con más puntos dibujados encima.
+ */
+export function interpolarPosiciones(
+  estado: EstadoSimulacion,
+  ruta: [number, number][],
+  dtSegundos: number,
+): EstadoSimulacion {
+  if (ruta.length < 2) return estado;
+
+  return {
+    ...estado,
+    trenes: estado.trenes.map((tr) => {
+      let avance = tr.avance + tr.velocidad * dtSegundos * tr.sentido * 60;
+
+      // El rebote en los extremos se decide aquí igual que en el paso
+      // completo: si no, el tren se pasaría del final entre dos pasos.
+      let sentido = tr.sentido;
+      if (avance >= 1) {
+        avance = 1;
+        sentido = -1;
+      } else if (avance <= 0) {
+        avance = 0;
+        sentido = 1;
+      }
+
+      const p = puntoEnRuta(ruta, avance);
+
+      return {
+        ...tr,
+        avance,
+        sentido,
+        lat: p.lat,
+        lon: p.lon,
+        rumbo: sentido === 1 ? p.rumbo : p.rumbo === null ? null : p.rumbo + 180,
+      };
+    }),
+  };
+}
+
 let contadorAlertas = 0;
 
 /** Cada cuánto baja un punto de batería el nodo activo, en segundos de
@@ -336,19 +387,12 @@ export function avanzarSimulacion(
   const ahora = Date.now();
 
   const trenes = estado.trenes.map((tr) => {
-    let avance = tr.avance + tr.velocidad * dtSegundos * tr.sentido * 60;
-
-    // Al llegar a un extremo, el tren da la vuelta: la demo no se queda
-    // sin trenes a los cuatro minutos.
-    let sentido = tr.sentido;
-    if (avance >= 1) {
-      avance = 1;
-      sentido = -1;
-    } else if (avance <= 0) {
-      avance = 0;
-      sentido = 1;
-    }
-
+    // La posición ya viene puesta: quien mueve los trenes es
+    // `interpolarPosiciones`, que corre por cuadro. Sumar aquí otra vez
+    // el avance los pondría al doble de velocidad. Este paso solo lee
+    // dónde están para decidir lo demás.
+    const avance = tr.avance;
+    const sentido = tr.sentido;
     const p = puntoEnRuta(ruta, avance);
     const curva = curvatura(ruta, avance);
     const sinCobertura = avance >= ZONA_SIN_COBERTURA.desde && avance <= ZONA_SIN_COBERTURA.hasta;
