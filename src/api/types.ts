@@ -38,7 +38,7 @@ export type CargoCategory = 'agricola' | 'construccion' | 'quimico' | 'sin_carga
  *  `cliente` nunca emite comandos, así que no pertenece a ese tipo; se
  *  define aparte aquí, igual que en el backend
  *  (`src/domain/ports/UserRepository.ts`). */
-export type UserRole = 'control_center' | 'operator' | 'cliente';
+export type UserRole = 'admin' | 'control_center' | 'operator' | 'cliente' | 'technician' | 'auditor';
 
 /** Todo lo que puede aparecer en la vista de Eventos. */
 export type AnyEventKind = EventKind | BackendEventKind;
@@ -312,6 +312,7 @@ export interface NodeCredentialRecord {
   unitCode: string;
   role: NodeRole;
   hasSecret: boolean;
+  active: boolean;
   isOnline: boolean;
   createdAt: string;
 }

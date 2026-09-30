@@ -27,7 +27,7 @@ export default function Login() {
     try {
       const { token, user: authUser } = await api.login(email, password);
       signIn(authUser, token);
-      navigate('/');
+      navigate(['cliente','technician'].includes(authUser.role)?'/gestion':'/');
     } catch (err) {
       setError(
         err instanceof ApiError ? err.userMessage : 'No se pudo iniciar sesión.',
@@ -58,7 +58,7 @@ export default function Login() {
       <form className="login-card" onSubmit={onSubmit}>
         <h1>Iniciar sesión</h1>
         <p className="login-hint">
-          Los usuarios se dan de alta desde el backend con <code>npm run create-user</code>.
+          Usa la cuenta que te asignó el administrador.
         </p>
 
         <label className="field">

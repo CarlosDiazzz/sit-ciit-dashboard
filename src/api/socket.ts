@@ -5,14 +5,15 @@
  * conexiones solo multiplica el tráfico.
  */
 
-import { useEffect, useState } from 'react';
-import { io, type Socket } from 'socket.io-client';
-import { getToken } from './client';
-import type { ServerToClientEvents } from './types';
+import { useEffect, useState } from "react";
+import { io, type Socket } from "socket.io-client";
+import { getToken } from "./client";
+import { useSession } from "../auth/context";
+import type { ServerToClientEvents } from "./types";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:3000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? "http://localhost:3000";
 
-export type ConnectionStatus = 'connecting' | 'online' | 'offline';
+export type ConnectionStatus = "connecting" | "online" | "offline";
 
 type AppSocket = Socket<ServerToClientEvents>;
 
@@ -42,26 +43,26 @@ export function closeSocket(): void {
 
 /** Estado de la conexión, para el indicador del encabezado. */
 export function useConnectionStatus(): ConnectionStatus {
-  const [status, setStatus] = useState<ConnectionStatus>(() =>
-    getSocket().connected ? 'online' : 'connecting',
-  );
+  const { user } = useSession();
+  const [status, setStatus] = useState<ConnectionStatus>("offline");
 
   useEffect(() => {
+    if (!user || user.role === "cliente") return;
     const s = getSocket();
-    const onConnect = () => setStatus('online');
-    const onDisconnect = () => setStatus('offline');
-    const onError = () => setStatus('offline');
+    const onConnect = () => setStatus("online");
+    const onDisconnect = () => setStatus("offline");
+    const onError = () => setStatus("offline");
 
-    s.on('connect', onConnect);
-    s.on('disconnect', onDisconnect);
-    s.on('connect_error', onError);
+    s.on("connect", onConnect);
+    s.on("disconnect", onDisconnect);
+    s.on("connect_error", onError);
 
     return () => {
-      s.off('connect', onConnect);
-      s.off('disconnect', onDisconnect);
-      s.off('connect_error', onError);
+      s.off("connect", onConnect);
+      s.off("disconnect", onDisconnect);
+      s.off("connect_error", onError);
     };
-  }, []);
+  }, [user]);
 
   return status;
 }

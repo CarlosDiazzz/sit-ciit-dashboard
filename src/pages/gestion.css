@@ -1,0 +1,84 @@
+.management-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.management-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--text-strong);
+}
+.management-card:hover {
+  border-color: var(--border-strong);
+}
+.management-card span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.management-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.management-fields input:not([type="checkbox"]),
+.management-fields select,
+.management-fields textarea,
+.management-toolbar input:not([type="checkbox"]) {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-strong);
+  font: inherit;
+}
+.management-fields textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+.management-actions,
+.management-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+.management-toolbar input:not([type="checkbox"]) {
+  width: min(100%, 340px);
+}
+.management-detail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.management-detail dt {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.management-detail dd {
+  margin: 6px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.management-hint,
+.management-note {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+}
+.management-note p {
+  white-space: pre-wrap;
+}
+.table pre {
+  max-width: 500px;
+  max-height: 400px;
+  overflow: auto;
+}

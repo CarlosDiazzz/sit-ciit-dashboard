@@ -5,32 +5,35 @@
  * API key — nunca se vuelve a consultar.
  */
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { ApiError, api } from '../api/client';
-import { useApi } from '../api/useApi';
-import type { NodeCredentialRecord } from '../api/types';
-import type { NodeRole } from '../contract/contract';
-import { useSession } from '../auth/context';
-import { AsyncBoundary } from '../components/States';
-import { ConnectionBadge } from '../components/Badges';
-import './tables.css';
-import './usuarios.css';
+import { ApiError, api } from "../api/client";
+import { useApi } from "../api/useApi";
+import type { NodeCredentialRecord } from "../api/types";
+import type { NodeRole } from "../contract/contract";
+import { useSession } from "../auth/context";
+import { AsyncBoundary } from "../components/States";
+import { ConnectionBadge } from "../components/Badges";
+import "./tables.css";
+import "./usuarios.css";
 
-const ROLES: NodeRole[] = ['primary', 'backup'];
+const ROLES: NodeRole[] = ["primary", "backup"];
 
 export default function Nodos() {
   const { user } = useSession();
   const nodos = useApi<NodeCredentialRecord[]>(() => api.listNodes(), []);
 
-  const [nodeCode, setNodeCode] = useState('');
-  const [unitCode, setUnitCode] = useState('');
-  const [role, setRole] = useState<NodeRole>('primary');
+  const [nodeCode, setNodeCode] = useState("");
+  const [unitCode, setUnitCode] = useState("");
+  const [role, setRole] = useState<NodeRole>("primary");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [revelado, setRevelado] = useState<{ nodeCode: string; secret: string } | null>(null);
+  const [revelado, setRevelado] = useState<{
+    nodeCode: string;
+    secret: string;
+  } | null>(null);
 
-  if (user?.role !== 'control_center') {
+  if (!["admin", "control_center"].includes(user?.role ?? "")) {
     return (
       <>
         <div className="page-head">
@@ -50,34 +53,72 @@ export default function Nodos() {
     try {
       const creado = await api.createNode({ nodeCode, unitCode, role });
       setRevelado({ nodeCode: creado.nodeCode, secret: creado.secret });
-      setNodeCode('');
-      setUnitCode('');
+      setNodeCode("");
+      setUnitCode("");
       nodos.reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.userMessage : 'No se pudo crear el nodo.');
+      setError(
+        err instanceof ApiError ? err.userMessage : "No se pudo crear el nodo.",
+      );
     } finally {
       setEnviando(false);
     }
   }
 
   async function regenerar(n: NodeCredentialRecord) {
-    if (!confirm(`¿Regenerar el secreto de ${n.nodeCode}? El anterior deja de servir de inmediato.`)) return;
+    if (
+      !confirm(
+        `¿Regenerar el secreto de ${n.nodeCode}? El anterior deja de servir de inmediato.`,
+      )
+    )
+      return;
     try {
       const { secret } = await api.regenerateNodeSecret(n.id);
       setRevelado({ nodeCode: n.nodeCode, secret });
       nodos.reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.userMessage : 'No se pudo regenerar el secreto.');
+      setError(
+        err instanceof ApiError
+          ? err.userMessage
+          : "No se pudo regenerar el secreto.",
+      );
+    }
+  }
+
+  async function reactivar(n: NodeCredentialRecord) {
+    if (
+      !confirm(
+        `¿Reactivar ${n.nodeCode} y generar un secreto nuevo? Tendrás que actualizar el celular.`,
+      )
+    )
+      return;
+    try {
+      const { secret } = await api.reactivateNode(n.id);
+      setRevelado({ nodeCode: n.nodeCode, secret });
+      nodos.reload();
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.userMessage
+          : "No se pudo reactivar el nodo.",
+      );
     }
   }
 
   async function borrar(n: NodeCredentialRecord) {
-    if (!confirm(`¿Borrar el nodo ${n.nodeCode}? No se puede deshacer.`)) return;
+    if (
+      !confirm(`¿Archivar el nodo ${n.nodeCode}? Su historial se conservará.`)
+    )
+      return;
     try {
       await api.deleteNode(n.id);
       nodos.reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.userMessage : 'No se pudo borrar el nodo.');
+      setError(
+        err instanceof ApiError
+          ? err.userMessage
+          : "No se pudo borrar el nodo.",
+      );
     }
   }
 
@@ -86,19 +127,27 @@ export default function Nodos() {
       <div className="page-head">
         <div>
           <h1>Nodos</h1>
-          <p>Alta de nodos y su secreto — sin él, un celular no puede publicar nada.</p>
+          <p>
+            Alta de nodos y su secreto — sin él, un celular no puede publicar
+            nada.
+          </p>
         </div>
       </div>
 
       {revelado ? (
-        <div className="user-form" style={{ borderColor: 'var(--warning)' }}>
+        <div className="user-form" style={{ borderColor: "var(--warning)" }}>
           <p className="user-aviso" role="status">
-            Secreto de <strong>{revelado.nodeCode}</strong> — cópialo ahora, no se vuelve a mostrar:
+            Secreto de <strong>{revelado.nodeCode}</strong> — cópialo ahora, no
+            se vuelve a mostrar:
           </p>
-          <p className="mono" style={{ wordBreak: 'break-all', fontSize: 14 }}>
+          <p className="mono" style={{ wordBreak: "break-all", fontSize: 14 }}>
             {revelado.secret}
           </p>
-          <button type="button" className="btn" onClick={() => setRevelado(null)}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setRevelado(null)}
+          >
             Ya lo copié
           </button>
         </div>
@@ -130,26 +179,36 @@ export default function Nodos() {
 
           <label className="field">
             <span>Rol</span>
-            <select value={role} onChange={(e) => setRole(e.target.value as NodeRole)}>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as NodeRole)}
+            >
               {ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {r === 'primary' ? 'Primario' : 'Respaldo'}
+                  {r === "primary" ? "Primario" : "Respaldo"}
                 </option>
               ))}
             </select>
           </label>
 
           <button type="submit" className="btn btn-primary" disabled={enviando}>
-            {enviando ? 'Creando…' : 'Crear nodo'}
+            {enviando ? "Creando…" : "Crear nodo"}
           </button>
         </div>
 
-        {error ? <p className="user-error" role="alert">{error}</p> : null}
+        {error ? (
+          <p className="user-error" role="alert">
+            {error}
+          </p>
+        ) : null}
       </form>
 
       <AsyncBoundary
         state={nodos}
-        empty={{ title: 'No hay nodos', hint: 'Crea el primero con el formulario de arriba.' }}
+        empty={{
+          title: "No hay nodos",
+          hint: "Crea el primero con el formulario de arriba.",
+        }}
       >
         {(lista) => (
           <div className="table-wrap">
@@ -169,22 +228,48 @@ export default function Nodos() {
                   <tr key={n.id}>
                     <td className="mono">{n.nodeCode}</td>
                     <td className="mono">{n.unitCode}</td>
-                    <td>{n.role === 'primary' ? 'Primario' : 'Respaldo'}</td>
+                    <td>{n.role === "primary" ? "Primario" : "Respaldo"}</td>
                     <td>
-                      <span className={`badge ${n.hasSecret ? 'badge-online' : 'badge-warning'}`}>
-                        {n.hasSecret ? 'Con secreto' : 'Sin secreto'}
+                      <span
+                        className={`badge ${n.hasSecret ? "badge-online" : "badge-warning"}`}
+                      >
+                        {n.hasSecret ? "Con secreto" : "Sin secreto"}
                       </span>
                     </td>
                     <td>
-                      <ConnectionBadge online={n.isOnline} />
+                      {n.active ? (
+                        <ConnectionBadge online={n.isOnline} />
+                      ) : (
+                        <span>Archivado</span>
+                      )}
                     </td>
                     <td>
-                      <button type="button" className="btn" onClick={() => regenerar(n)}>
-                        Regenerar secreto
-                      </button>{' '}
-                      <button type="button" className="btn" onClick={() => borrar(n)}>
-                        Borrar
-                      </button>
+                      {n.active ? (
+                        <>
+                          <button
+                            type="button"
+                            className="btn"
+                            onClick={() => regenerar(n)}
+                          >
+                            Regenerar secreto
+                          </button>{" "}
+                          <button
+                            type="button"
+                            className="btn"
+                            onClick={() => borrar(n)}
+                          >
+                            Archivar
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() => reactivar(n)}
+                        >
+                          Reactivar y renovar secreto
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
