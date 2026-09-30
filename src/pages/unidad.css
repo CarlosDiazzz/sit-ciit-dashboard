@@ -159,3 +159,8 @@
 .weather-thresholds-details .weather-thresholds {
   margin-top: var(--s2);
 }
+
+.unit-search {
+  max-width: 320px;
+  margin-bottom: var(--s4);
+}

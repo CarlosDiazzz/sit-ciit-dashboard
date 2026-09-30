@@ -103,6 +103,41 @@ function construirIconoUnidad({
   });
 }
 
+/** Antena con una línea encima: se lee como "sin señal" a primera
+ *  vista, para no confundirse con un impacto o una puerta (que usan el
+ *  mismo punto pulsante de iconoEvento). */
+function svgSenalPerdida(color: string): string {
+  return `
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="M12 20 L12 11" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+      <path d="M8 11 Q12 7 16 11" stroke="${color}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+      <path d="M5 8 Q12 1 19 8" stroke="${color}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.3"/>
+      <circle cx="12" cy="21" r="1.6" fill="${color}"/>
+      <path d="M3 3 L21 21" stroke="${color}" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>`;
+}
+
+const cacheSenalPerdida = new Map<string, DivIcon>();
+
+/** Marca de "se quedó sin señal aquí" — dónde y, con el popup, cuándo.
+ *  A diferencia de iconoEvento no pulsa: no es una alerta que necesite
+ *  atención inmediata, es un hecho ya pasado. */
+export function iconoSenalPerdida(severidad: EventSeverity = 'warning'): DivIcon {
+  const clave = severidad;
+  const guardado = cacheSenalPerdida.get(clave);
+  if (guardado) return guardado;
+
+  const color = COLOR_ALERTA[severidad];
+  const creado = divIcon({
+    className: '',
+    html: `<span class="signal-lost-marker" style="--ev:${color}">${svgSenalPerdida(color)}</span>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+  cacheSenalPerdida.set(clave, creado);
+  return creado;
+}
+
 /** Marca de evento: un anillo que late si es crítico. */
 const cacheEvento = new Map<string, DivIcon>();
 

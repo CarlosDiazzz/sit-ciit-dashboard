@@ -25,7 +25,7 @@ import type { EventBroadcast, TelemetryBroadcast, TelemetryPoint } from '../api/
 import type { EventSeverity } from '../contract/contract';
 import { eventKindLabel, eventValueUnit } from '../lib/labels';
 import { formatTime } from '../lib/format';
-import { iconoEvento, iconoUnidad } from './mapIcons';
+import { iconoEvento, iconoSenalPerdida, iconoUnidad } from './mapIcons';
 import './liveMap.css';
 
 /** Posiciones guardadas por unidad para el rastro: a 1 Hz, unos dos
@@ -379,7 +379,11 @@ export default function LiveMapLayers({
         <Marker
           key={ev.id}
           position={[ev.lat, ev.lon]}
-          icon={iconoEvento(ev.severity, ev.severity === 'critical')}
+          icon={
+            ev.kind === 'signal_lost'
+              ? iconoSenalPerdida(ev.severity)
+              : iconoEvento(ev.severity, ev.severity === 'critical')
+          }
         >
           <Tooltip direction="top" offset={[0, -10]}>
             {eventKindLabel(ev.kind)}

@@ -101,6 +101,19 @@
   }
 }
 
+/* Marca de "se quedó sin señal aquí" — no pulsa como event-marker: es un
+   hecho ya pasado, no una alerta que necesite atención inmediata. */
+.signal-lost-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ev, #f39a48) 18%, transparent);
+  border: 1.5px solid var(--ev, #f39a48);
+}
+
 /* El respaldo se dibuja algo más chico: presente, sin competir con el
    nodo que está reportando. */
 .unit-marker--backup .unit-marker__icon {

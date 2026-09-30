@@ -138,6 +138,12 @@ function toChartPoint(row: TelemetryPoint): ChartPoint {
   };
 }
 
+/** true si el texto matchea el código o la etiqueta de la unidad —
+ *  usado por el buscador de la lista de abajo. */
+function unidadCoincide(u: Unit, texto: string): boolean {
+  return u.unitCode.toLowerCase().includes(texto) || (u.label?.toLowerCase().includes(texto) ?? false);
+}
+
 // Indicador instantáneo de movimiento a partir del acelerómetro (no una
 // velocidad: el GPS es la única fuente de eso, ver nota arriba).
 // Histéresis para no parpadear en el umbral: entra al superar ENTER,
@@ -156,6 +162,10 @@ export default function Unidad() {
   const colors = chartPalette(mode === 'dark');
   const { user } = useSession();
   const canEditCargoCategory = ['admin','control_center'].includes(user?.role??'');
+
+  // Filtro de la lista de abajo: sin esto crece sin límite con toda
+  // unidad y todo nodo que exista, sin ninguna forma de acotarla.
+  const [filtro, setFiltro] = useState('');
 
   const [points, setPoints] = useState<ChartPoint[]>([]);
   const [lastByNode, setLastByNode] = useState<Record<string, TelemetryBroadcast>>({});
@@ -502,6 +512,16 @@ export default function Unidad() {
         </div>
       )}
 
+      <label className="field unit-search">
+        <span>Buscar unidad o nodo</span>
+        <input
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          placeholder="unit-01, unit-01-a…"
+          autoCapitalize="none"
+        />
+      </label>
+
       <AsyncBoundary
         state={state}
         empty={{
@@ -509,9 +529,27 @@ export default function Unidad() {
           hint: 'Las unidades aparecen cuando un nodo se da de alta contra el backend.',
         }}
       >
-        {(unidades) => (
+        {(unidades) => {
+          const texto = filtro.trim().toLowerCase();
+          const unidadesFiltradas = !texto
+            ? unidades
+            : unidades
+                .filter(
+                  (u) => unidadCoincide(u, texto) || u.nodes.some((n) => n.nodeCode.toLowerCase().includes(texto)),
+                )
+                .map((u) =>
+                  unidadCoincide(u, texto)
+                    ? u
+                    : { ...u, nodes: u.nodes.filter((n) => n.nodeCode.toLowerCase().includes(texto)) },
+                );
+
+          if (texto && unidadesFiltradas.length === 0) {
+            return <p className="chart-hint">Sin coincidencias para «{filtro}».</p>;
+          }
+
+          return (
           <div className="unit-list">
-            {unidades.map((unidad) => (
+            {unidadesFiltradas.map((unidad) => (
               <section key={unidad.id} className="unit">
                 <div className="card-head">
                   <h2>{unidad.label ?? unidad.unitCode}</h2>
@@ -566,7 +604,8 @@ export default function Unidad() {
               </section>
             ))}
           </div>
-        )}
+          );
+        }}
       </AsyncBoundary>
     </>
   );

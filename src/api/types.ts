@@ -25,7 +25,7 @@ import type {
 
 /** Eventos que genera el backend, no el dispositivo: no viajan por MQTT
  *  y por eso no están en EventKind, pero se guardan en la misma tabla. */
-export type BackendEventKind = 'source_failover' | 'sensor_disagreement' | 'weather_risk';
+export type BackendEventKind = 'source_failover' | 'sensor_disagreement' | 'weather_risk' | 'signal_lost';
 
 /** Categoría de carga que declara el cliente por unidad — no es un dato
  *  de sensor, se fija desde este dashboard (rol control_center).
