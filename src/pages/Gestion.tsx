@@ -23,6 +23,7 @@ interface Field {
   min?: number;
   max?: number;
   roles?: string[];
+  generated?: boolean;
 }
 interface Resource {
   key: string;
@@ -142,7 +143,7 @@ function GestionModule({ resource }: { resource: string }) {
   const fields =
     selected?.fields.filter(
       (f) =>
-        !f.roles || f.roles.includes(String(form.role ?? editing?.role ?? "")),
+        !f.generated && (!f.roles || f.roles.includes(String(form.role ?? editing?.role ?? ""))),
     ) ?? [];
   const editable = selected?.canWrite === true;
   function start(row: RecordData | null) {
@@ -423,6 +424,7 @@ function GestionModule({ resource }: { resource: string }) {
             </p>
           ) : (
             <div className="management-fields">
+              {resource === 'shipments' && <p className="field management-wide-field">{editing ? `Guía: ${editing.code}` : 'El sistema asignará una guía SITCIIT al guardar el envío.'}</p>}
               {fields.map((f) => {
                 let value = form[f.key] ?? "";
                 if (f.type === "datetime" && value) {

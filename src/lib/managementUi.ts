@@ -3,7 +3,7 @@ import { Bell, Box, Building2, ClipboardCheck, Container, MapPin, Package, Route
 export interface ManagementField {
   key: string; label: string; type: string; required?: boolean;
   options?: { value: string; label: string }[]; resource?: string;
-  min?: number; max?: number; roles?: string[];
+  min?: number; max?: number; roles?: string[]; generated?: boolean;
 }
 export interface ManagementResource {
   key: string; label: string; fields: ManagementField[]; canWrite: boolean; canCreate: boolean;
