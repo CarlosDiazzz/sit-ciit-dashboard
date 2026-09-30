@@ -77,7 +77,9 @@ export interface Node {
 
 export interface TelemetryPoint {
   id: string;
-  nodeId: string;
+  /** Código del nodo, ej. "unit-01-a" — igual que en el socket, no UUID. */
+  nodeCode: string;
+  role: NodeRole;
   seq: number;
   /** Reloj del dispositivo: cuándo ocurrió. */
   ts: string;

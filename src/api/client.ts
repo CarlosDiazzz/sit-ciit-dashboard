@@ -142,9 +142,12 @@ export const api = {
 
   getUnit: (unitId: string) => request<Unit>(`/units/${unitId}`),
 
-  /** Serie de telemetría de un nodo, para las gráficas de la vista Unidad. */
-  listTelemetry: (nodeId: string, limit = 200) =>
-    request<TelemetryPoint[]>(`/nodes/${nodeId}/telemetry?limit=${limit}`),
+  /** Historia real de telemetría de una unidad (hasta 500, más reciente
+   *  primero) — para rellenar la vista Unidad al abrirla, no solo con lo
+   *  que llegue por socket desde ese momento. `unitCode` es el mismo
+   *  código que unitCode en /units, ej. "unit-01". */
+  listTelemetry: (unitCode: string) =>
+    request<TelemetryPoint[]>(`/telemetry?unitId=${encodeURIComponent(unitCode)}`),
 
   listEvents: (params?: { unitId?: string; limit?: number }) => {
     const q = new URLSearchParams();

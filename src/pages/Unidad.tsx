@@ -21,7 +21,7 @@ import {
 import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
 import { useApi } from '../api/useApi';
-import type { RiskRule, TelemetryBroadcast, Unit } from '../api/types';
+import type { RiskRule, TelemetryBroadcast, TelemetryPoint, Unit } from '../api/types';
 import { useSession } from '../auth/context';
 import { ConnectionBadge, MovementBadge } from '../components/Badges';
 import NodeComparison from '../components/NodeComparison';
@@ -48,6 +48,54 @@ interface ChartPoint {
   z: number | null;
   magnitude: number | null;
   speedKmh: number | null;
+}
+
+/** Convierte una fila real de /telemetry a la misma forma que llega por
+ *  socket, para poder rellenar lastByNode con historia sin duplicar la
+ *  lógica que ya la consume (NodeComparison, el picker de nodo, etc). */
+function toBroadcast(unitCode: string, row: TelemetryPoint): TelemetryBroadcast {
+  return {
+    nodeId: row.nodeCode,
+    unitId: unitCode,
+    role: row.role,
+    seq: row.seq,
+    ts: new Date(row.ts).getTime(),
+    receivedAt: new Date(row.receivedAt).getTime(),
+    accel:
+      row.accelX != null && row.accelY != null && row.accelZ != null
+        ? { x: row.accelX, y: row.accelY, z: row.accelZ }
+        : undefined,
+    gyro:
+      row.gyroX != null && row.gyroY != null && row.gyroZ != null
+        ? { x: row.gyroX, y: row.gyroY, z: row.gyroZ }
+        : undefined,
+    mag:
+      row.magX != null && row.magY != null && row.magZ != null
+        ? { x: row.magX, y: row.magY, z: row.magZ }
+        : undefined,
+    lux: row.lux ?? undefined,
+    pressureHpa: row.pressureHpa ?? undefined,
+    gps:
+      row.gpsLat != null && row.gpsLon != null
+        ? { lat: row.gpsLat, lon: row.gpsLon, speedMs: row.gpsSpeedMs ?? undefined, accuracyM: row.gpsAccuracyM ?? undefined }
+        : undefined,
+  };
+}
+
+function toChartPoint(row: TelemetryPoint): ChartPoint {
+  const { accelX, accelY, accelZ } = row;
+  return {
+    ts: new Date(row.ts).getTime(),
+    time: new Date(row.ts).toLocaleTimeString('es-MX', { hour12: false }),
+    x: accelX,
+    y: accelY,
+    z: accelZ,
+    magnitude:
+      accelX != null && accelY != null && accelZ != null
+        ? Math.sqrt(accelX ** 2 + accelY ** 2 + accelZ ** 2)
+        : null,
+    speedKmh: row.gpsSpeedMs != null ? row.gpsSpeedMs * 3.6 : null,
+  };
 }
 
 // Indicador instantáneo de movimiento a partir del acelerómetro (no una
@@ -143,6 +191,65 @@ export default function Unidad() {
   }, []);
 
   useSocketEvent('telemetry', onTelemetry);
+
+  // Historia real al abrir la pantalla: antes solo se pintaba lo que
+  // llegara por socket desde este momento — si el nodo no estaba
+  // publicando justo en ese instante, el picker y las gráficas se veían
+  // vacíos aunque hubiera telemetría reciente guardada en la base.
+  const backfilledRef = useRef(false);
+  useEffect(() => {
+    if (backfilledRef.current) return;
+    const unidades = state.data;
+    if (!unidades || unidades.length === 0) return;
+    backfilledRef.current = true;
+
+    void (async () => {
+      const porNodo: Record<string, TelemetryBroadcast> = {};
+      let masReciente: { rows: TelemetryPoint[] } | null = null;
+
+      for (const unidad of unidades) {
+        let rows: TelemetryPoint[];
+        try {
+          rows = await api.listTelemetry(unidad.unitCode);
+        } catch {
+          // Sin historia para esta unidad no debe impedir ver las demás.
+          continue;
+        }
+        if (rows.length === 0) continue;
+
+        // rows viene ordenado más reciente primero; una pasada basta
+        // para quedarse con la última fila real de cada nodo.
+        for (const row of rows) {
+          if (!porNodo[row.nodeCode]) {
+            porNodo[row.nodeCode] = toBroadcast(unidad.unitCode, row);
+          }
+        }
+
+        if (!masReciente || new Date(rows[0]!.ts).getTime() > new Date(masReciente.rows[0]!.ts).getTime()) {
+          masReciente = { rows };
+        }
+      }
+
+      if (Object.keys(porNodo).length > 0) {
+        // ...prev al final: si ya llegó algo real por socket mientras
+        // se cargaba la historia, esa lectura en vivo gana.
+        setLastByNode((prev) => ({ ...porNodo, ...prev }));
+      }
+
+      if (masReciente && !selectedRef.current) {
+        const nodeCode = masReciente.rows[0]!.nodeCode;
+        selectedRef.current = nodeCode;
+        setSelectedNodeId(nodeCode);
+        setPoints(
+          masReciente.rows
+            .filter((r) => r.nodeCode === nodeCode)
+            .slice(0, MAX_POINTS)
+            .reverse()
+            .map(toChartPoint),
+        );
+      }
+    })();
+  }, [state.data]);
 
   const reportando = useMemo(() => Object.values(lastByNode), [lastByNode]);
   const ultimo = points.at(-1);
