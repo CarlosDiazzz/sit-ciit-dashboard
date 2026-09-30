@@ -19,6 +19,7 @@
   --ehecatl: #8f433e;
   --tezcatlipoca: #345d78;
   --tonatiuh: #8a5a19;
+  --comandos: #7045a1;
   --info: #275f88;
   --info-bg: #e7f0f6;
   --warning: #81570c;
@@ -69,6 +70,7 @@
 .shell[data-color-mode='light'][data-theme='tonatiuh'] { --accent: #8a5a19; --accent-rgb: 138, 90, 25; --accent-soft: #eee4d3; }
 .shell[data-color-mode='light'][data-theme='ehecatl'] { --accent: #8f433e; --accent-rgb: 143, 67, 62; --accent-soft: #f0dfdd; }
 .shell[data-color-mode='light'][data-theme='tezcatlipoca'] { --accent: #345d78; --accent-rgb: 52, 93, 120; --accent-soft: #dfe8ed; }
+.shell[data-color-mode='light'][data-theme='comandos'] { --accent: #7045a1; --accent-rgb: 112, 69, 161; --accent-soft: #e9def3; }
 .shell[data-color-mode='light'][data-theme='control'] { --accent: #4e5e57; --accent-rgb: 78, 94, 87; --accent-soft: #e4e8e5; }
 
 .shell[data-color-mode='light'] .sidebar {
@@ -88,6 +90,10 @@
 
 .shell[data-color-mode='light'] [data-nav-theme='control'] {
   --nav-color: #4e5e57;
+}
+
+.shell[data-color-mode='light'] [data-nav-theme='comandos'] {
+  --nav-color: #7045a1;
 }
 
 .shell[data-color-mode='light'] .brand-mark {
