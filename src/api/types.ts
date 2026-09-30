@@ -107,8 +107,10 @@ export interface EventRecord {
 export interface Command {
   id: string;
   cmdId: string;
-  targetNodeId: string;
-  issuedByUserId: string;
+  /** Código del nodo destino en el contrato, ej. "unit-01-a". */
+  targetNodeCode: string;
+  /** Correo de quien lo emitió. */
+  issuedByEmail: string;
   /** Rol con el que se emitió, no el rol actual del usuario. */
   issuedByRole: IssuerRole;
   action: CmdAction;
@@ -126,6 +128,10 @@ export interface Command {
 export interface CommandLogEntry {
   id: string;
   commandId: string;
+  cmdId: string;
+  action: CmdAction;
+  targetNodeCode: string;
+  issuedByEmail: string;
   status: CommandStatus;
   reason: string | null;
   occurredAt: string;
@@ -183,8 +189,18 @@ export interface TelemetryBroadcast {
 
 /** Los nombres y formas que aún no emite el backend están comentados: se
  *  agregan cuando existan, para no tipar contra algo inventado. */
+/** Avance de un comando, emitido al aplicar un ack del nodo. */
+export interface CommandUpdate {
+  cmdId: string;
+  nodeId: string;
+  status: Exclude<CommandStatus, 'sent'>;
+  reason: string | null;
+  /** epoch ms */
+  occurredAt: number;
+}
+
 export interface ServerToClientEvents {
   telemetry: (payload: TelemetryBroadcast) => void;
   // event: (event: EventRecord) => void;              // Fase 2
-  // 'command:update': (command: Command) => void;     // Fase 4
+  'command:update': (payload: CommandUpdate) => void;
 }

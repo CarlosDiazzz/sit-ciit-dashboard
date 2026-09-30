@@ -1,5 +1,9 @@
-/* Bitácora: historial completo de transiciones de comandos, para
- * auditoría (quién mandó qué y cuándo). Fase 4.
+/* Bitácora: cada cambio de estado de cada comando, para auditoría.
+ *
+ * A diferencia de la vista de Comandos, que muestra el estado actual,
+ * aquí queda el historial completo: incluye los acks tardíos que no
+ * hicieron avanzar el estado, porque para una auditoría importa que el
+ * mensaje llegó, no solo el resultado final.
  */
 
 import { api } from '../api/client';
@@ -10,6 +14,15 @@ import { CommandStatusBadge } from '../components/Badges';
 import { formatDateTime } from '../lib/format';
 import './tables.css';
 
+const ACCION_LABEL: Record<string, string> = {
+  set_sampling_rate: 'Ajustar muestreo',
+  set_thresholds: 'Ajustar umbrales',
+  trigger_alarm: 'Activar alarma',
+  stop_alarm: 'Detener alarma',
+  set_mode: 'Cambiar modo',
+  toggle_sensor: 'Activar/desactivar sensor',
+};
+
 export default function Bitacora() {
   const state = useApi<CommandLogEntry[]>(() => api.listCommandLog());
 
@@ -18,7 +31,7 @@ export default function Bitacora() {
       <div className="page-head">
         <div>
           <h1>Bitácora</h1>
-          <p>Registro de auditoría: cada cambio de estado de cada comando.</p>
+          <p>Registro de auditoría: quién mandó qué, a qué nodo y cuándo.</p>
         </div>
       </div>
 
@@ -35,20 +48,24 @@ export default function Bitacora() {
               <thead>
                 <tr>
                   <th>Cuándo</th>
-                  <th>Comando</th>
+                  <th>Acción</th>
+                  <th>Nodo</th>
                   <th>Estado</th>
+                  <th>Emitió</th>
                   <th>Motivo</th>
                 </tr>
               </thead>
               <tbody>
-                {entradas.map((entrada) => (
-                  <tr key={entrada.id}>
-                    <td className="tabular">{formatDateTime(entrada.occurredAt)}</td>
-                    <td className="mono">{entrada.commandId.slice(0, 8)}</td>
+                {entradas.map((e) => (
+                  <tr key={e.id}>
+                    <td className="tabular">{formatDateTime(e.occurredAt)}</td>
+                    <td>{ACCION_LABEL[e.action] ?? e.action}</td>
+                    <td className="mono">{e.targetNodeCode}</td>
                     <td>
-                      <CommandStatusBadge status={entrada.status} />
+                      <CommandStatusBadge status={e.status} />
                     </td>
-                    <td>{entrada.reason ?? '—'}</td>
+                    <td>{e.issuedByEmail}</td>
+                    <td>{e.reason ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
