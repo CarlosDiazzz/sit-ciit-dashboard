@@ -340,3 +340,21 @@ export interface CreateNodeRequest {
 export interface NodeSecretResponse {
   secret: string;
 }
+
+/** Lecturas alrededor de un evento, para ver la forma de la señal y no
+ *  solo su pico. Las da GET /events/:id/window. */
+export interface EventWindowSample {
+  ts: string;
+  nodeCode: string;
+  /** Milisegundos respecto al instante del evento: negativo antes. */
+  offsetMs: number;
+  accel: { x: number; y: number; z: number } | null;
+  gyro: { x: number; y: number; z: number } | null;
+  speedKmh: number | null;
+}
+
+export interface EventWindow {
+  event: { id: string; kind: string; ts: string; value: number | null; threshold: number | null };
+  windowSeconds: number;
+  samples: EventWindowSample[];
+}
