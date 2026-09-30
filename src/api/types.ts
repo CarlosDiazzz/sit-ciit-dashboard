@@ -106,6 +106,11 @@ export interface TelemetryPoint {
 export interface EventRecord {
   id: string;
   unitId: string;
+  /** Codigo del contrato ("unit-01"). El unitId de arriba es el UUID de
+   *  la base, que sirve para agrupar pero no se muestra: un operador no
+   *  reconoce 63898a12-ff5e-42ca-8a50-4758d4e4b96a. */
+  unitCode?: string | null;
+  nodeCode?: string | null;
   /** null en eventos a nivel unidad (failover, disagreement): comparan
    *  primary contra backup, no pertenecen a un solo nodo. */
   nodeId: string | null;
@@ -334,4 +339,22 @@ export interface CreateNodeRequest {
  *  key, no se puede volver a consultar después de esto. */
 export interface NodeSecretResponse {
   secret: string;
+}
+
+/** Lecturas alrededor de un evento, para ver la forma de la señal y no
+ *  solo su pico. Las da GET /events/:id/window. */
+export interface EventWindowSample {
+  ts: string;
+  nodeCode: string;
+  /** Milisegundos respecto al instante del evento: negativo antes. */
+  offsetMs: number;
+  accel: { x: number; y: number; z: number } | null;
+  gyro: { x: number; y: number; z: number } | null;
+  speedKmh: number | null;
+}
+
+export interface EventWindow {
+  event: { id: string; kind: string; ts: string; value: number | null; threshold: number | null };
+  windowSeconds: number;
+  samples: EventWindowSample[];
 }

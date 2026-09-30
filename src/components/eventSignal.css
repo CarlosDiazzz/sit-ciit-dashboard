@@ -1,0 +1,76 @@
+/* Señal alrededor de un evento, en el panel de evidencia. */
+
+.signal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+
+.signal-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.signal-head h4 {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-strong);
+}
+
+.signal-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.signal-chart {
+  width: 100%;
+  height: 160px;
+}
+
+.signal-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+  margin: 0;
+}
+
+.signal-stats dt {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1px;
+}
+
+.signal-stats dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cómo leer la curva: la forma distingue el tipo de anomalía. */
+.signal-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.signal-note {
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.signal-note--error {
+  color: var(--critical);
+}

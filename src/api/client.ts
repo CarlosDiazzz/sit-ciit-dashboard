@@ -13,6 +13,7 @@ import type {
   CreateNodeRequest,
   CreateUserRequest,
   EventRecord,
+  EventWindow,
   IssueCommandRequest,
   LoginResponse,
   ManagedUser,
@@ -211,6 +212,11 @@ export const api = {
     const qs = q.toString();
     return request<EventRecord[]>(`/events${qs ? `?${qs}` : ""}`);
   },
+
+  /** Señal alrededor de un evento: lo que permite distinguir un golpe
+   *  de via de un frenon, que pueden tener el mismo pico. */
+  eventWindow: (eventId: string, seconds = 4) =>
+    request<EventWindow>(`/events/${eventId}/window?seconds=${seconds}`),
 
   acknowledgeEvent: (eventId: string) =>
     request<EventRecord>(`/events/${eventId}/ack`, { method: "POST" }),
