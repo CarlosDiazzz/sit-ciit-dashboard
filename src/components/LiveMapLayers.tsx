@@ -21,12 +21,24 @@ import { Marker, Polyline, Popup, Tooltip, useMap } from 'react-leaflet';
 
 import { api } from '../api/client';
 import { useSocketEvent } from '../api/socket';
-import type { EventBroadcast, TelemetryBroadcast, TelemetryPoint } from '../api/types';
+import type { CellTower, EventBroadcast, TelemetryBroadcast, TelemetryPoint } from '../api/types';
 import type { EventSeverity } from '../contract/contract';
 import { eventKindLabel, eventValueUnit } from '../lib/labels';
 import { formatTime } from '../lib/format';
-import { iconoEvento, iconoSenalPerdida, iconoUnidad } from './mapIcons';
+import type { MapCoordinate } from '../lib/mapData';
+import { proyectarSobreRuta, puntoADistancia } from '../lib/routeProjection';
+import { iconoAntena, iconoEstimado, iconoEvento, iconoSenalPerdida, iconoUnidad } from './mapIcons';
 import './liveMap.css';
+
+/** Cada cuánto se recalcula la posición estimada de un nodo sin señal —
+ *  no hace falta la frecuencia de la animación de unidades reales, es
+ *  un cálculo de distancia/velocidad, no una interpolación visual. */
+const ESTIMADO_TICK_MS = 3000;
+
+/** Si no se encuentra ninguna torre real adelante en esta distancia, se
+ *  dice que no se sabe en vez de forzar un ETA. ~el largo del corredor,
+ *  para no cortar la búsqueda antes de tiempo. */
+const BUSQUEDA_COBERTURA_MAX_M = 300_000;
 
 /** Posiciones guardadas por unidad para el rastro: a 1 Hz, unos dos
  *  minutos de recorrido. */
@@ -80,6 +92,19 @@ interface Unidad {
   alerta: EventSeverity | null;
 }
 
+/** Última posición real conocida de un nodo que se quedó sin señal —
+ *  todo real (GPS y velocidad del último fix, hora de la caída). Lo que
+ *  se calcula a partir de esto (posición estimada, ETA) se hace en el
+ *  render, nunca se guarda como si fuera otro dato medido. */
+interface SenalPerdida {
+  unitId: string;
+  lat: number;
+  lon: number;
+  speedMs: number;
+  /** epoch ms de cuándo se detectó la caída (reloj del backend). */
+  ts: number;
+}
+
 interface EventoEnMapa {
   id: string;
   lat: number;
@@ -105,6 +130,13 @@ function rumboEntre(a: [number, number], b: [number, number]): number {
   return (Math.atan2(dLon, dLat) * 180) / Math.PI;
 }
 
+function formatMin(segundos: number): string {
+  const min = Math.round(segundos / 60);
+  if (min < 1) return '<1 min';
+  if (min < 60) return `${min} min`;
+  return `${Math.floor(min / 60)} h ${min % 60} min`;
+}
+
 /** Arranca y frena, en vez de moverse a velocidad constante y pararse
  *  en seco. */
 function suavizar(t: number): number {
@@ -125,13 +157,28 @@ function posicionActual(u: Unidad, ahora: number): [number, number] {
 
 export default function LiveMapLayers({
   onTelemetria,
+  railRoute = [],
+  torres = [],
 }: {
   /** Ultimo mensaje por nodo, para que el panel lateral muestre la
    *  velocidad en vivo sin abrir un segundo socket. */
   onTelemetria?: (t: TelemetryBroadcast) => void;
+  /** Ruta real de la Línea Z (Mapa.tsx ya la carga) — para proyectar la
+   *  posición estimada de un nodo sin señal sobre la vía real, no en
+   *  línea recta. Sin ruta, no se puede estimar nada: se omite la capa. */
+  railRoute?: MapCoordinate[];
+  /** Antenas reales (OpenCelliD, GET /coverage/towers) — para el ETA a
+   *  la próxima zona con cobertura conocida. Sin torres, se estima la
+   *  posición igual pero sin ETA. */
+  torres?: CellTower[];
 } = {}) {
   const [unidades, setUnidades] = useState<Record<string, Unidad>>({});
   const [eventos, setEventos] = useState<EventoEnMapa[]>([]);
+  /** Por nodo: la última vez que se supo de verdad dónde estaba antes
+   *  de quedarse sin señal. Se borra en cuanto llega telemetría real de
+   *  ese nodo — la posición real siempre gana sobre la estimada. */
+  const [sinSenal, setSinSenal] = useState<Record<string, SenalPerdida>>({});
+  const [tickEstimado, setTickEstimado] = useState(() => Date.now());
   // El bucle lee las unidades por ref: si dependiera del estado habria
   // que recrearlo con cada mensaje.
   const unidadesRef = useRef<Record<string, Unidad>>({});
@@ -278,6 +325,14 @@ export default function LiveMapLayers({
       // El panel lateral quiere toda la telemetria, tenga GPS o no.
       onTelemetria?.(t);
 
+      // Llegó dato real de este nodo: la posición real siempre gana
+      // sobre la estimada, sin esperar a un signal_recovered aparte.
+      setSinSenal((prev) => {
+        if (!(t.nodeId in prev)) return prev;
+        const { [t.nodeId]: _quitado, ...resto } = prev;
+        return resto;
+      });
+
       const gps = t.gps;
       // Sin GPS no hay nada que ubicar. Es lo normal bajo techo.
       if (!gps) return;
@@ -316,6 +371,16 @@ export default function LiveMapLayers({
     }, [onTelemetria]),
   );
 
+  // Solo corre mientras haya al menos un nodo sin señal que estimar —
+  // un timer aparte del bucle de animación de unidades reales, porque
+  // esto es un cálculo de distancia/velocidad, no una interpolación
+  // visual, y no debe depender de que otra unidad esté en movimiento.
+  useEffect(() => {
+    if (Object.keys(sinSenal).length === 0) return;
+    const id = setInterval(() => setTickEstimado(Date.now()), ESTIMADO_TICK_MS);
+    return () => clearInterval(id);
+  }, [sinSenal]);
+
   useSocketEvent(
     'unit:active-node',
     useCallback((p: { unitId: string; activeNodeId: string | null }) => {
@@ -352,10 +417,82 @@ export default function LiveMapLayers({
           ...prev,
         ].slice(0, 50),
       );
+
+      // Punto de partida para estimar dónde va mientras sigue sin
+      // señal — solo si trae velocidad real (sin ella no hay con qué
+      // proyectar, y no se inventa una).
+      if (ev.kind === 'signal_lost' && nodeId !== null && ev.speedMs != null) {
+        setSinSenal((prev) => ({
+          ...prev,
+          [nodeId]: { unitId: ev.unitId, lat: gps.lat, lon: gps.lon, speedMs: ev.speedMs!, ts: ev.ts },
+        }));
+      }
     }, []),
   );
 
   const lista = Object.values(unidades);
+
+  // Torres proyectadas sobre la ruta una sola vez por lista de torres
+  // (no en cada tick del estimado): con eso, encontrar la proxima zona
+  // con cobertura es nada mas filtrar y tomar el minimo, en vez de
+  // caminar la ruta metro a metro en cada recalculo.
+  const torresProyectadas = useMemo(
+    () =>
+      torres
+        .map((t) => ({ torre: t, proyeccion: proyectarSobreRuta(railRoute, [t.lat, t.lon]) }))
+        .filter((x): x is { torre: CellTower; proyeccion: NonNullable<ReturnType<typeof proyectarSobreRuta>> } => x.proyeccion !== null),
+    [torres, railRoute],
+  );
+
+  /** Rango a usar para esa torre: el real de OpenCelliD si lo trae, o
+   *  un supuesto conservador si no — nunca se muestra como medido. */
+  const RANGO_SUPUESTO_M = 1500;
+
+  const estimados = useMemo(() => {
+    if (railRoute.length < 2) return [];
+    return Object.entries(sinSenal).flatMap(([nodeId, s]) => {
+      const proyeccionInicial = proyectarSobreRuta(railRoute, [s.lat, s.lon]);
+      if (!proyeccionInicial) return [];
+
+      const segundos = Math.max(0, (tickEstimado - s.ts) / 1000);
+      const distanciaRecorrida = s.speedMs * segundos;
+      const distanciaActual = proyeccionInicial.distanciaAcumulada + distanciaRecorrida;
+      const posicion = puntoADistancia(railRoute, distanciaActual);
+      if (!posicion) return [];
+
+      // Rumbo desde el punto de partida hasta el estimado, para
+      // orientar el icono — mismo calculo que ya usa rumboEntre().
+      const rumbo = distanciaRecorrida > 0 ? rumboEntre([s.lat, s.lon], posicion) : null;
+
+      // Próxima torre adelante (mayor distancia acumulada que la
+      // posición actual) dentro de su propio rango real o supuesto.
+      const candidatas = torresProyectadas
+        .filter(
+          ({ torre, proyeccion }) =>
+            proyeccion.distanciaAcumulada > distanciaActual &&
+            proyeccion.distanciaAcumulada - distanciaActual <= BUSQUEDA_COBERTURA_MAX_M &&
+            proyeccion.distanciaALaRuta <= (torre.rangeM ?? RANGO_SUPUESTO_M),
+        )
+        .sort((a, b) => a.proyeccion.distanciaAcumulada - b.proyeccion.distanciaAcumulada);
+
+      const proxima = candidatas[0];
+      const etaSegundos =
+        proxima && s.speedMs > 0 ? (proxima.proyeccion.distanciaAcumulada - distanciaActual) / s.speedMs : null;
+
+      return [
+        {
+          nodeId,
+          unitId: s.unitId,
+          posicion,
+          rumbo,
+          speedKmh: s.speedMs * 3.6,
+          sinSenalDesdeS: segundos,
+          etaSegundos,
+          rangoSupuesto: proxima ? proxima.torre.rangeM === null : false,
+        },
+      ];
+    });
+  }, [sinSenal, railRoute, torresProyectadas, tickEstimado]);
 
   // Los rastros se recalculan solo cuando llega telemetria, no en cada
   // cuadro de animacion: son hasta 120 puntos por unidad y redibujarlos
@@ -374,6 +511,17 @@ export default function LiveMapLayers({
 
   return (
     <>
+      {/* Antenas reales al fondo: no deben competir con nada que
+          reporte un evento o una unidad real. */}
+      {torres.map((t, i) => (
+        <Marker key={`torre-${i}`} position={[t.lat, t.lon]} icon={iconoAntena()}>
+          <Tooltip direction="top" offset={[0, -6]}>
+            Antena {t.radio ?? 'real'} (OpenCelliD)
+            {t.rangeM !== null ? ` · rango real ${(t.rangeM / 1000).toFixed(1)} km` : ' · sin rango reportado'}
+          </Tooltip>
+        </Marker>
+      ))}
+
       {/* Eventos primero: los marcadores de unidad quedan encima. */}
       {eventosVigentes.map((ev) => (
         <Marker
@@ -401,6 +549,35 @@ export default function LiveMapLayers({
             {formatTime(new Date(ev.ts).toISOString())}
           </Popup>
         </Marker>
+      ))}
+
+      {/* Posición estimada mientras un nodo sigue sin señal: proyectada
+          sobre la ruta real a partir de su última velocidad real, nunca
+          mezclada con datos medidos — desaparece en cuanto llega
+          telemetría real de ese nodo. */}
+      {estimados.map((e) => (
+        <div key={`estimado-${e.nodeId}`}>
+          <Polyline
+            positions={[[sinSenal[e.nodeId]!.lat, sinSenal[e.nodeId]!.lon], e.posicion]}
+            pathOptions={{ color: '#6e7681', weight: 2, dashArray: '2 6', opacity: 0.6 }}
+          />
+          <Marker position={e.posicion} icon={iconoEstimado(e.rumbo)}>
+            <Tooltip direction="top" offset={[0, -10]}>
+              Posición estimada — {e.unitId}
+            </Tooltip>
+            <Popup>
+              <strong>Posición estimada</strong>
+              <br />
+              A partir de su última velocidad real ({e.speedKmh.toFixed(0)} km/h)
+              <br />
+              Sin señal desde hace {formatMin(e.sinSenalDesdeS)}
+              <br />
+              {e.etaSegundos !== null
+                ? `ETA a próxima zona con cobertura conocida: ~${formatMin(e.etaSegundos)}${e.rangoSupuesto ? ' (rango supuesto, esa torre no reporta uno real)' : ''}`
+                : 'No se encontró una zona de cobertura conocida más adelante en los datos de OpenCelliD.'}
+            </Popup>
+          </Marker>
+        </div>
       ))}
 
       {/* Rastros aparte de los marcadores: solo cambian al llegar una

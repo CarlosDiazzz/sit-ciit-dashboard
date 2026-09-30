@@ -10,6 +10,7 @@ import type {
   HistoryNode,
   NodeHistoryPage,
   CargoCategory,
+  CellTower,
   Command,
   CommandLogEntry,
   CreateNodeRequest,
@@ -235,6 +236,14 @@ export const api = {
   /** Defectos de via confirmados por repeticion entre unidades. */
   trackDefects: (days = 90) =>
     request<TrackDefectsResponse>(`/track-defects?days=${days}`),
+
+  /** `puntos` son [lat, lon] muestreados sobre la geometría real de la
+   *  ruta (ver muestrearRuta en routeProjection.ts) — el backend no
+   *  conoce la vía, solo consulta antenas reales cerca de estos puntos. */
+  listCellTowers: (puntos: [number, number][]) =>
+    request<CellTower[]>(
+      `/coverage/towers?points=${encodeURIComponent(puntos.map(([lat, lon]) => `${lat},${lon}`).join(';'))}`,
+    ),
 
   listEvents: (params?: { unitId?: string; limit?: number }) => {
     const q = new URLSearchParams();
