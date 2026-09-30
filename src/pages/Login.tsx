@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiError, api } from '../api/client';
 import { useSession } from '../auth/context';
+import { userRoleLabel } from '../lib/labels';
 import './login.css';
 
 export default function Login() {
@@ -42,7 +43,7 @@ export default function Login() {
         <div className="login-card">
           <h1>Sesión iniciada</h1>
           <p className="login-hint">
-            {user.email} — {user.role === 'control_center' ? 'Centro de control' : 'Operador'}
+            {user.email} — {userRoleLabel(user.role)}
           </p>
           <button type="button" className="btn" onClick={signOut}>
             Cerrar sesión

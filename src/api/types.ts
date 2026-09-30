@@ -28,8 +28,17 @@ import type {
 export type BackendEventKind = 'source_failover' | 'sensor_disagreement' | 'weather_risk';
 
 /** Categoría de carga que declara el cliente por unidad — no es un dato
- *  de sensor, se fija desde este dashboard (rol control_center). */
-export type CargoCategory = 'agricola' | 'construccion' | 'quimico';
+ *  de sensor, se fija desde este dashboard (rol control_center).
+ *  'sin_carga' es un estado explícito ("va vacía"), distinto de null
+ *  (todavía no se declaró nada). */
+export type CargoCategory = 'agricola' | 'construccion' | 'quimico' | 'sin_carga';
+
+/** Rol de autorización del backend/dashboard — distinto de `IssuerRole`
+ *  del contrato MQTT (2 valores, quién puede emitir comandos a un nodo).
+ *  `cliente` nunca emite comandos, así que no pertenece a ese tipo; se
+ *  define aparte aquí, igual que en el backend
+ *  (`src/domain/ports/UserRepository.ts`). */
+export type UserRole = 'control_center' | 'operator' | 'cliente';
 
 /** Todo lo que puede aparecer en la vista de Eventos. */
 export type AnyEventKind = EventKind | BackendEventKind;
@@ -149,12 +158,33 @@ export interface CommandLogEntry {
 export interface AuthUser {
   id: string;
   email: string;
-  role: IssuerRole;
+  role: UserRole;
 }
 
 export interface LoginResponse {
   token: string;
   user: AuthUser;
+}
+
+/** Fila del CRUD de usuarios — misma forma que AuthUser más createdAt,
+ *  nunca incluye el hash de la contraseña. */
+export interface ManagedUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
+/** Ambos campos opcionales: mandar solo lo que se quiere cambiar. */
+export interface UpdateUserRequest {
+  role?: UserRole;
+  password?: string;
 }
 
 /** Clima ambiental real (Open-Meteo) en la última posición GPS conocida de
@@ -270,4 +300,28 @@ export interface ServerToClientEvents {
   telemetry: (payload: TelemetryBroadcast) => void;
   event: (payload: EventBroadcast) => void;
   'command:update': (payload: CommandUpdate) => void;
+}
+
+/** Fila del CRUD de nodos. El secreto NUNCA aparece aquí — solo en la
+ *  respuesta de creación/regeneración, una sola vez. */
+export interface NodeCredentialRecord {
+  id: string;
+  nodeCode: string;
+  unitCode: string;
+  role: NodeRole;
+  hasSecret: boolean;
+  isOnline: boolean;
+  createdAt: string;
+}
+
+export interface CreateNodeRequest {
+  nodeCode: string;
+  unitCode: string;
+  role: NodeRole;
+}
+
+/** El secreto en texto plano, mostrado una sola vez — igual que un API
+ *  key, no se puede volver a consultar después de esto. */
+export interface NodeSecretResponse {
+  secret: string;
 }

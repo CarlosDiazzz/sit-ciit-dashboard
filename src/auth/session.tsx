@@ -55,8 +55,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const can = useCallback(
-    (action: CmdAction) =>
-      user ? isActionAllowedForRole(action, user.role) : false,
+    (action: CmdAction) => {
+      if (!user || user.role === 'cliente') return false;
+      // Descartado 'cliente' arriba: user.role solo puede ser
+      // control_center|operator aquí, que es lo que pide IssuerRole.
+      return isActionAllowedForRole(action, user.role);
+    },
     [user],
   );
 

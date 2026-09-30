@@ -4,7 +4,7 @@
  * (un archivo que exporta componentes no debe exportar también funciones).
  */
 
-import type { AnyEventKind, CargoCategory, Condition, WeatherVariable } from '../api/types';
+import type { AnyEventKind, CargoCategory, Condition, UserRole, WeatherVariable } from '../api/types';
 
 const EVENT_LABEL: Record<AnyEventKind, string> = {
   impact: 'Impacto',
@@ -45,10 +45,21 @@ const CARGO_CATEGORY_LABEL: Record<CargoCategory, string> = {
   agricola: 'Agrícola',
   construccion: 'Construcción',
   quimico: 'Químicos',
+  sin_carga: 'Sin carga',
 };
 
 export function cargoCategoryLabel(category: CargoCategory): string {
   return CARGO_CATEGORY_LABEL[category] ?? category;
+}
+
+const USER_ROLE_LABEL: Record<UserRole, string> = {
+  control_center: 'Centro de control',
+  operator: 'Operador',
+  cliente: 'Cliente',
+};
+
+export function userRoleLabel(role: UserRole): string {
+  return USER_ROLE_LABEL[role] ?? role;
 }
 
 const VARIABLE_META: Record<WeatherVariable, { label: string; unit: string }> = {

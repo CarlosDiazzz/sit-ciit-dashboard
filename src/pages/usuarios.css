@@ -1,0 +1,47 @@
+.user-form {
+  margin-bottom: var(--s5);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.user-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+}
+
+.user-fields .field { min-width: 170px; flex: 1 1 170px; }
+.user-fields .btn { flex: 0 0 auto; height: 37px; }
+
+.user-fields select,
+.user-fields input {
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-strong);
+  font: inherit;
+}
+
+.user-error,
+.user-aviso {
+  margin-top: var(--s3);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.user-error {
+  border: 1px solid var(--critical);
+  background: var(--critical-bg);
+  color: var(--critical);
+}
+
+.user-aviso {
+  border: 1px solid var(--online);
+  background: var(--online-bg);
+  color: var(--online);
+}

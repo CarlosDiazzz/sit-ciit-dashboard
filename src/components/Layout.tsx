@@ -3,10 +3,11 @@
  */
 
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Activity, ClipboardList, Map as MapIcon, Radio, ShieldAlert, Wifi } from 'lucide-react';
+import { Activity, ClipboardList, Map as MapIcon, Radio, ShieldAlert, Smartphone, Users, Wifi } from 'lucide-react';
 import { useConnectionStatus } from '../api/socket';
 import { useSession } from '../auth/context';
 import { useColorMode } from '../hooks/useColorMode';
+import { userRoleLabel } from '../lib/labels';
 import AztecOrnament from './AztecOrnament';
 import './layout.css';
 import './decision.css';
@@ -20,10 +21,28 @@ const NAV = [
   { to: '/bitacora', label: 'Auditoría', deity: 'Tezcatlipoca', domain: 'Historial de intervenciones', icon: ClipboardList, theme: 'tezcatlipoca', end: false },
   { to: '/comandos', label: 'Comandos', deity: 'Control operativo', domain: 'Seguimiento de órdenes', icon: Radio, theme: 'control', end: false },
 ] as const;
-const ROLE_LABEL: Record<string, string> = {
-  control_center: 'Centro de control',
-  operator: 'Operador',
-};
+
+// Solo visible para control_center: son cuentas de otras personas, no
+// algo que un operador o cliente deba ni siquiera ver en el nav.
+const USUARIOS_NAV = {
+  to: '/usuarios',
+  label: 'Usuarios',
+  deity: 'Acceso',
+  domain: 'Cuentas del centro de control',
+  icon: Users,
+  theme: 'control',
+  end: false,
+} as const;
+
+const NODOS_NAV = {
+  to: '/nodos',
+  label: 'Nodos',
+  deity: 'Acceso',
+  domain: 'Identidad y secretos de campo',
+  icon: Smartphone,
+  theme: 'control',
+  end: false,
+} as const;
 
 function ConnectionIndicator() {
   const status = useConnectionStatus();
@@ -46,7 +65,11 @@ export default function Layout() {
   const { user, signOut } = useSession();
   const { mode, toggle } = useColorMode();
   const location = useLocation();
-  const current = NAV.find((item) =>
+  // cliente no tiene nada que hacer aquí (RequireAuth ya le bloquea las
+  // rutas): mostrarle links que van a rebotar solo confunde.
+  const nav =
+    user?.role === 'cliente' ? [] : user?.role === 'control_center' ? [...NAV, USUARIOS_NAV, NODOS_NAV] : NAV;
+  const current = nav.find((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to),
   ) ?? NAV[0];
 
@@ -66,7 +89,7 @@ export default function Layout() {
         <p className="sidebar-kicker">Corredor Interoceánico · Línea Z</p>
 
         <nav className="nav">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -119,7 +142,7 @@ export default function Layout() {
                 <>
                   <span className="user">
                     {user.email}
-                    <small>{ROLE_LABEL[user.role] ?? user.role}</small>
+                    <small>{userRoleLabel(user.role)}</small>
                   </span>
                   <button type="button" className="btn" onClick={signOut}>
                     Salir
