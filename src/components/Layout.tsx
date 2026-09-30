@@ -78,7 +78,7 @@ export default function Layout() {
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
-            <img src="/zenda-logo-dark.png" alt="" />
+            <img src={mode === 'light' ? '/LogoClaro.png' : '/zenda-logo-dark.png'} alt="" />
           </span>
           <span className="brand-name">
             Zenda
@@ -88,7 +88,7 @@ export default function Layout() {
 
         <p className="sidebar-kicker">Corredor Interoceánico · Línea Z</p>
 
-        <nav className="nav">
+        <nav className="nav" aria-label="Navegación principal">
           {nav.map((item) => (
             <NavLink
               key={item.to}
@@ -97,10 +97,10 @@ export default function Layout() {
               className={({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`}
               data-nav-theme={item.theme}
             >
-              <span className="nav-glyph" aria-hidden="true"><item.icon size={18} strokeWidth={1.8} /></span>
+              <span className="nav-glyph" aria-hidden="true"><item.icon size={20} strokeWidth={2} /></span>
               <span className="nav-copy">
                 <strong>{item.label}</strong>
-                <small>{item.deity} · {item.domain}</small>
+                <small>{item.domain}</small>
               </span>
             </NavLink>
           ))}
