@@ -6,12 +6,14 @@
  * y las capas de antenas OpenCelliD y clima Open-Meteo (Fase 1 y Fase 7).
  */
 
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { useEffect, useState } from 'react';
+import { MapContainer, Polyline, TileLayer } from 'react-leaflet';
 import { api } from '../api/client';
 import { useApi } from '../api/useApi';
 import type { Unit } from '../api/types';
 import { ErrorState, Loading } from '../components/States';
 import { ConnectionBadge } from '../components/Badges';
+import { parseRailSegments, type MapCoordinate } from '../lib/mapData';
 import './mapa.css';
 
 // Centro aproximado del corredor Salina Cruz–Coatzacoalcos, para que el
@@ -20,6 +22,28 @@ const CENTRO: [number, number] = [17.3, -94.8];
 
 export default function Mapa() {
   const state = useApi<Unit[]>(() => api.listUnits());
+  const [railSegments, setRailSegments] = useState<MapCoordinate[][]>([]);
+  const [mapDataError, setMapDataError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('mapData.txt')
+      .then((response) => {
+        if (!response.ok) throw new Error(`No se pudo cargar mapData.txt (${response.status}).`);
+        return response.json();
+      })
+      .then((data: unknown) => {
+        const segments = parseRailSegments(data);
+        if (segments.length === 0) throw new Error('mapData.txt no contiene trazos ferroviarios con coordenadas.');
+        if (!cancelled) setRailSegments(segments);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setMapDataError(error instanceof Error ? error.message : 'No se pudo cargar el mapa.');
+      });
+
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <>
@@ -39,6 +63,9 @@ export default function Mapa() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            {railSegments.map((segment, index) => (
+              <Polyline key={index} positions={segment} pathOptions={{ color: '#2E7D32', weight: 4 }} />
+            ))}
           </MapContainer>
         </div>
 
@@ -63,8 +90,7 @@ export default function Mapa() {
             </ul>
           ) : (
             <p className="map-hint">
-              Sin unidades registradas todavía. El trazado de la Línea Z y la
-              posición en vivo se agregan en las fases 1 y 7.
+              {mapDataError ?? 'Sin unidades registradas todavía.'}
             </p>
           )}
         </aside>
