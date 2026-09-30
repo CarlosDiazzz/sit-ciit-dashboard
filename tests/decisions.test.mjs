@@ -22,7 +22,7 @@ test('entre eventos de igual prioridad presenta primero el más reciente', () =>
 });
 
 test('todos los tipos de evento tienen orientación para revisión humana', () => {
-  for (const kind of ['impact', 'door_open', 'door_closed', 'rollover', 'threshold_exceeded', 'source_failover', 'sensor_disagreement']) {
+  for (const kind of ['impact', 'door_open', 'door_closed', 'rollover', 'threshold_exceeded', 'source_failover', 'sensor_disagreement', 'hard_brake', 'curve_overspeed', 'dynamic_impact', 'track_irregularity']) {
     assert.ok(eventGuidance[kind]?.length > 20, kind);
   }
 });

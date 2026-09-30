@@ -8,6 +8,10 @@ export function prioritizeEvents(events: EventRecord[]): EventRecord[] {
 }
 
 export const eventGuidance: Record<AnyEventKind, string> = {
+  hard_brake: 'Revisa la desaceleración registrada y verifica con el operador el contexto del frenado y el estado de la carga.',
+  curve_overspeed: 'Contrasta la aceleración lateral con la ubicación y solicita revisión del contexto de la curva.',
+  dynamic_impact: 'Revisa el pico de fuerza y verifica con el operador posibles desplazamientos de la carga.',
+  track_irregularity: 'Revisa la vibración registrada y su ubicación antes de reportar una posible irregularidad de vía.',
   impact: 'Contrasta el pico con la aceleración de la unidad y solicita al operador verificar el estado de la carga.',
   door_open: 'Verifica con el operador si la apertura corresponde a una maniobra autorizada.',
   door_closed: 'Contrasta el cierre con el evento de apertura y el contexto de la maniobra.',
@@ -16,4 +20,3 @@ export const eventGuidance: Record<AnyEventKind, string> = {
   source_failover: 'Revisa la conectividad del nodo principal y verifica las lecturas de la fuente de respaldo.',
   sensor_disagreement: 'Compara ambos nodos y comprueba su instalación antes de confiar en una sola lectura.',
 };
-

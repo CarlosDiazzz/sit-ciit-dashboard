@@ -1,0 +1,59 @@
+.cmd-form {
+  margin-bottom: var(--s5);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.cmd-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+}
+
+.cmd-fields .field { min-width: 170px; flex: 1 1 170px; }
+.cmd-fields .btn { flex: 0 0 auto; height: 37px; }
+
+.cmd-fields select,
+.cmd-fields input {
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-strong);
+  font: inherit;
+}
+
+.cmd-nota {
+  margin-top: var(--s3);
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+.cmd-error,
+.cmd-aviso {
+  margin-top: var(--s3);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.cmd-error {
+  border: 1px solid var(--critical);
+  background: var(--critical-bg);
+  color: var(--critical);
+}
+
+.cmd-aviso {
+  border: 1px solid var(--online);
+  background: var(--online-bg);
+  color: var(--online);
+}
+
+/* Destaca brevemente la fila que acaba de cambiar por un ack. */
+.table tbody tr.is-fresh td {
+  background: var(--accent-bg);
+  transition: background 1.2s ease-out;
+}
